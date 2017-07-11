@@ -26,9 +26,11 @@ public class Creator_Control : MonoBehaviour
     public Text textTimeCurrentLength;
 
     public Text textChartGameType;
+    public Text textNotePlacementType;
 
     public ChartData chartData;
 
+    private List<Creator_Note> listNotePool = new List<Creator_Note>();
     public Creator_Note objectNotePrefab;
     public Color[] colorNote = { Color.blue, Color.red, Color.green, Color.yellow };
 
@@ -36,6 +38,7 @@ public class Creator_Control : MonoBehaviour
     private int intChartGameType = 0;
     public string[] stringChartGameType = { "Linear", "Double", "Quad", "Powerful" };
     private int intNotePlacementType = 0;
+    public string[] stringNotePlacementType = { "Blue (Btm)", "Red (Top)", "Green (Lt)", "Yellw (Dn)" };
     private int intCursorPosition = 0;
 
     void Start()
@@ -61,6 +64,7 @@ public class Creator_Control : MonoBehaviour
             newNote.position = x.transform.position.x;
             newNote.type = x.type;
             newNote.size = x.size;
+            newNote.length = x.length;
             newNote.special = x.special;
             chartData.listNoteInfo.Add(newNote);
         }
@@ -100,7 +104,7 @@ public class Creator_Control : MonoBehaviour
         Creator_Note[] listNoteC = FindObjectsOfType<Creator_Note>();
         foreach (Creator_Note x in listNoteC)
         {
-            Destroy(x.gameObject);
+            DeleteNote(x);
         }
     }
 
@@ -110,32 +114,73 @@ public class Creator_Control : MonoBehaviour
     /// <param name="note"></param>
     public void CreateNote(NoteInfo note)
     {
-        Creator_Note newNote = Instantiate(objectNotePrefab);
+        // Object pooling - try to get an unused object from the pool, and make a new object if there are no unused ones
+        bool createNote = true;
+        Creator_Note newNote = null;
+        foreach (Creator_Note x in listNotePool)
+        {
+            if (!x.gameObject.activeSelf)
+            {
+                newNote = x;
+                createNote = false;
+                break;
+            }
+        }
+        if (createNote) newNote = Instantiate(objectNotePrefab);
+
+        // Modify note to use information given
         newNote.transform.position = new Vector3(note.position, note.time);
         newNote.type = note.type;
         newNote.size = note.size;
+        newNote.length = note.length;
         newNote.special = note.special;
 
+        // Long note visualization
+        if (note.length > 0.01f)
+        {
+            newNote.spriteRendererLength.gameObject.SetActive(true);
+            newNote.spriteRendererLength.transform.position = Vector3.up * note.length * 0.5f;
+            newNote.spriteRendererLength.transform.localScale = new Vector3(
+                newNote.spriteRendererLength.transform.localScale.x,
+                25f * note.length,
+                newNote.spriteRendererLength.transform.localScale.z);
+        }
+        else
+        {
+            newNote.spriteRendererLength.gameObject.SetActive(false);
+        }
+
+        // Colorize note based on type
         if (colorNote.Length > note.type)
         {
             newNote.GetComponent<SpriteRenderer>().color = colorNote[note.type];
+
+            Color dim = colorNote[note.type];
+            dim.r *= 0.7f;
+            dim.g *= 0.7f;
+            dim.b *= 0.7f;
+            newNote.spriteRendererLength.color = dim;
         }
+
+        // Make note active
+        newNote.gameObject.SetActive(true);
     }
     /// <summary>
-    /// Create a new custom note.
+    /// Create a new custom note from scratch.
     /// </summary>
     /// <param name="position">Note's horizontal position (right is positive). If this note would be used for the vertical catchers, this would be used for the vertical position instead (up is positive).</param>
     /// <param name="time">Note's time. Determines when the note will pass the catcher's position.</param>
     /// <param name="type">Note's type. Determines which catcher it will appear for.</param>
     /// <param name="size">Note's size. Larger sizes make note judgment easier. Also affects note's appearance. The default value is 0 and cannot be lower than that.</param>
     /// <param name="special">Note's additional attributes.</param>
-    public void CreateNote(float position, float time, int type = 0, int size = 0, List<string> special = null)
+    public void CreateNote(float position, float time, int type = 0, int size = 0, float length = 0f, List<string> special = null)
     {
         NoteInfo newNote = new NoteInfo();
         newNote.position = position;
         newNote.time = time;
         newNote.type = type;
         newNote.size = size;
+        newNote.length = length;
         newNote.special = special;
     }
 
@@ -156,6 +201,28 @@ public class Creator_Control : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Change the current note placement type.
+    /// </summary>
+    /// <param name="modifier">The additive value on the note type ID.</param>
+    public void ChartNotePlacementTypeChange(int modifier)
+    {
+        intNotePlacementType += modifier;
+        while (intNotePlacementType < 0)
+        {
+            intNotePlacementType += stringNotePlacementType.Length;
+        }
+        while (intNotePlacementType >= stringNotePlacementType.Length)
+        {
+            intNotePlacementType -= stringNotePlacementType.Length;
+        }
+    }
+
+    public void DeleteNote(Creator_Note note)
+    {
+        note.gameObject.SetActive(false);
+    }
+
     private void Update()
     {
         holdDelayCurrent -= Time.deltaTime;
@@ -163,12 +230,26 @@ public class Creator_Control : MonoBehaviour
         // Cursor movement
         if (Input.GetKey(KeyCode.DownArrow) && holdDelayCurrent < 0f)
         {
-            intCursorPosition--;
+            if (Input.GetKey(KeyCode.RightArrow))
+            {
+                intCursorPosition -= 16;
+            }
+            else
+            {
+                intCursorPosition--;
+            }
             holdDelayCurrent = holdDelay;
         }
         if (Input.GetKey(KeyCode.UpArrow) && holdDelayCurrent < 0f)
         {
-            intCursorPosition++;
+            if (Input.GetKey(KeyCode.LeftArrow))
+            {
+                intCursorPosition += 16;
+            }
+            else
+            {
+                intCursorPosition++;
+            }
             holdDelayCurrent = holdDelay;
         }
         if (Input.GetKey(KeyCode.LeftArrow) && holdDelayCurrent < 0f)
@@ -193,14 +274,15 @@ public class Creator_Control : MonoBehaviour
         textTimeCurrentMeasure.text = "Measure " + intCursorPosition.ToString();
         if (float.TryParse(textSongTempo.text, out songTempo))
         {
-            textTimeCurrentLength.text = "Length " + (60f / songTempo * intCursorPosition).ToString("f2");
+            textTimeCurrentLength.text = "Song Pos " + (60f / songTempo * intCursorPosition).ToString("f2");
         }
         else
         {
-            textTimeCurrentLength.text = "Length Error";
+            textTimeCurrentLength.text = "Song Pos Unknown";
         }
 
         // Other text manipluation
         textChartGameType.text = stringChartGameType[intChartGameType];
+        textNotePlacementType.text = stringNotePlacementType[intNotePlacementType];
     }
 }

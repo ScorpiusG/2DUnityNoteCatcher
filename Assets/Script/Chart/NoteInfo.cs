@@ -9,5 +9,6 @@ public class NoteInfo : MonoBehaviour
     public int size = 0;
     public float time = 0f;
     public float position = 0f;
+    public float length = 0f;
     public List<string> special = new List<string>();
 }
