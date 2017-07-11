@@ -6,6 +6,7 @@ using UnityEngine.UI;
 public class Creator_Control : MonoBehaviour
 {
     public Camera cameraMain;
+    public Canvas canvasCreatorSetting;
 
     public float holdDelay = 0.3f;
     private float holdDelayCurrent = 0f;
@@ -14,6 +15,7 @@ public class Creator_Control : MonoBehaviour
     public float cameraSizeMin = 3f;
     public float cameraSizeMax = 10f;
 
+    public Text textFileName;
     public Text textSongName;
     public Text textSongArtist;
     public Text textChartDeveloper;
@@ -27,6 +29,9 @@ public class Creator_Control : MonoBehaviour
 
     public Text textChartGameType;
     public Text textNotePlacementType;
+    public Text textNoteLength;
+
+    public Text textMouseScrollSetting;
 
     public ChartData chartData;
 
@@ -35,14 +40,21 @@ public class Creator_Control : MonoBehaviour
     public Color[] colorNote = { Color.blue, Color.red, Color.green, Color.yellow };
 
     private int intMouseScrollSetting = 0;
+    public string[] stringMouseScrollSetting = { "Move Chart", "Zoom Chart", "Change Note Type"};
     private int intChartGameType = 0;
     public string[] stringChartGameType = { "Linear", "Double", "Quad", "Powerful" };
     private int intNotePlacementType = 0;
     public string[] stringNotePlacementType = { "Blue (Btm)", "Red (Top)", "Green (Lt)", "Yellw (Dn)" };
+    private int intBeatSnapDivisor = 0;
     private int intCursorPosition = 0;
 
     void Start()
     {
+        canvasCreatorSetting.gameObject.SetActive(false);
+        textFileName.text = PlayerPrefs.GetString("creator_textFileName", "");
+        intMouseScrollSetting = PlayerPrefs.GetInt("creator_intMouseScrollSetting", 0);
+        intBeatSnapDivisor = PlayerPrefs.GetInt("creator_intBeatSnapDivisor", 0);
+        sliderZoom.value = PlayerPrefs.GetFloat("creator_sliderZoom", 0.5f);
     }
 
     /// <summary>
@@ -64,7 +76,14 @@ public class Creator_Control : MonoBehaviour
             newNote.position = x.transform.position.x;
             newNote.type = x.type;
             newNote.size = x.size;
-            newNote.length = x.length;
+            if (x.length > 0.01f)
+            {
+                newNote.length = x.length;
+            }
+            else
+            {
+                newNote.length = 0;
+            }
             newNote.special = x.special;
             chartData.listNoteInfo.Add(newNote);
         }
@@ -132,7 +151,14 @@ public class Creator_Control : MonoBehaviour
         newNote.transform.position = new Vector3(note.position, note.time);
         newNote.type = note.type;
         newNote.size = note.size;
-        newNote.length = note.length;
+        if (note.length > 0.01f)
+        {
+            newNote.length = note.length;
+        }
+        else
+        {
+            newNote.length = 0;
+        }
         newNote.special = note.special;
 
         // Long note visualization
@@ -160,6 +186,34 @@ public class Creator_Control : MonoBehaviour
             dim.g *= 0.7f;
             dim.b *= 0.7f;
             newNote.spriteRendererLength.color = dim;
+        }
+
+        // Update note's text mesh
+        switch (newNote.type)
+        {
+            default:
+                newNote.textMeshNoteType.gameObject.SetActive(false);
+                break;
+            case 0:
+                newNote.textMeshNoteType.text = "1";
+                newNote.textMeshNoteType.anchor = TextAnchor.LowerRight;
+                break;
+            case 1:
+                newNote.textMeshNoteType.text = "2";
+                newNote.textMeshNoteType.anchor = TextAnchor.LowerLeft;
+                break;
+            case 2:
+                newNote.textMeshNoteType.text = "3";
+                newNote.textMeshNoteType.anchor = TextAnchor.UpperRight;
+                break;
+            case 3:
+                newNote.textMeshNoteType.text = "4";
+                newNote.textMeshNoteType.anchor = TextAnchor.UpperLeft;
+                break;
+            case 4:
+                newNote.textMeshNoteType.text = "SHAKE";
+                newNote.textMeshNoteType.anchor = TextAnchor.MiddleCenter;
+                break;
         }
 
         // Make note active
@@ -191,13 +245,13 @@ public class Creator_Control : MonoBehaviour
     public void ChartGameTypeChange(int modifier)
     {
         intChartGameType += modifier;
-        while (intChartGameType < 0)
+        if (intChartGameType < 0)
         {
-            intChartGameType += stringChartGameType.Length;
+            intChartGameType = stringChartGameType.Length - 1;
         }
-        while (intChartGameType >= stringChartGameType.Length)
+        if (intChartGameType >= stringChartGameType.Length)
         {
-            intChartGameType -= stringChartGameType.Length;
+            intChartGameType = 0;
         }
     }
 
@@ -208,26 +262,66 @@ public class Creator_Control : MonoBehaviour
     public void ChartNotePlacementTypeChange(int modifier)
     {
         intNotePlacementType += modifier;
-        while (intNotePlacementType < 0)
+        if (intNotePlacementType < 0)
         {
-            intNotePlacementType += stringNotePlacementType.Length;
+            intNotePlacementType = stringNotePlacementType.Length - 1;
         }
-        while (intNotePlacementType >= stringNotePlacementType.Length)
+        if (intNotePlacementType >= stringNotePlacementType.Length)
         {
-            intNotePlacementType -= stringNotePlacementType.Length;
+            intNotePlacementType = 0;
         }
     }
 
+    public void MouseScrollSettingChange(int modifier)
+    {
+        intMouseScrollSetting += modifier;
+        if (intMouseScrollSetting < 0)
+        {
+            intMouseScrollSetting = stringMouseScrollSetting.Length - 1;
+        }
+        if (intMouseScrollSetting >= stringMouseScrollSetting.Length)
+        {
+            intMouseScrollSetting = 0;
+        }
+    }
+
+    /// <summary>
+    /// Despawns a note.
+    /// </summary>
+    /// <param name="note">The note to be despawned.</param>
     public void DeleteNote(Creator_Note note)
     {
         note.gameObject.SetActive(false);
+    }
+
+    /// <summary>
+    /// Toggle activity of editor setting window canvas.
+    /// </summary>
+    public void ToggleCreatorSettingWindow()
+    {
+        if (canvasCreatorSetting.gameObject.activeSelf)
+        {
+            SaveCreatorSettings();
+        }
+
+        canvasCreatorSetting.gameObject.SetActive(!canvasCreatorSetting.gameObject.activeSelf);
+    }
+
+    public void SaveCreatorSettings()
+    {
+        PlayerPrefs.SetString("creator_textFileName", textFileName.text);
+        PlayerPrefs.SetInt("creator_intMouseScrollSetting", intMouseScrollSetting);
+        PlayerPrefs.SetInt("creator_intBeatSnapDivisor", intBeatSnapDivisor);
+        PlayerPrefs.SetFloat("creator_sliderZoom", sliderZoom.value);
+
+        PlayerPrefs.Save();
     }
 
     private void Update()
     {
         holdDelayCurrent -= Time.deltaTime;
 
-        // Cursor movement
+        // Cursor movement by input
         if (Input.GetKey(KeyCode.DownArrow) && holdDelayCurrent < 0f)
         {
             if (Input.GetKey(KeyCode.RightArrow))
@@ -263,6 +357,70 @@ public class Creator_Control : MonoBehaviour
             holdDelayCurrent = holdDelay;
         }
 
+        // Mouse scroll wheel input
+        switch (intMouseScrollSetting)
+        {
+            default:
+                if (Mathf.Abs(Input.GetAxis("MouseScrollWheel")) > Mathf.Epsilon)
+                {
+                    Debug.LogWarning("WARNING: This mouse scroll setting input type has no function. intMouseScrollSetting = " + intMouseScrollSetting.ToString());
+                }
+                break;
+            case 0:
+                if (Input.GetAxis("MouseScrollWheel") >  Mathf.Epsilon)
+                {
+                    intCursorPosition++;
+                }
+                if (Input.GetAxis("MouseScrollWheel") < -Mathf.Epsilon)
+                {
+                    intCursorPosition--;
+                }
+                break;
+            case 1:
+                if (Input.GetAxis("MouseScrollWheel") > Mathf.Epsilon)
+                {
+                    intCursorPosition--;
+                }
+                if (Input.GetAxis("MouseScrollWheel") < -Mathf.Epsilon)
+                {
+                    intCursorPosition++;
+                }
+                break;
+            case 2:
+                if (Input.GetAxis("MouseScrollWheel") > Mathf.Epsilon)
+                {
+                    sliderZoom.value = Mathf.Clamp01(sliderZoom.value + 0.08f);
+                }
+                if (Input.GetAxis("MouseScrollWheel") < -Mathf.Epsilon)
+                {
+                    sliderZoom.value = Mathf.Clamp01(sliderZoom.value - 0.08f);
+                }
+                break;
+            case 3:
+                if (Input.GetAxis("MouseScrollWheel") > Mathf.Epsilon)
+                {
+                    ChartNotePlacementTypeChange(-1);
+                }
+                if (Input.GetAxis("MouseScrollWheel") < -Mathf.Epsilon)
+                {
+                    ChartNotePlacementTypeChange(1);
+                }
+                break;
+            case 4:
+                if (Input.GetAxis("MouseScrollWheel") > Mathf.Epsilon)
+                {
+                    intBeatSnapDivisor++;
+                    if (intBeatSnapDivisor > 6) intBeatSnapDivisor = 6;
+                }
+                if (Input.GetAxis("MouseScrollWheel") < -Mathf.Epsilon)
+                {
+                    intBeatSnapDivisor--;
+                    if (intBeatSnapDivisor < 0) intBeatSnapDivisor = 0;
+                }
+                break;
+        }
+
+        // Cursor cannot be positioned before the start of the chart
         if (intCursorPosition < 0) intCursorPosition = 0;
 
         // Camera manipulation
@@ -284,5 +442,7 @@ public class Creator_Control : MonoBehaviour
         // Other text manipluation
         textChartGameType.text = stringChartGameType[intChartGameType];
         textNotePlacementType.text = stringNotePlacementType[intNotePlacementType];
+
+        textMouseScrollSetting.text = stringMouseScrollSetting[intMouseScrollSetting];
     }
 }
