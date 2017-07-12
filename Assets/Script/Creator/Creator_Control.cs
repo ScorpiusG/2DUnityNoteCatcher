@@ -17,6 +17,7 @@ public class Creator_Control : MonoBehaviour
     public float cameraSizeMax = 10f;
 
     public Text textFileName;
+    public Text textChartLevel;
     public Text textSongName;
     public Text textSongArtist;
     public Text textChartDeveloper;
@@ -45,6 +46,7 @@ public class Creator_Control : MonoBehaviour
 
     private List<Creator_SpecialEffect> listSpecialEffectPool = new List<Creator_SpecialEffect>();
     public Creator_SpecialEffect objectSpecialEffectPrefab;
+    public Sprite[] spriteSpecialEffect;
 
     private List<GameObject> listObjectBeatSnapDivisorGuide = new List<GameObject>();
     public GameObject objectBeatSnapDivisorGuidePrefab;
@@ -58,6 +60,9 @@ public class Creator_Control : MonoBehaviour
     private int intBeatSnapDivisor = 0;
     public int[] intBeatSnapDivisorValue = { 2, 3, 4, 6, 8 };
     private int intCursorPosition = 0;
+    private int intChartLevel = 0;
+
+    private bool fixedUpdateCheckOtherFrame = false;
 
     void Start()
     {
@@ -285,6 +290,63 @@ public class Creator_Control : MonoBehaviour
     }
 
     /// <summary>
+    /// Create a special effect using the chart's note data.
+    /// </summary>
+    /// <param name="effect"></param>
+    public void CreateSpecialEffect(Creator_SpecialEffect effect)
+    {
+        // Object pooling - try to get an unused object from the pool, and make a new object if there are no unused ones
+        bool createNote = true;
+        Creator_SpecialEffect newEffect = null;
+        foreach (Creator_SpecialEffect x in listSpecialEffectPool)
+        {
+            if (!x.gameObject.activeSelf)
+            {
+                newEffect = x;
+                createNote = false;
+                break;
+            }
+        }
+        if (createNote)
+        {
+            newEffect = Instantiate(objectSpecialEffectPrefab);
+            listSpecialEffectPool.Add(newEffect);
+        }
+
+        // Modify effect to use information given
+        newEffect.transform.position = new Vector3(0f, effect.time);
+        newEffect.type = effect.type;
+        newEffect.intensity = effect.intensity;
+        newEffect.duration = effect.duration;
+
+        // Change sprite depending on its type
+        if (newEffect.type < spriteSpecialEffect.Length)
+        {
+            newEffect.spriteRendererType.sprite = spriteSpecialEffect[newEffect.type];
+        }
+
+        // Make note active
+        newEffect.gameObject.SetActive(true);
+    }
+    /// <summary>
+    /// Create a new custom effect from scratch.
+    /// </summary>
+    /// <param name="time">"When" the effect will occur in the song.</param>
+    /// <param name="type">The type of effect to use.</param>
+    /// <param name="duration">The duration of the effect, if applicable.</param>
+    /// <param name="intensity">The "strength" of the effect, if applicable.</param>
+    public void CreateSpecialEffect(float time, int type = 0, float duration = 4, int intensity = 1)
+    {
+        Creator_SpecialEffect effect = new Creator_SpecialEffect();
+        effect.time = time;
+        effect.type = type;
+        effect.duration = duration;
+        effect.intensity = intensity;
+
+        CreateSpecialEffect(effect);
+    }
+
+    /// <summary>
     /// Change the game type ID for this chart.
     /// </summary>
     /// <param name="modifier">The additive value on the game type ID.</param>
@@ -358,6 +420,10 @@ public class Creator_Control : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Change beat snap divisor value ID.
+    /// </summary>
+    /// <param name="modifier">The additive value on the divisor type ID.</param>
     public void BeatSnapDivisorChange(int modifier)
     {
         if (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.LeftCommand)) return;
@@ -374,6 +440,9 @@ public class Creator_Control : MonoBehaviour
         RefreshBeatSnapDivisorGuide();
     }
 
+    /// <summary>
+    /// Refreshes the beat snap divisor guide lines (the horizontal white lines).
+    /// </summary>
     public void RefreshBeatSnapDivisorGuide()
     {
         foreach (GameObject x in listObjectBeatSnapDivisorGuide)
@@ -451,6 +520,33 @@ public class Creator_Control : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (fixedUpdateCheckOtherFrame)
+        {
+            fixedUpdateCheckOtherFrame = false;
+            return;
+        }
+        fixedUpdateCheckOtherFrame = true;
+
+        // Sort note order
+        if (listNotePool.Count >= 2)
+        {
+            bool keepSorting = false;
+            do
+            {
+                keepSorting = false;
+                for (int i = 0; i < listNotePool.Count - 1; i++)
+                {
+                    if (listNotePool[i].transform.position.y > listNotePool[i + 1].transform.position.y + Mathf.Epsilon)
+                    {
+                        Creator_Note tempNote = listNotePool[i];
+                        listNotePool[i] = listNotePool[i + 1];
+                        listNotePool[i + 1] = tempNote;
+                        keepSorting = true;
+                    }
+                }
+            } while (keepSorting);
+        }
+
         // Display cursor position
         float songTempo = 0;
         textTimeCurrentMeasure.text = "Measure " + ((intCursorPosition / 4) + 1).ToString() + ", Beat " + ((intCursorPosition % 4) + 1).ToString();
@@ -481,6 +577,48 @@ public class Creator_Control : MonoBehaviour
         }
 
         textMouseScrollSetting.text = stringMouseScrollSetting[intMouseScrollSetting];
+
+        // Chart level calculation and display
+        float floatNotePositionFirstNote = -1f;
+        float floatNotePositionLastNote = 0f;
+        int noteCount = 0;
+        float floatTotalMovement = 0f;
+        float[] floatCatcherPosition = { 0f, 0f, 0f, 0f };
+        foreach (Creator_Note x in listNotePool)
+        {
+            if (x.gameObject.activeSelf)
+            {
+                // Try to get first and last notes' positions to determine actual song play time.
+                if (floatNotePositionLastNote < x.transform.position.y + x.length)
+                {
+                    floatNotePositionLastNote = x.transform.position.y + x.length;
+                }
+                if (floatNotePositionFirstNote < 0 || floatNotePositionFirstNote > x.transform.position.y)
+                {
+                    floatNotePositionFirstNote = x.transform.position.y;
+                }
+
+                // Increase note count. A long note counts as two notes.
+                noteCount++;
+                if (x.length > 0.01f) noteCount++;
+
+                // Use the difference between this note's horizontal position and the catcher's to further increase the level.
+                floatTotalMovement += Mathf.Abs(floatCatcherPosition[x.type] - x.transform.position.x);
+                floatCatcherPosition[x.type] = x.transform.position.x;
+            }
+        }
+
+        float notesPerBeat = 1f * noteCount / (floatNotePositionLastNote - floatNotePositionFirstNote);
+        float finalChartLevel = (Mathf.Sqrt(notesPerBeat) + Mathf.Sqrt(floatTotalMovement) - 1f) * 0.6f;
+
+        intChartLevel = 1 + Mathf.FloorToInt(finalChartLevel);
+        if (intChartLevel < 1) intChartLevel = 1;
+
+#if UNITY_EDITOR
+        textChartLevel.text = "CHART LEVEL " + intChartLevel.ToString() + " (" + (1 + finalChartLevel).ToString("f3") + ")";
+#else
+        textChartLevel.text = "CHART LEVEL " + intChartLevel.ToString();
+#endif
     }
 
     private void Update()
