@@ -10,5 +10,5 @@ public class Creator_Note : MonoBehaviour
     public int type = 0;
     public int size = 0;
     public float length = 0f;
-    public List<string> special = new List<string>();
+    public List<string> other = new List<string>();
 }

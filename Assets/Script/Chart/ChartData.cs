@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [SerializeField]
-public class ChartData : MonoBehaviour
+public class ChartData : ScriptableObject
 {
     public string songName = "";
     public string songArtist = "";
@@ -16,4 +16,5 @@ public class ChartData : MonoBehaviour
     public bool isHighScoreAllowed = true;
     public bool isModifierAllowed = true;
     public List<NoteInfo> listNoteInfo = new List<NoteInfo>();
+    public List<SpecialEffectInfo> listSpecialEffectInfo = new List<SpecialEffectInfo>();
 }
