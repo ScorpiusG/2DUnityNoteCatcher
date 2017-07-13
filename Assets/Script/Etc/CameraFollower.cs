@@ -19,7 +19,7 @@ public class CameraFollower : MonoBehaviour
         mCamera = GetComponent<Camera>();
     }
 
-    private void Update()
+    private void LateUpdate()
     {
         if (followPosition) transform.position = parentCamera.transform.position;
         if (followRotation) transform.rotation = parentCamera.transform.rotation;

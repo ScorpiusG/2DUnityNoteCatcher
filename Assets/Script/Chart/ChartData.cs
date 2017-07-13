@@ -9,6 +9,7 @@ public class ChartData : ScriptableObject
     public string songArtist = "";
     public string chartDeveloper = "";
     public string chartDescription = "";
+    public int chartLevel = 0;
     public int chartGameType = 0;
     public float songTempo = 60f;
     public float songLength = 10f;

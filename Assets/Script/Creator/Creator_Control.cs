@@ -79,8 +79,7 @@ public class Creator_Control : MonoBehaviour
     /// <summary>
     /// Write chart information into a text file.
     /// </summary>
-    /// <param name="location"></param>
-    public void SaveChart(string location)
+    public void SaveChart()
     {
         Creator_Note[] listNoteC = FindObjectsOfType<Creator_Note>();
         if (listNoteC.Length < 1)
@@ -95,6 +94,7 @@ public class Creator_Control : MonoBehaviour
         chartData.songArtist = textSongArtist.text;
         chartData.chartDeveloper = textChartDeveloper.text;
         chartData.chartDescription = textChartDescription.text;
+        chartData.chartLevel = intChartLevel;
         chartData.songLength = 0;
         float.TryParse(textSongLength.text, out chartData.songLength);
         chartData.songTempo = 60f;
@@ -136,8 +136,7 @@ public class Creator_Control : MonoBehaviour
     /// <summary>
     /// Load chart information from an external text file.
     /// </summary>
-    /// <param name="location"></param>
-    public void LoadChart(string location)
+    public void LoadChart()
     {
         ClearChart();
 
@@ -518,6 +517,11 @@ public class Creator_Control : MonoBehaviour
         PlayerPrefs.Save();
     }
 
+    public void ToggleObjectActivity(GameObject x)
+    {
+        x.SetActive(!x.activeSelf);
+    }
+
     private void FixedUpdate()
     {
         if (fixedUpdateCheckOtherFrame)
@@ -583,7 +587,8 @@ public class Creator_Control : MonoBehaviour
         float floatNotePositionLastNote = 0f;
         int noteCount = 0;
         float floatTotalMovement = 0f;
-        float[] floatCatcherPosition = { 0f, 0f, 0f, 0f };
+        float[] floatCatcherPositionHori = { 0f, 0f, 0f, 0f };
+        float[] floatCatcherPositionVert = { 0f, 0f, 0f, 0f };
         foreach (Creator_Note x in listNotePool)
         {
             if (x.gameObject.activeSelf)
@@ -602,14 +607,15 @@ public class Creator_Control : MonoBehaviour
                 noteCount++;
                 if (x.length > 0.01f) noteCount++;
 
-                // Use the difference between this note's horizontal position and the catcher's to further increase the level.
-                floatTotalMovement += Mathf.Abs(floatCatcherPosition[x.type] - x.transform.position.x);
-                floatCatcherPosition[x.type] = x.transform.position.x;
+                // Use the difference between this note's position and the catcher's to further increase the level.
+                floatTotalMovement += Mathf.Pow(Mathf.Abs(floatCatcherPositionHori[x.type] - x.transform.position.x), 2) * (1f / (x.transform.position.y - floatCatcherPositionVert[x.type] + 1f));
+                floatCatcherPositionHori[x.type] = x.transform.position.x;
+                floatCatcherPositionVert[x.type] = x.transform.position.y;
             }
         }
 
         float notesPerBeat = 1f * noteCount / (floatNotePositionLastNote - floatNotePositionFirstNote);
-        float finalChartLevel = (Mathf.Sqrt(notesPerBeat) + Mathf.Sqrt(floatTotalMovement) - 1f) * 0.6f;
+        float finalChartLevel = (Mathf.Sqrt(notesPerBeat) + floatTotalMovement - 1f) * 0.6f;
 
         intChartLevel = 1 + Mathf.FloorToInt(finalChartLevel);
         if (intChartLevel < 1) intChartLevel = 1;
