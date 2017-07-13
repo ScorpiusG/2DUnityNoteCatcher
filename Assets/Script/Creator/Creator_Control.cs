@@ -16,16 +16,16 @@ public class Creator_Control : MonoBehaviour
     public float cameraSizeMin = 3f;
     public float cameraSizeMax = 10f;
 
-    public Text textFileName;
-    public Text textChartLevel;
-    public Text textSongName;
-    public Text textSongArtist;
-    public Text textChartDeveloper;
-    public Text textChartDescription;
-    public Text textSongTempo;
-    public Text textSongLength;
-    public Text textChartJudge;
+    public InputField textFileName;
+    public InputField textSongName;
+    public InputField textSongArtist;
+    public InputField textChartDeveloper;
+    public InputField textChartDescription;
+    public InputField textSongTempo;
+    public InputField textSongLength;
+    public InputField textChartJudge;
 
+    public Text textChartLevel;
     public Text textTimeCurrentMeasure;
     public Text textTimeCurrentLength;
     public Text textBeatSnapDivisor;
@@ -66,6 +66,7 @@ public class Creator_Control : MonoBehaviour
 
     void Start()
     {
+        chartData = ScriptableObject.CreateInstance(typeof(ChartData)) as ChartData;
         canvasCreatorSetting.gameObject.SetActive(false);
 
         textFileName.text = PlayerPrefs.GetString("creator_textFileName", "");
@@ -87,8 +88,8 @@ public class Creator_Control : MonoBehaviour
             return;
         }
 
-        chartData.listNoteInfo.Clear();
-        chartData.listSpecialEffectInfo.Clear();
+        chartData.listNoteInfo = new List<string>();
+        chartData.listSpecialEffectInfo = new List<string>();
 
         chartData.songName = textSongName.text;
         chartData.songArtist = textSongArtist.text;
@@ -103,7 +104,8 @@ public class Creator_Control : MonoBehaviour
         chartData.chartJudge = int.Parse(textChartJudge.text);
         int.TryParse(textChartJudge.text, out chartData.chartJudge);
         
-        NoteInfo newNote = new NoteInfo();
+        //ChartData.NoteInfo newNote = new ChartData.NoteInfo();
+        ChartData.NoteInfo newNote = ScriptableObject.CreateInstance(typeof(ChartData.NoteInfo)) as ChartData.NoteInfo;
         foreach (Creator_Note x in listNoteC)
         {
             newNote.time = x.transform.position.y;
@@ -119,7 +121,17 @@ public class Creator_Control : MonoBehaviour
                 newNote.length = 0;
             }
             newNote.other = x.other;
-            chartData.listNoteInfo.Add(newNote);
+
+            string stringNote = newNote.type.ToString() + "|" +
+                newNote.size.ToString() + "|" +
+                newNote.time.ToString() + "|" +
+                newNote.position.ToString() + "|" +
+                newNote.length.ToString();
+            foreach (string s in newNote.other)
+            {
+                stringNote += "|" + s;
+            }
+            chartData.listNoteInfo.Add(stringNote);
 
             if (newNote.position > chartData.songLength - 2.5f)
             {
@@ -129,8 +141,19 @@ public class Creator_Control : MonoBehaviour
         }
 
         string output = JsonUtility.ToJson(chartData);
+#if UNITY_EDITOR
+        Debug.Log(output);
+#endif
 
-        // TODO: output to file
+        // Output to file
+        string path = "MyCharts/" + textFileName.text + ".txt";
+        if (File.Exists(path))
+        {
+            File.Delete(path);
+        }
+        StreamWriter writer = new StreamWriter(path, true);
+        writer.WriteLine(output);
+        writer.Close();
     }
 
     /// <summary>
@@ -138,16 +161,56 @@ public class Creator_Control : MonoBehaviour
     /// </summary>
     public void LoadChart()
     {
+        string input = textFileName.text;
+
         ClearChart();
 
-        string input = "";
-        // TODO: load file
+        // Load file
+        string path = "MyCharts/" + input + ".txt";
+        if (!File.Exists(path))
+        {
+#if UNITY_EDITOR
+            Debug.LogWarning("WARNING: The chart file does not exist! Path: " + path);
+#endif
+            return;
+        }
+        StreamReader reader = new StreamReader(path);
+        input = reader.ReadToEnd();
+        reader.Close();
+#if UNITY_EDITOR
+        Debug.Log(input);
+#endif
 
+        // Use file data
         JsonUtility.FromJsonOverwrite(input, chartData);
 
-        foreach (NoteInfo x in chartData.listNoteInfo)
+        textSongName.text = chartData.songName;
+        textSongArtist.text = chartData.songArtist;
+        textChartDeveloper.text = chartData.chartDeveloper;
+        textChartDescription.text = chartData.chartDescription;
+        textSongLength.text = chartData.songLength.ToString();
+        textSongTempo.text = chartData.songTempo.ToString("f2");
+        textChartJudge.text = chartData.chartJudge.ToString();
+        intChartGameType = chartData.chartGameType;
+
+        ChartData.NoteInfo newNote = ScriptableObject.CreateInstance(typeof(ChartData.NoteInfo)) as ChartData.NoteInfo;
+        foreach (string x in chartData.listNoteInfo)
         {
-            CreateNote(x);
+            newNote.other = new List<string>();
+            string[] y = x.Split('|');
+            newNote.type = int.Parse(y[0]);
+            newNote.size = int.Parse(y[1]);
+            newNote.time = float.Parse(y[2]);
+            newNote.position = float.Parse(y[3]);
+            newNote.length = float.Parse(y[4]);
+            if (y.Length > 5)
+            {
+                for (int i = 5; i < y.Length; i++)
+                {
+                    newNote.other.Add(y[i]);
+                }
+            }
+            CreateNote(newNote);
         }
     }
 
@@ -156,13 +219,14 @@ public class Creator_Control : MonoBehaviour
     /// </summary>
     public void ClearChart()
     {
+        //textFileName.text = "";
         textSongName.text = "";
         textSongArtist.text = "";
         textChartDeveloper.text = "";
         textChartDescription.text = "";
         textSongTempo.text = "60.00";
         textSongLength.text = "10";
-        textChartJudge.text = "";
+        textChartJudge.text = "0";
 
         Creator_Note[] listNoteC = FindObjectsOfType<Creator_Note>();
         foreach (Creator_Note x in listNoteC)
@@ -175,7 +239,7 @@ public class Creator_Control : MonoBehaviour
     /// Create a note using the chart's note data.
     /// </summary>
     /// <param name="note"></param>
-    public void CreateNote(NoteInfo note)
+    public void CreateNote(ChartData.NoteInfo note)
     {
         // Object pooling - try to get an unused object from the pool, and make a new object if there are no unused ones
         bool createNote = true;
@@ -270,7 +334,8 @@ public class Creator_Control : MonoBehaviour
     /// <param name="other">Note's additional attributes.</param>
     public void CreateNote(float position, float time, int type = 0, int size = 0, float length = 0f, List<string> other = null)
     {
-        NoteInfo newNote = new NoteInfo();
+        //ChartData.NoteInfo newNote = new ChartData.NoteInfo();
+        ChartData.NoteInfo newNote = ScriptableObject.CreateInstance(typeof(ChartData.NoteInfo)) as ChartData.NoteInfo;
         newNote.position = position;
         newNote.time = time;
         newNote.type = type;
@@ -292,7 +357,7 @@ public class Creator_Control : MonoBehaviour
     /// Create a special effect using the chart's note data.
     /// </summary>
     /// <param name="effect"></param>
-    public void CreateSpecialEffect(Creator_SpecialEffect effect)
+    public void CreateSpecialEffect(ChartData.SpecialEffectInfo effect)
     {
         // Object pooling - try to get an unused object from the pool, and make a new object if there are no unused ones
         bool createNote = true;
@@ -336,7 +401,8 @@ public class Creator_Control : MonoBehaviour
     /// <param name="intensity">The "strength" of the effect, if applicable.</param>
     public void CreateSpecialEffect(float time, int type = 0, float duration = 4, int intensity = 1)
     {
-        Creator_SpecialEffect effect = new Creator_SpecialEffect();
+        //ChartData.SpecialEffectInfo effect = new ChartData.SpecialEffectInfo();
+        ChartData.SpecialEffectInfo effect = ScriptableObject.CreateInstance(typeof(ChartData.SpecialEffectInfo)) as ChartData.SpecialEffectInfo;
         effect.time = time;
         effect.type = type;
         effect.duration = duration;

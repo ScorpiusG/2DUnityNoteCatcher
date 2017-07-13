@@ -1,8 +1,9 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[SerializeField]
+[Serializable]
 public class ChartData : ScriptableObject
 {
     public string songName = "";
@@ -16,6 +17,25 @@ public class ChartData : ScriptableObject
     public int chartJudge = 0;
     public bool isHighScoreAllowed = true;
     public bool isModifierAllowed = true;
-    public List<NoteInfo> listNoteInfo = new List<NoteInfo>();
-    public List<SpecialEffectInfo> listSpecialEffectInfo = new List<SpecialEffectInfo>();
+
+    public List<string> listNoteInfo;
+    public List<string> listSpecialEffectInfo;
+    
+    public class NoteInfo : ScriptableObject
+    {
+        public int type = 0;
+        public int size = 0;
+        public float time = 0f;
+        public float position = 0f;
+        public float length = 0f;
+        public List<string> other;
+    }
+    
+    public class SpecialEffectInfo : ScriptableObject
+    {
+        public int type = 0;
+        public int intensity = 0;
+        public float time = 0f;
+        public float duration = 0f;
+    }
 }
