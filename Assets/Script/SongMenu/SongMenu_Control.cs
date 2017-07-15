@@ -56,8 +56,22 @@ public class SongMenu_Control : MonoBehaviour
         for (int i = 0; i < listStringSongDirectory.Count; i++)
         {
             Button newBtn = Instantiate(buttonSongIndividual);
-            newBtn.name = listStringSongDirectory[i];
-            newBtn.GetComponentInChildren<Text>().text = listStringSongDirectory[i];
+            // Use custom name via _customname.txt
+            if (File.Exists(path + "/" + listStringSongDirectory[i] + "/_customname.txt"))
+            {
+                StreamReader reader = new StreamReader(path + "/" + listStringSongDirectory[i] + "/_customname.txt");
+                string buttonName = reader.ReadLine();
+                reader.Close();
+
+                newBtn.name = buttonName;
+                newBtn.GetComponentInChildren<Text>().text = buttonName;
+            }
+            // Use default name if _customname.txt doesn't exist
+            else
+            {
+                newBtn.name = listStringSongDirectory[i];
+                newBtn.GetComponentInChildren<Text>().text = listStringSongDirectory[i];
+            }
             newBtn.transform.SetParent(rectSongListParent.transform);
             newBtn.transform.localPosition = Vector3.down * i * floatVertDistanceBetweenButtons;
             newBtn.transform.localScale = Vector3.one;

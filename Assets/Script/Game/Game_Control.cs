@@ -25,7 +25,15 @@ public class Game_Control : MonoBehaviour
 
     public AudioSource audioSourceMusic;
 
+    public TextMesh textMeshComboCurrent;
+    public int floatTextComboAppearComboMinimum = 4;
+    public float floatTextComboScaleOnChange = 3f;
+    public float floatTextComboScaleMinimum = 1f;
+    public float floatTextComboScaleChangeRate = 12f;
+    private float floatTextComboScaleCurrent = 1f;
+
     public Text textSongAndArtistName;
+    public Text textSongDetails;
     public Text textSongProgressTime;
     public Image imageSongProgressGauge;
     public Image imageAccuracyGauge;
@@ -51,6 +59,8 @@ public class Game_Control : MonoBehaviour
     private int playerAccuracyGreat = 0;
     private int playerAccuracyFine = 0;
     private int playerAccuracyMiss = 0;
+    private int playerComboCurrent = 0;
+    private int playerComboBest = 0;
 
     public Game_Note SpawnNote()
     {
@@ -82,6 +92,7 @@ public class Game_Control : MonoBehaviour
                 if (dist < floatDistAccuracyBest[chartJudgeDifficulty] || boolAutoplay)
                 {
                     playerAccuracyBest++;
+                    playerComboCurrent++;
 #if UNITY_EDITOR
                     Debug.Log("Note judgment - distance: " + dist + " (BEST)");
 #endif
@@ -90,6 +101,7 @@ public class Game_Control : MonoBehaviour
                 else if (dist < floatDistAccuracyBest[chartJudgeDifficulty])
                 {
                     playerAccuracyGreat++;
+                    playerComboCurrent++;
 #if UNITY_EDITOR
                     Debug.Log("Note judgment - distance: " + dist + " (GREAT)");
 #endif
@@ -98,6 +110,7 @@ public class Game_Control : MonoBehaviour
                 else if (dist < floatDistAccuracyBest[chartJudgeDifficulty])
                 {
                     playerAccuracyFine++;
+                    playerComboCurrent++;
 #if UNITY_EDITOR
                     Debug.Log("Note judgment - distance: " + dist + " (FINE)");
 #endif
@@ -106,11 +119,23 @@ public class Game_Control : MonoBehaviour
                 else
                 {
                     playerAccuracyMiss++;
+                    playerComboCurrent = 0;
 #if UNITY_EDITOR
                     Debug.Log("Note judgment - distance: " + dist + " (MISS)");
 #endif
                 }
                 break;
+        }
+
+        if (playerComboCurrent > playerComboBest)
+        {
+            playerComboBest = playerComboCurrent;
+        }
+        textMeshComboCurrent.gameObject.SetActive(playerComboCurrent >= floatTextComboAppearComboMinimum);
+        if (textMeshComboCurrent.gameObject.activeSelf)
+        {
+            floatTextComboScaleCurrent = floatTextComboScaleOnChange;
+            textMeshComboCurrent.transform.localScale = Vector3.one * floatTextComboScaleCurrent;
         }
 
         DespawnNote(note);
@@ -171,7 +196,10 @@ public class Game_Control : MonoBehaviour
         //FileStream fileMusic = File.Open(Directory.GetCurrentDirectory() + "Songs/" + stringSongFileName + "/" + stringSongFileName + ".ogg", FileMode.Open);
         //audioSourceMusic.clip = (AudioClip)fileMusic as AudioClip;
 
+        string gameTypeAbbr = "";
+
         textSongAndArtistName.text = chartData.songArtist + " - " + chartData.songName;
+        textSongDetails.text = chartData.chartDeveloper + " - " + gameTypeAbbr + " #" + (intChartGameChart + 1).ToString() + " - Level" + chartData.chartLevel;
         chartTotalNotes = chartData.listNoteInfo.Count;
         chartJudgeDifficulty = chartData.chartJudge;
 
@@ -186,15 +214,30 @@ public class Game_Control : MonoBehaviour
         {
             yield return null;
         }
-        AudioClip myClip = www.GetAudioClip(false, false, AudioType.OGGVORBIS);
+#if UNITY_EDITOR
+        if (www.error != "")
+        {
+            Debug.Log("Error message from reading audio file: " + www.error);
+        }
+#endif
+        audioSourceMusic.clip = www.GetAudioClip(false, false, AudioType.OGGVORBIS);
 
         yield return new WaitForSeconds(0.5f);
         // Play music and begin the game
-        audioSourceMusic.Play();
+        if (audioSourceMusic.clip == null)
+        {
 #if UNITY_EDITOR
-        Debug.Log("Playing song. The game begins.");
+            Debug.LogWarning("WARNING: " + stringSongFileName + ".ogg is not present or is corrupted.");
 #endif
-        
+        }
+        else
+        {
+            audioSourceMusic.Play();
+#if UNITY_EDITOR
+            Debug.Log("Playing song. The game begins.");
+#endif
+        }
+
         while (floatMusicPosition < chartData.songLength && !isForcedFailure)
         {
             // Time update
@@ -249,6 +292,10 @@ public class Game_Control : MonoBehaviour
                 "G" + playerAccuracyGreat.ToString() + "\n" +
                 "F" + playerAccuracyFine.ToString() + "\n" +
                 "M" + playerAccuracyMiss.ToString();
+
+            floatTextComboScaleCurrent = Mathf.Clamp(floatTextComboScaleCurrent - Time.deltaTime * floatTextComboScaleChangeRate, floatTextComboScaleMinimum, floatTextComboScaleOnChange);
+            textMeshComboCurrent.text = playerComboCurrent.ToString();
+            textMeshComboCurrent.transform.localScale = Vector3.one * floatTextComboScaleCurrent;
 
             // Note spawning
             foreach (string s in chartData.listNoteInfo)
