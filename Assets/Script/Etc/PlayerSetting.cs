@@ -6,15 +6,21 @@ public class PlayerSetting : MonoBehaviour
 {
     public static PlayerSetting setting;
 
-    public List<int> intPlayerTotalScore;
+    public List<int> intPlayerTotalScore = new List<int>();
 
+    public float floatGameOffset = 0f;
     public float floatMouseSensitivity = 0.06f;
     public float intScrollSpeed = 40;
     public int intAccuracyTolerance = 30;
+
     public bool enableVSync = true;
+    public bool enableInterfaceSongDetails = true;
+    public bool enableInterfaceAccuracy = true;
+    public bool enableDisplayCombo = true;
+    public bool enableDisplayNoteJudgment = true;
 
     /// <summary>
-    /// Adds score to the total amount. The score limit implemented is super high and may take centuries to reach.
+    /// Adds score to the total amount. The score limit implemented is super high and may take centuries to reach. (Or in this case, a few years?)
     /// </summary>
     /// <param name="score"></param>
     public void ScoreAdd(int score)
@@ -63,8 +69,6 @@ public class PlayerSetting : MonoBehaviour
     
 	void Start ()
     {
-        intPlayerTotalScore = new List<int>();
-
         if (setting == null)
         {
             setting = this;

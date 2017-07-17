@@ -134,10 +134,10 @@ public class Creator_Control : MonoBehaviour
             }
             chartData.listNoteInfo.Add(stringNote);
 
-            if (newNote.position > chartData.songLength - 2.5f)
+            if (newNote.position > chartData.songLength - 4f)
             {
-                chartData.songLength = newNote.position + 2.5f;
-                textSongLength.text = (newNote.position + 2.5f).ToString();
+                chartData.songLength = newNote.position + 4f;
+                textSongLength.text = (newNote.position + 4f).ToString();
             }
         }
 
