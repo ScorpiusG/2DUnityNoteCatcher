@@ -20,8 +20,17 @@ public class SongMenu_Control : MonoBehaviour
     public Button buttonSongIndividual;
     public float floatVertDistanceBetweenButtons = 80f;
 
-    void Start ()
+    public Text textDisplayAccuracy;
+    public Text textDisplayMods;
+
+    public GameObject objectOptionsMenu;
+    public GameObject[] groupOptionsMenuPage;
+    private int intOptionsMenuPage = 0;
+
+    void Start()
     {
+        objectOptionsMenu.SetActive(false);
+
         string path = Directory.GetCurrentDirectory() + stringSongDirectoryPath;
 #if UNITY_EDITOR
         Debug.Log(path);
@@ -81,6 +90,83 @@ public class SongMenu_Control : MonoBehaviour
         buttonSongIndividual = null;
     }
 
+    private void Update()
+    {
+        for (int i = 0; i < groupOptionsMenuPage.Length; i++)
+        {
+            groupOptionsMenuPage[i].SetActive(i == intOptionsMenuPage);
+        }
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            if (objectOptionsMenu.activeSelf)
+            {
+                ToggleMenuOptions();
+            }
+        }
+    }
+
+    public void RefreshTexts()
+    {
+        textDisplayAccuracy.text = "Accuracy Tolerance: " + PlayerSetting.setting.intAccuracyTolerance.ToString() + "%";
+        if (PlayerSetting.setting.intGameOffset > Mathf.Epsilon)
+        {
+            textDisplayAccuracy.text += "; Offset: " + PlayerSetting.setting.intGameOffset.ToString() + "ms";
+        }
+        textDisplayMods.text = "";
+        if (PlayerSetting.setting.modChartCluster)
+        {
+            textDisplayMods.text += "Cluster";
+        }
+        if (PlayerSetting.setting.modChartFlip)
+        {
+            if (textDisplayMods.text != "")
+            {
+                textDisplayMods.text += ", ";
+            }
+            textDisplayMods.text += "ChartFlip";
+        }
+        if (PlayerSetting.setting.modChartHell)
+        {
+            if (textDisplayMods.text != "")
+            {
+                textDisplayMods.text += ", ";
+            }
+            textDisplayMods.text += "Hell";
+        }
+        if (PlayerSetting.setting.modChartMirror)
+        {
+            if (textDisplayMods.text != "")
+            {
+                textDisplayMods.text += ", ";
+            }
+            textDisplayMods.text += "ChartMirror";
+        }
+        if (PlayerSetting.setting.modChartRain)
+        {
+            if (textDisplayMods.text != "")
+            {
+                textDisplayMods.text += ", ";
+            }
+            textDisplayMods.text += "Rain";
+        }
+        if (PlayerSetting.setting.modScreenFlip)
+        {
+            if (textDisplayMods.text != "")
+            {
+                textDisplayMods.text += ", ";
+            }
+            textDisplayMods.text += "ScreenFlip";
+        }
+        if (PlayerSetting.setting.modScreenMirror)
+        {
+            if (textDisplayMods.text != "")
+            {
+                textDisplayMods.text += ", ";
+            }
+            textDisplayMods.text += "ScreenMirror";
+        }
+    }
+
     public void PlaySong(string songName, int gameType, int gameStage)
     {
         // TODO: Store song name, game type, game stage, and custom song (bool) information for use in the game scene
@@ -107,5 +193,32 @@ public class SongMenu_Control : MonoBehaviour
     public void LoadGameScene()
     {
         SceneManager.LoadScene(stringSceneNameGame);
+    }
+
+    public void ToggleMenuOptions()
+    {
+        if (objectOptionsMenu.activeSelf)
+        {
+            PlayerSetting.setting.Save();
+        }
+
+        objectOptionsMenu.SetActive(!objectOptionsMenu.activeSelf);
+    }
+    public void ToggleMenuPage(int page)
+    {
+        intOptionsMenuPage += page;
+        if (intOptionsMenuPage < 0)
+        {
+            intOptionsMenuPage = 0;
+        }
+        if (intOptionsMenuPage >= groupOptionsMenuPage.Length)
+        {
+            intOptionsMenuPage = groupOptionsMenuPage.Length - 1;
+        }
+    }
+
+    public void AdjustAccuracyTolerance(int mod)
+    {
+        PlayerSetting.setting.intAccuracyTolerance += mod;
     }
 }

@@ -15,6 +15,7 @@ public class Game_Control : MonoBehaviour
 
     public static bool boolAutoplay = false;
 
+    public GameObject objectAutoplayIndicator;
     public GameObject[] objectGroupType;
     public GameObject objectMouseCrosshair;
     public GameObject[] objectCatcher;
@@ -47,6 +48,15 @@ public class Game_Control : MonoBehaviour
     public Text textAccuracy;
     public Image imageAccuracyTolerance;
 
+    public Animator animatorResults;
+    public Text textResultHeader;
+    public Text textResultOutcome;
+    public Text textResultAccuracy;
+    public Text textResultJudgeBest;
+    public Text textResultJudgeGreat;
+    public Text textResultJudgeFair;
+    public Text textResultJudgeMiss;
+
     private ChartData chartData;
     private int chartTotalNotes = 0;
     private int chartJudgeDifficulty = 0;
@@ -60,6 +70,7 @@ public class Game_Control : MonoBehaviour
     public float[] floatDistAccuracyFine = { 0.21f, 0.183f, 0.164f, 0.138f, 0.122f };
 
     private bool isForcedFailure = false;
+    private bool isScoringDisabled = false;
     private float floatTimeEscapeHeld = 0f;
     private int playerAccuracyBest = 0;
     private int playerAccuracyGreat = 0;
@@ -204,12 +215,21 @@ public class Game_Control : MonoBehaviour
         objectGroupType[3].SetActive(intChartGameType >= 2);
 
         // Object initialization
+        objectAutoplayIndicator.SetActive(boolAutoplay);
         imageSongProgressGauge.fillAmount = 0f;
-        imageAccuracyTolerance.transform.localPosition = Vector3.right * 928f * 0.01f * PlayerSetting.setting.intAccuracyTolerance;
+        if (PlayerSetting.setting.intAccuracyTolerance > 0)
+        {
+            imageAccuracyTolerance.transform.localPosition = Vector3.right * 928f * 0.01f * PlayerSetting.setting.intAccuracyTolerance;
+        }
+        else
+        {
+            imageAccuracyTolerance.gameObject.SetActive(false);
+        }
         foreach (GameObject x in objectCatcher)
         {
             x.transform.localPosition = Vector3.zero;
         }
+        textAccuracy.gameObject.SetActive(PlayerSetting.setting.enableDisplayNoteHitCounterSmall);
 
         // Read chart from the text file
         string input = "";
@@ -313,11 +333,11 @@ public class Game_Control : MonoBehaviour
 #endif
         }
 
-        while (floatMusicPosition < chartData.songLength && !isForcedFailure)
+        while (floatMusicPosition < chartData.songLength)
         {
             // Time update
-            floatMusicPosition = audioSourceMusic.time - PlayerSetting.setting.floatGameOffset;
-            floatMusicBeat = 60f * floatMusicPosition / chartData.songTempo;
+            floatMusicPosition = audioSourceMusic.time + ((chartData.chartOffset - PlayerSetting.setting.intGameOffset) * 0.001f);
+            floatMusicBeat =  floatMusicPosition * chartData.songTempo / 60f;
 
             // Normal play
             if (!boolAutoplay)
@@ -350,7 +370,57 @@ public class Game_Control : MonoBehaviour
             // Automatic play (always perfect)
             else
             {
+                Vector3 mouseCursorPos = objectMouseCrosshair.transform.position;
+                Game_Note nextNoteCatcherHori = null;
+                Game_Note nextNoteCatcherVert = null;
+                foreach (Game_Note x in listNote)
+                {
+                    if (x.gameObject.activeSelf)
+                    {
+                        switch (x.type)
+                        {
+                            case 0:
+                            case 1:
+                                if (nextNoteCatcherHori == null || x.transform.position.y > nextNoteCatcherHori.transform.position.y)
+                                {
+                                    nextNoteCatcherHori = x;
+                                }
+                                break;
+                            case 2:
+                            case 3:
+                                if (nextNoteCatcherVert == null || x.transform.position.y > nextNoteCatcherVert.transform.position.y)
+                                {
+                                    nextNoteCatcherVert = x;
+                                }
+                                break;
+                        }
+                    }
+                }
 
+                if (nextNoteCatcherHori != null)
+                {
+                    switch(nextNoteCatcherHori.type)
+                    {
+                        case 0:
+                            mouseCursorPos.x = Mathf.Lerp(mouseCursorPos.x, nextNoteCatcherHori.position, Time.deltaTime * 4f / nextNoteCatcherVert.transform.position.y);
+                            break;
+                        case 1:
+                            mouseCursorPos.x = Mathf.Lerp(mouseCursorPos.x, -nextNoteCatcherHori.position, Time.deltaTime * 4f / nextNoteCatcherVert.transform.position.y);
+                            break;
+                    }
+                }
+                if (nextNoteCatcherVert != null)
+                {
+                    switch (nextNoteCatcherVert.type)
+                    {
+                        case 2:
+                            mouseCursorPos.x = Mathf.Lerp(mouseCursorPos.x, nextNoteCatcherVert.position, Time.deltaTime * 4f / nextNoteCatcherVert.transform.position.y);
+                            break;
+                        case 3:
+                            mouseCursorPos.x = Mathf.Lerp(mouseCursorPos.x, -nextNoteCatcherVert.position, Time.deltaTime * 4f / nextNoteCatcherVert.transform.position.y);
+                            break;
+                    }
+                }
             }
 
             // Text and gauge update
@@ -372,6 +442,9 @@ public class Game_Control : MonoBehaviour
             {
                 imageAccuracyGauge.fillAmount = 1f * currentAccuracy / chartTotalNotes;
                 imageAccuracyNegativeGauge.fillAmount = 1f * currentAccuracyNegative / chartTotalNotes;
+            }
+            if (PlayerSetting.setting.enableDisplayNoteHitCounterSmall)
+            {
                 textAccuracy.text =
                     "B" + playerAccuracyBest.ToString() + "\n" +
                     "G" + playerAccuracyGreat.ToString() + "\n" +
@@ -384,9 +457,9 @@ public class Game_Control : MonoBehaviour
             textMeshComboCurrent.transform.localScale = Vector3.one * floatTextComboScaleCurrent;
 
             // Note spawning
-            foreach (string s in chartData.listNoteInfo)
+            for (int j = 0; j < chartData.listNoteInfo.Count; j++)
             {
-                string[] noteInfo = s.Split('|');
+                string[] noteInfo = chartData.listNoteInfo[j].Split('|');
                 float time = float.Parse(noteInfo[2]);
                 // Spawn note if position of note < current beat pos / FOV (scroll speed)
                 if (time < floatMusicBeat + (floatNoteDistanceSpawn / (0.01f * PlayerSetting.setting.intScrollSpeed)))
@@ -434,6 +507,8 @@ public class Game_Control : MonoBehaviour
                     {
                         note.spriteRendererLength.gameObject.SetActive(false);
                     }
+
+                    chartData.listNoteInfo.RemoveAt(j);
                 }
             }
 
@@ -457,7 +532,7 @@ public class Game_Control : MonoBehaviour
                 }
             }
 
-            // Player force fail
+            // Player force end: Hold [Escape]
             if (Input.GetKey(KeyCode.Escape))
             {
                 floatTimeEscapeHeld += Time.deltaTime;
@@ -466,22 +541,52 @@ public class Game_Control : MonoBehaviour
             {
                 floatTimeEscapeHeld = 0f;
             }
-
-            // Fail conditions - at least one is true:
-            // - Current negative accuracy is below tolerance
-            // - [Escape] key was held for over two seconds
-            if (1f * currentAccuracyNegative / chartTotalNotes > 0.01f * PlayerSetting.setting.intAccuracyTolerance ||
-                floatTimeEscapeHeld > 2f)
+            if (floatTimeEscapeHeld > 2f)
             {
                 isForcedFailure = true;
+            }
+
+            // Alternate force end condition: Current negative accuracy is below tolerance
+            if (1f * currentAccuracyNegative / chartTotalNotes > 0.01f * PlayerSetting.setting.intAccuracyTolerance)
+            {
+                isForcedFailure = true;
+            }
+
+            // Force end consequences: Miss all remaining notes
+            if (isForcedFailure)
+            {
+                if (floatTimeEscapeHeld > 2f)
+                {
+                    foreach (string s in chartData.listNoteInfo)
+                    {
+                        string[] noteInfo = s.Split('|');
+                        playerAccuracyMiss++;
+                        float longNoteLength = float.Parse(noteInfo[4]);
+                        if (longNoteLength > 0.01f)
+                        {
+                            playerAccuracyMiss++;
+                        }
+                    }
+                }
+                foreach (Game_Note x in listNote)
+                {
+                    if (x.gameObject.activeSelf)
+                    {
+                        playerAccuracyMiss++;
+                        DespawnNote(x);
+                    }
+                }
+                audioSourceMusic.Stop();
+                break;
             }
 
             yield return null;
         }
         imageSongProgressGauge.fillAmount = 1f;
 
+        float finalAccuracy = ((playerAccuracyBest * 4) + (playerAccuracyGreat * 3) + (playerAccuracyFine * 2)) / (chartTotalNotes * 4);
 #if UNITY_EDITOR
-        Debug.Log("Song finished. Display results.");
+        Debug.Log("Song finished. Accuracy: " + (finalAccuracy * 100f).ToString("f2"));
 #endif
         // Revert settings (cursor, v-sync, etc.)
         Cursor.visible = true;
@@ -490,6 +595,10 @@ public class Game_Control : MonoBehaviour
         Application.targetFrameRate = 60;
         yield return null;
 
-        // TODO: Show result screen
+        // Show result screen
+        if (animatorResults != null)
+        {
+            animatorResults.Play("clip");
+        }
     }
 }

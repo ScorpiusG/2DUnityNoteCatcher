@@ -14,6 +14,7 @@ public class ChartData : ScriptableObject
     public int chartGameType = 0;
     public float songTempo = 60f;
     public float songLength = 10f;
+    public float chartOffset = 0f;
     public int chartJudge = 0;
     public bool isHighScoreAllowed = true;
     public bool isModifierAllowed = true;
