@@ -76,6 +76,7 @@ public class Creator_Control : MonoBehaviour
         sliderZoom.value = PlayerPrefs.GetFloat("creator_sliderZoom", 0.5f);
 
         RefreshBeatSnapDivisorGuide();
+        CalculateChartLevel();
     }
 
     /// <summary>
@@ -83,6 +84,8 @@ public class Creator_Control : MonoBehaviour
     /// </summary>
     public void SaveChart()
     {
+        CalculateChartLevel();
+
         Creator_Note[] listNoteC = FindObjectsOfType<Creator_Note>();
         if (listNoteC.Length < 1)
         {
@@ -213,6 +216,8 @@ public class Creator_Control : MonoBehaviour
             }
             CreateNote(newNote);
         }
+
+        CalculateChartLevel();
     }
 
     /// <summary>
@@ -234,6 +239,8 @@ public class Creator_Control : MonoBehaviour
         {
             DeleteNote(x);
         }
+
+        CalculateChartLevel();
     }
 
     /// <summary>
@@ -589,6 +596,140 @@ public class Creator_Control : MonoBehaviour
         x.SetActive(!x.activeSelf);
     }
 
+    /// <summary>
+    /// Updates the chart level value.
+    /// </summary>
+    public void CalculateChartLevel()
+    {
+        List<Vector2> listNotePosHori = new List<Vector2>();
+        List<Vector2> listNotePosVert = new List<Vector2>();
+
+        // Get all the catcher points in the chart
+        foreach (Creator_Note x in listNotePool)
+        {
+            if (x.gameObject.activeSelf)
+            {
+                switch (x.type)
+                {
+                    case 0:
+                        listNotePosHori.Add(new Vector2(x.transform.position.x, x.transform.position.y));
+                        if (x.length > 0.01f)
+                        {
+                            listNotePosHori.Add(new Vector2(x.transform.position.x, x.transform.position.y + x.length));
+                        }
+                        break;
+                    case 1:
+                        listNotePosHori.Add(new Vector2(-x.transform.position.x, x.transform.position.y));
+                        if (x.length > 0.01f)
+                        {
+                            listNotePosHori.Add(new Vector2(-x.transform.position.x, x.transform.position.y + x.length));
+                        }
+                        break;
+                    case 2:
+                        listNotePosVert.Add(new Vector2(x.transform.position.x, x.transform.position.y));
+                        if (x.length > 0.01f)
+                        {
+                            listNotePosVert.Add(new Vector2(x.transform.position.x, x.transform.position.y + x.length));
+                        }
+                        break;
+                    case 3:
+                        listNotePosVert.Add(new Vector2(-x.transform.position.x, x.transform.position.y));
+                        if (x.length > 0.01f)
+                        {
+                            listNotePosVert.Add(new Vector2(-x.transform.position.x, x.transform.position.y + x.length));
+                        }
+                        break;
+                }
+            }
+        }
+
+        // Sort the points
+        if (listNotePosHori.Count > 1)
+        {
+            bool keepSorting = false;
+            do
+            {
+                keepSorting = false;
+                for (int i = 0; i < listNotePosHori.Count - 1; i++)
+                {
+                    if (listNotePosHori[i].y > listNotePosHori[i + 1].y)
+                    {
+                        keepSorting = true;
+                        Vector2 tempV2 = listNotePosHori[i];
+                        listNotePosHori[i] = listNotePosHori[i + 1];
+                        listNotePosHori[i + 1] = tempV2;
+                    }
+                }
+            } while (keepSorting);
+        }
+        if (listNotePosVert.Count > 1)
+        {
+            bool keepSorting = false;
+            do
+            {
+                keepSorting = false;
+                for (int i = 0; i < listNotePosVert.Count - 1; i++)
+                {
+                    if (listNotePosVert[i].y > listNotePosVert[i + 1].y)
+                    {
+                        keepSorting = true;
+                        Vector2 tempV2 = listNotePosVert[i];
+                        listNotePosVert[i] = listNotePosVert[i + 1];
+                        listNotePosVert[i + 1] = tempV2;
+                    }
+                }
+            } while (keepSorting);
+        }
+
+        // Now calculate distance between points
+        float floatTotalMovement = 0f;
+        float floatNotePositionFirstNote = 0f;
+        if (listNotePosHori.Count > 0) floatNotePositionFirstNote = listNotePosHori[0].y;
+        if (listNotePosVert.Count > 0 && listNotePosVert[0].y < floatNotePositionFirstNote) floatNotePositionFirstNote = listNotePosVert[0].y;
+        float floatNotePositionLastNote = floatNotePositionFirstNote;
+        if (listNotePosHori.Count > 0) floatNotePositionLastNote = listNotePosHori[listNotePosHori.Count - 1].y;
+        if (listNotePosVert.Count > 0 && listNotePosVert[listNotePosVert.Count - 1].y > floatNotePositionLastNote) floatNotePositionLastNote = listNotePosVert[listNotePosVert.Count - 1].y;
+
+        if (listNotePosHori.Count > 1)
+        {
+            for (int i = 0; i < listNotePosHori.Count - 1; i++)
+            {
+                if (Mathf.Abs(listNotePosHori[i].y - listNotePosHori[i + 1].y) > 0.01f)
+                {
+                    floatTotalMovement += CalculateIntensityOfNotes(listNotePosHori[i], listNotePosHori[i + 1]);
+                }
+            }
+        }
+        if (listNotePosVert.Count > 1)
+        {
+            for (int i = 0; i < listNotePosVert.Count - 1; i++)
+            {
+                if (Mathf.Abs(listNotePosVert[i].y - listNotePosVert[i + 1].y) > 0.01f)
+                {
+                    floatTotalMovement += CalculateIntensityOfNotes(listNotePosVert[i], listNotePosVert[i + 1]);
+                }
+            }
+        }
+
+        float notesPerBeat = 1f * (listNotePosHori.Count + listNotePosVert.Count) / (floatNotePositionLastNote - floatNotePositionFirstNote);
+        float finalChartLevel = (Mathf.Sqrt(notesPerBeat) + floatTotalMovement - 1f) * 0.4f;
+
+        intChartLevel = 1 + Mathf.FloorToInt(finalChartLevel);
+        if (intChartLevel < 1) intChartLevel = 1;
+
+#if UNITY_EDITOR
+        textChartLevel.text = "CHART LEVEL " + intChartLevel.ToString() + " (" + (1 + finalChartLevel).ToString("f3") + ")";
+#else
+        textChartLevel.text = "CHART LEVEL " + intChartLevel.ToString();
+#endif
+    }
+    public float CalculateIntensityOfNotes(Vector2 point1, Vector2 point2)
+    {
+        float calc =
+            Mathf.Abs(Mathf.Pow(Mathf.Abs(point1.x - point2.x), 2) * (1f / (point2.y - point1.y + 1f)));
+        return calc;
+    }
+
     private void FixedUpdate()
     {
         if (fixedUpdateCheckOtherFrame)
@@ -648,50 +789,6 @@ public class Creator_Control : MonoBehaviour
         }
 
         textMouseScrollSetting.text = stringMouseScrollSetting[intMouseScrollSetting];
-
-        // Chart level calculation and display
-        float floatNotePositionFirstNote = -1f;
-        float floatNotePositionLastNote = 0f;
-        int noteCount = 0;
-        float floatTotalMovement = 0f;
-        float[] floatCatcherPositionHori = { 0f, 0f, 0f, 0f };
-        float[] floatCatcherPositionVert = { 0f, 0f, 0f, 0f };
-        foreach (Creator_Note x in listNotePool)
-        {
-            if (x.gameObject.activeSelf)
-            {
-                // Try to get first and last notes' positions to determine actual song play time.
-                if (floatNotePositionLastNote < x.transform.position.y + x.length)
-                {
-                    floatNotePositionLastNote = x.transform.position.y + x.length;
-                }
-                if (floatNotePositionFirstNote < 0 || floatNotePositionFirstNote > x.transform.position.y)
-                {
-                    floatNotePositionFirstNote = x.transform.position.y;
-                }
-
-                // Increase note count. A long note counts as two notes.
-                noteCount++;
-                if (x.length > 0.01f) noteCount++;
-
-                // Use the difference between this note's position and the catcher's to further increase the level.
-                floatTotalMovement += Mathf.Pow(Mathf.Abs(floatCatcherPositionHori[x.type] - x.transform.position.x), 2) * (1f / (x.transform.position.y - floatCatcherPositionVert[x.type] + 1f));
-                floatCatcherPositionHori[x.type] = x.transform.position.x;
-                floatCatcherPositionVert[x.type] = x.transform.position.y;
-            }
-        }
-
-        float notesPerBeat = 1f * noteCount / (floatNotePositionLastNote - floatNotePositionFirstNote);
-        float finalChartLevel = (Mathf.Sqrt(notesPerBeat) + floatTotalMovement - 1f) * 0.6f;
-
-        intChartLevel = 1 + Mathf.FloorToInt(finalChartLevel);
-        if (intChartLevel < 1) intChartLevel = 1;
-
-#if UNITY_EDITOR
-        textChartLevel.text = "CHART LEVEL " + intChartLevel.ToString() + " (" + (1 + finalChartLevel).ToString("f3") + ")";
-#else
-        textChartLevel.text = "CHART LEVEL " + intChartLevel.ToString();
-#endif
     }
 
     private void Update()
@@ -867,6 +964,7 @@ public class Creator_Control : MonoBehaviour
                         Debug.Log("Note creation: pos " + pos.ToString("f3") + ", time " + time.ToString("f3") + ", type " + type.ToString() + ", length " + length.ToString("f3"));
 #endif
                         CreateNote(pos, time, type, 0, length, listStringNoteOther);
+                        CalculateChartLevel();
                     }
                 }
             }
@@ -885,6 +983,7 @@ public class Creator_Control : MonoBehaviour
             if (Physics.Raycast(ray, out hit, 15f) && hit.collider.tag == "Creator_Note")
             {
                 DeleteNote(hit.collider.GetComponent<Creator_Note>());
+                CalculateChartLevel();
             }
         }
 
