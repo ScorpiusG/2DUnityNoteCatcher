@@ -34,6 +34,8 @@ public class PlayerSetting : MonoBehaviour
     public bool enableDisplayNoteHitCounterSmall = false;
 
     // Other fun(?) stuff. DISABLE SCORING if any of these are used.
+    // Does nothing while not affecting high score
+    public bool modDisableScore = false;
     // Flips the whole screen 180 degrees.
     public bool modScreenFlip = false;
     // Mirrors the screen horizontally.
@@ -95,6 +97,97 @@ public class PlayerSetting : MonoBehaviour
             if (i > 0) s += ",";
         }
         return s;
+    }
+
+    /// <summary>
+    /// Calculates player possible level using the value given.
+    /// </summary>
+    /// <param name="value">Score value.</param>
+    /// <returns></returns>
+    public int CalculateLevel(int value)
+    {
+        List<int> v = ConvertIntToListInt(value);
+        return CalculateLevel(v);
+    }
+    /// <summary>
+    /// Calculates player possible level using the value given in the list.
+    /// </summary>
+    /// <param name="value">Score value in every three units per item in the list.</param>
+    /// <returns></returns>
+    public int CalculateLevel(List<int> value)
+    {
+        int level = 1;
+        while (true)
+        {
+            int req = GetLevelScoreRequirement(level);
+            bool isAboveRequirement = false;
+            List<int> reqList = ConvertIntToListInt(req);
+
+            // Requirement has more digits than value.
+            if (reqList.Count > value.Count)
+            {
+                isAboveRequirement = false;
+            }
+            // Requirement has less digits than value.
+            else if (reqList.Count < value.Count)
+            {
+                isAboveRequirement = true;
+            }
+            // Requirement has similar digits as value.
+            else
+            {
+                for (int i = value.Count - 1; i >= 0; i--)
+                {
+                    if (reqList[i] > value[i])
+                    {
+                        isAboveRequirement = false;
+                        break;
+                    }
+                    else if (reqList[i] < value[i])
+                    {
+                        isAboveRequirement = true;
+                        break;
+                    }
+                }
+            }
+
+            if (isAboveRequirement)
+            {
+                level++;
+            }
+            else
+            {
+                break;
+            }
+        }
+        return level;
+    }
+
+    /// <summary>
+    /// Uses a formula to calculate requirement to next level.
+    /// </summary>
+    /// <param name="level">The value used for calculation.</param>
+    /// <returns></returns>
+    public int GetLevelScoreRequirement(int level)
+    {
+        return (((level + 1) * level) / 2) * ((level * 6) + 94);
+    }
+
+    /// <summary>
+    /// Converts an integer to a list of 3-digit integers.
+    /// </summary>
+    /// <param name="value"></param>
+    /// <returns></returns>
+    public List<int> ConvertIntToListInt(int value)
+    {
+        List<int> list = new List<int>();
+        for (int i = 0; ; i++)
+        {
+            list.Add(value % 1000);
+            value /= 1000;
+            if (value <= 0) break;
+        }
+        return list;
     }
     
 	void Start ()

@@ -30,6 +30,7 @@ public class Creator_Control : MonoBehaviour
     public Text textTimeCurrentMeasure;
     public Text textTimeCurrentLength;
     public Text textBeatSnapDivisor;
+    public Text textHoriPosSnapDivisor;
 
     public Text textChartGameType;
     public Text textNotePlacementType;
@@ -50,7 +51,9 @@ public class Creator_Control : MonoBehaviour
     public Sprite[] spriteSpecialEffect;
 
     private List<GameObject> listObjectBeatSnapDivisorGuide = new List<GameObject>();
-    public GameObject objectBeatSnapDivisorGuidePrefab;
+    public GameObject objectBeatSnapDivisorGuidePrefab; 
+    private List<GameObject> listObjectHoriPosSnapDivisorGuide = new List<GameObject>();
+    public GameObject objectHoriPosSnapDivisorGuidePrefab;
 
     private int intMouseScrollSetting = 0;
     public string[] stringMouseScrollSetting = { "Move Chart", "Zoom Chart", "Change Note Type"};
@@ -60,6 +63,8 @@ public class Creator_Control : MonoBehaviour
     public string[] stringNotePlacementType = { "Blue (Btm)", "Red (Top)", "Green (Lt)", "Yellw (Dn)" };
     private int intBeatSnapDivisor = 0;
     public int[] intBeatSnapDivisorValue = { 2, 3, 4, 6, 8 };
+    private int intHoriPosSnapDivisor = 0;
+    public int[] intHoriPosSnapDivisorValue = { 2, 3, 4, 6, 8 };
     private int intCursorPosition = 0;
     private int intChartLevel = 0;
 
@@ -73,9 +78,10 @@ public class Creator_Control : MonoBehaviour
         textFileName.text = PlayerPrefs.GetString("creator_textFileName", "");
         intMouseScrollSetting = PlayerPrefs.GetInt("creator_intMouseScrollSetting", 0);
         intBeatSnapDivisor = PlayerPrefs.GetInt("creator_intBeatSnapDivisor", 0);
+        intHoriPosSnapDivisor = PlayerPrefs.GetInt("creator_intHoriPosSnapDivisor", 2);
         sliderZoom.value = PlayerPrefs.GetFloat("creator_sliderZoom", 0.5f);
 
-        RefreshBeatSnapDivisorGuide();
+        RefreshGridSnapDivisorGuide();
         CalculateChartLevel();
     }
 
@@ -290,10 +296,9 @@ public class Creator_Control : MonoBehaviour
         newNote.other = note.other;
 
         // Colorize note based on type
-        if (colorNote.Length > note.type)
+        newNote.GetComponent<SpriteRenderer>().color = colorNote[note.type];
+        if (colorNote.Length > 0.01f)
         {
-            newNote.GetComponent<SpriteRenderer>().color = colorNote[note.type];
-
             Color dim = colorNote[note.type];
             dim.r *= 0.7f;
             dim.g *= 0.7f;
@@ -327,6 +332,11 @@ public class Creator_Control : MonoBehaviour
                 newNote.textMeshNoteType.text = "SHAKE";
                 newNote.textMeshNoteType.anchor = TextAnchor.MiddleCenter;
                 break;
+        }
+        newNote.textMeshNoteOther.text = "";
+        foreach (string x in newNote.other)
+        {
+            newNote.textMeshNoteOther.text = " " + x + " ";
         }
 
         // Make note active
@@ -510,22 +520,41 @@ public class Creator_Control : MonoBehaviour
         {
             intBeatSnapDivisor = intBeatSnapDivisorValue.Length - 1;
         }
-        RefreshBeatSnapDivisorGuide();
+        RefreshGridSnapDivisorGuide();
+    }
+    public void HoriPosSnapDivisorChange(int modifier)
+    {
+        if (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.LeftCommand)) return;
+
+        intHoriPosSnapDivisor += modifier;
+        if (intHoriPosSnapDivisor < 0)
+        {
+            intHoriPosSnapDivisor = 0;
+        }
+        if (intHoriPosSnapDivisor >= intHoriPosSnapDivisorValue.Length)
+        {
+            intHoriPosSnapDivisor = intHoriPosSnapDivisorValue.Length - 1;
+        }
+        RefreshGridSnapDivisorGuide();
     }
 
     /// <summary>
     /// Refreshes the beat snap divisor guide lines (the horizontal white lines).
     /// </summary>
-    public void RefreshBeatSnapDivisorGuide()
+    private void RefreshGridSnapDivisorGuide()
     {
         foreach (GameObject x in listObjectBeatSnapDivisorGuide)
         {
             x.SetActive(false);
         }
+        foreach (GameObject x in listObjectHoriPosSnapDivisorGuide)
+        {
+            x.SetActive(false);
+        }
 
+        GameObject line = null;
         if (intBeatSnapDivisor >= 0)
         {
-            GameObject line = null;
             for (int i = 0; i <= 5; i++)
             {
                 for (float f = 0; f < 1 - Mathf.Epsilon; f += 1f / intBeatSnapDivisorValue[intBeatSnapDivisor])
@@ -543,6 +572,20 @@ public class Creator_Control : MonoBehaviour
                 }
             }
         }
+
+        for (float f = 0; f < 1 - Mathf.Epsilon; f += 1f / intHoriPosSnapDivisorValue[intHoriPosSnapDivisor])
+        {
+            if (f < Mathf.Epsilon) continue;
+
+            line = GetObjectHoriPosSnapDivisorGuide();
+            line.transform.parent = cameraMain.transform;
+            line.transform.localPosition = Vector3.left * f;
+            line.SetActive(true);
+            line = GetObjectHoriPosSnapDivisorGuide();
+            line.transform.parent = cameraMain.transform;
+            line.transform.localPosition = Vector3.right * f;
+            line.SetActive(true);
+        }
     }
     private GameObject GetObjectBeatSnapDivisorGuide()
     {
@@ -556,6 +599,20 @@ public class Creator_Control : MonoBehaviour
 
         GameObject newLine = Instantiate(objectBeatSnapDivisorGuidePrefab);
         listObjectBeatSnapDivisorGuide.Add(newLine);
+        return newLine;
+    }
+    private GameObject GetObjectHoriPosSnapDivisorGuide()
+    {
+        foreach (GameObject x in listObjectHoriPosSnapDivisorGuide)
+        {
+            if (!x.activeSelf)
+            {
+                return x;
+            }
+        }
+
+        GameObject newLine = Instantiate(objectHoriPosSnapDivisorGuidePrefab);
+        listObjectHoriPosSnapDivisorGuide.Add(newLine);
         return newLine;
     }
 
@@ -586,6 +643,7 @@ public class Creator_Control : MonoBehaviour
         PlayerPrefs.SetString("creator_textFileName", textFileName.text);
         PlayerPrefs.SetInt("creator_intMouseScrollSetting", intMouseScrollSetting);
         PlayerPrefs.SetInt("creator_intBeatSnapDivisor", intBeatSnapDivisor);
+        PlayerPrefs.SetInt("creator_intHoriPosSnapDivisor", intHoriPosSnapDivisor);
         PlayerPrefs.SetFloat("creator_sliderZoom", sliderZoom.value);
 
         PlayerPrefs.Save();
@@ -778,6 +836,7 @@ public class Creator_Control : MonoBehaviour
         {
             textBeatSnapDivisor.text = "FREE";
         }
+        textHoriPosSnapDivisor.text = "1/" + intHoriPosSnapDivisorValue[intHoriPosSnapDivisor].ToString();
 
         // Current selection
         textChartGameType.text = stringChartGameType[intChartGameType];
@@ -914,14 +973,16 @@ public class Creator_Control : MonoBehaviour
                     float length = 0f;
                     float.TryParse(textNoteLength.text, out length);
 
-                    // Left shift snaps horizontal position to nearest quarter from the center
-                    if (Input.GetKey(KeyCode.LeftShift))
+                    // Left shift ignores horizontal position grid snap
+                    if (!Input.GetKey(KeyCode.LeftShift))
                     {
-                        pos = Mathf.Round(4f * pos) / 4f;
+                        pos = Mathf.Round(intHoriPosSnapDivisorValue[intHoriPosSnapDivisor] * pos) / intHoriPosSnapDivisorValue[intHoriPosSnapDivisor];
                     }
                     // If there is a beat snap divisor, it will be applied
                     if (intBeatSnapDivisor >= 0)
                     {
+                        time = Mathf.Round(intBeatSnapDivisorValue[intBeatSnapDivisor] * time) / intBeatSnapDivisorValue[intBeatSnapDivisor];
+                        /*
                         float beat = Mathf.Floor(time);
                         float partial = time - beat;
                         for (int divisor = intBeatSnapDivisorValue[intBeatSnapDivisor] - 1; divisor >= 0 ; divisor--)
@@ -932,6 +993,7 @@ public class Creator_Control : MonoBehaviour
                                 break;
                             }
                         }
+                        */
                     }
 
                     // If the new note is too close to another note of the same type, don't create

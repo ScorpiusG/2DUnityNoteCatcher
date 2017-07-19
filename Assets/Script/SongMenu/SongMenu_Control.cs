@@ -108,13 +108,25 @@ public class SongMenu_Control : MonoBehaviour
     public void RefreshTexts()
     {
         textDisplayAccuracy.text = "Accuracy Tolerance: " + PlayerSetting.setting.intAccuracyTolerance.ToString() + "%";
-        if (PlayerSetting.setting.intGameOffset > Mathf.Epsilon)
+        if (PlayerSetting.setting.intGameOffset != 0)
         {
-            textDisplayAccuracy.text += "; Offset: " + PlayerSetting.setting.intGameOffset.ToString() + "ms";
+            textDisplayAccuracy.text += " | Offset: " + PlayerSetting.setting.intGameOffset.ToString() + "ms";
         }
         textDisplayMods.text = "";
+        if (PlayerSetting.setting.modDisableScore)
+        {
+            if (textDisplayMods.text != "")
+            {
+                textDisplayMods.text += ", ";
+            }
+            textDisplayMods.text += "DisableScore";
+        }
         if (PlayerSetting.setting.modChartCluster)
         {
+            if (textDisplayMods.text != "")
+            {
+                textDisplayMods.text += ", ";
+            }
             textDisplayMods.text += "Cluster";
         }
         if (PlayerSetting.setting.modChartFlip)
@@ -169,14 +181,21 @@ public class SongMenu_Control : MonoBehaviour
 
     public void PlaySong(string songName, int gameType, int gameStage)
     {
-        // TODO: Store song name, game type, game stage, and custom song (bool) information for use in the game scene
+        // Store song name, game type, game stage, and custom song (bool) information for use in the game scene
+        Game_Control.stringSongFileName = songName;
+        Game_Control.intChartGameType = gameType;
+        Game_Control.intChartGameChart = gameStage;
+        Game_Control.stringModList = textDisplayMods.text;
+        Game_Control.boolCustomSong = isLoadCustomSongs;
 
         SceneManager.LoadScene(stringSceneNameGame);
     }
 
     public void UseSongFolder(Button folder)
     {
-        Debug.Log(folder.name);
+#if UNITY_EDITOR
+        Debug.Log("Clicked on \"" + folder.name + "\" folder.");
+#endif
         // TODO: Display chart information from first chart in the folder
     }
 

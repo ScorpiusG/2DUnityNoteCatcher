@@ -6,6 +6,7 @@ public class Creator_Note : MonoBehaviour
 {
     public SpriteRenderer spriteRendererLength;
     public TextMesh textMeshNoteType;
+    public TextMesh textMeshNoteOther;
 
     public int type = 0;
     public int size = 0;

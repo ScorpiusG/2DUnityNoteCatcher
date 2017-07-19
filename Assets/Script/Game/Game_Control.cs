@@ -12,6 +12,7 @@ public class Game_Control : MonoBehaviour
     public static string stringSongFileName = "";
     public static int intChartGameType = 0;
     public static int intChartGameChart = 0;
+    public static string stringModList = "";
 
     public static bool boolAutoplay = false;
 
@@ -46,16 +47,23 @@ public class Game_Control : MonoBehaviour
     public Image imageAccuracyGauge;
     public Image imageAccuracyNegativeGauge;
     public Text textAccuracy;
+    public Text textNoteJudgeCount;
     public Image imageAccuracyTolerance;
+    public float floatAccuracyGaugeWidth = 928f;
 
     public Animator animatorResults;
     public Text textResultHeader;
-    public Text textResultOutcome;
+    public Color colorResultHeaderPass = Color.green;
+    public Color colorResultHeaderFail = Color.red;
     public Text textResultAccuracy;
     public Text textResultJudgeBest;
     public Text textResultJudgeGreat;
-    public Text textResultJudgeFair;
+    public Text textResultJudgeFine;
     public Text textResultJudgeMiss;
+    public Text textResultOther;
+    public Text textScoreDisabled;
+    public Text textRecordAccuracy;
+    public Animator animatorNewRecord;
 
     private ChartData chartData;
     private int chartTotalNotes = 0;
@@ -69,15 +77,33 @@ public class Game_Control : MonoBehaviour
     public float[] floatDistAccuracyGreat = { 0.19f, 0.165f, 0.15f, 0.125f, 0.113f };
     public float[] floatDistAccuracyFine = { 0.21f, 0.183f, 0.164f, 0.138f, 0.122f };
 
-    private bool isForcedFailure = false;
+    private bool isForcedEnd = false;
     private bool isScoringDisabled = false;
     private float floatTimeEscapeHeld = 0f;
+    private int currentAccuracy = 0;
+    private int currentAccuracyNegative = 0;
     private int playerAccuracyBest = 0;
     private int playerAccuracyGreat = 0;
     private int playerAccuracyFine = 0;
     private int playerAccuracyMiss = 0;
     private int playerComboCurrent = 0;
     private int playerComboBest = 0;
+
+    public void ExitGameScene()
+    {
+        if (boolCustomSong)
+        {
+            LoadScene("SongMenuCustom");
+        }
+        else
+        {
+            LoadScene("SongMenuOfficial");
+        }
+    }
+    public void LoadScene(string sceneName)
+    {
+        SceneManager.LoadScene(sceneName);
+    }
 
     public Game_Note SpawnNote()
     {
@@ -219,7 +245,7 @@ public class Game_Control : MonoBehaviour
         imageSongProgressGauge.fillAmount = 0f;
         if (PlayerSetting.setting.intAccuracyTolerance > 0)
         {
-            imageAccuracyTolerance.transform.localPosition = Vector3.right * 928f * 0.01f * PlayerSetting.setting.intAccuracyTolerance;
+            imageAccuracyTolerance.transform.localPosition = Vector3.right * floatAccuracyGaugeWidth * 0.01f * PlayerSetting.setting.intAccuracyTolerance;
         }
         else
         {
@@ -229,7 +255,9 @@ public class Game_Control : MonoBehaviour
         {
             x.transform.localPosition = Vector3.zero;
         }
-        textAccuracy.gameObject.SetActive(PlayerSetting.setting.enableDisplayNoteHitCounterSmall);
+        textNoteJudgeCount.gameObject.SetActive(PlayerSetting.setting.enableDisplayNoteHitCounterSmall);
+        animatorResults.gameObject.SetActive(false);
+        animatorNewRecord.gameObject.SetActive(false);
 
         // Read chart from the text file
         string input = "";
@@ -243,7 +271,7 @@ public class Game_Control : MonoBehaviour
 #if UNITY_EDITOR
                 Debug.LogWarning("WARNING: The chart file does not exist! Path: " + path);
 #endif
-                isForcedFailure = true;
+                isForcedEnd = true;
             }
             StreamReader reader = new StreamReader(path);
             input = reader.ReadToEnd();
@@ -339,6 +367,8 @@ public class Game_Control : MonoBehaviour
             floatMusicPosition = audioSourceMusic.time + ((chartData.chartOffset - PlayerSetting.setting.intGameOffset) * 0.001f);
             floatMusicBeat =  floatMusicPosition * chartData.songTempo / 60f;
 
+            // Crosshair position
+            Vector3 mouseCursorPos = objectMouseCrosshair.transform.position;
             // Normal play
             if (!boolAutoplay)
             {
@@ -346,31 +376,13 @@ public class Game_Control : MonoBehaviour
                 movementHoriAlpha = Input.GetAxisRaw("MouseX");
                 movementVertAlpha = Input.GetAxisRaw("MouseY");
 
-                // Crosshair position
-                Vector3 mouseCursorPos = objectMouseCrosshair.transform.position;
                 mouseCursorPos.x = Mathf.Clamp(mouseCursorPos.x + movementHoriAlpha * PlayerSetting.setting.floatMouseSensitivity, -1f, 1f);
                 mouseCursorPos.y = Mathf.Clamp(mouseCursorPos.y + movementVertAlpha * PlayerSetting.setting.floatMouseSensitivity, -1f, 1f);
                 objectMouseCrosshair.transform.position = mouseCursorPos;
-
-                // Catcher position
-                objectCatcher[0].transform.position = Vector3.right * objectMouseCrosshair.transform.position.x;
-                if (objectCatcher[1].activeInHierarchy)
-                {
-                    objectCatcher[1].transform.position = Vector3.left * objectMouseCrosshair.transform.position.x;
-                }
-                if (objectCatcher[2].activeInHierarchy)
-                {
-                    objectCatcher[2].transform.position = Vector3.left * objectMouseCrosshair.transform.position.y;
-                }
-                if (objectCatcher[3].activeInHierarchy)
-                {
-                    objectCatcher[3].transform.position = Vector3.right * objectMouseCrosshair.transform.position.y;
-                }
             }
             // Automatic play (always perfect)
             else
             {
-                Vector3 mouseCursorPos = objectMouseCrosshair.transform.position;
                 Game_Note nextNoteCatcherHori = null;
                 Game_Note nextNoteCatcherVert = null;
                 foreach (Game_Note x in listNote)
@@ -397,15 +409,16 @@ public class Game_Control : MonoBehaviour
                     }
                 }
 
+                float posLerpRate = 4f;
                 if (nextNoteCatcherHori != null)
                 {
                     switch(nextNoteCatcherHori.type)
                     {
                         case 0:
-                            mouseCursorPos.x = Mathf.Lerp(mouseCursorPos.x, nextNoteCatcherHori.position, Time.deltaTime * 4f / nextNoteCatcherVert.transform.position.y);
+                            mouseCursorPos.x = Mathf.Lerp(mouseCursorPos.x, nextNoteCatcherHori.position, Time.deltaTime * posLerpRate / nextNoteCatcherVert.transform.position.y);
                             break;
                         case 1:
-                            mouseCursorPos.x = Mathf.Lerp(mouseCursorPos.x, -nextNoteCatcherHori.position, Time.deltaTime * 4f / nextNoteCatcherVert.transform.position.y);
+                            mouseCursorPos.x = Mathf.Lerp(mouseCursorPos.x, -nextNoteCatcherHori.position, Time.deltaTime * posLerpRate / nextNoteCatcherVert.transform.position.y);
                             break;
                     }
                 }
@@ -414,13 +427,29 @@ public class Game_Control : MonoBehaviour
                     switch (nextNoteCatcherVert.type)
                     {
                         case 2:
-                            mouseCursorPos.x = Mathf.Lerp(mouseCursorPos.x, nextNoteCatcherVert.position, Time.deltaTime * 4f / nextNoteCatcherVert.transform.position.y);
+                            mouseCursorPos.x = Mathf.Lerp(mouseCursorPos.x, nextNoteCatcherVert.position, Time.deltaTime * posLerpRate / nextNoteCatcherVert.transform.position.y);
                             break;
                         case 3:
-                            mouseCursorPos.x = Mathf.Lerp(mouseCursorPos.x, -nextNoteCatcherVert.position, Time.deltaTime * 4f / nextNoteCatcherVert.transform.position.y);
+                            mouseCursorPos.x = Mathf.Lerp(mouseCursorPos.x, -nextNoteCatcherVert.position, Time.deltaTime * posLerpRate / nextNoteCatcherVert.transform.position.y);
                             break;
                     }
                 }
+            }
+            objectMouseCrosshair.transform.position = mouseCursorPos;
+
+            // Catcher position
+            objectCatcher[0].transform.position = Vector3.right * objectMouseCrosshair.transform.position.x;
+            if (objectCatcher[1].activeInHierarchy)
+            {
+                objectCatcher[1].transform.position = Vector3.left * objectMouseCrosshair.transform.position.x;
+            }
+            if (objectCatcher[2].activeInHierarchy)
+            {
+                objectCatcher[2].transform.position = Vector3.left * objectMouseCrosshair.transform.position.y;
+            }
+            if (objectCatcher[3].activeInHierarchy)
+            {
+                objectCatcher[3].transform.position = Vector3.right * objectMouseCrosshair.transform.position.y;
             }
 
             // Text and gauge update
@@ -436,16 +465,17 @@ public class Game_Control : MonoBehaviour
                 imageSongProgressGauge.fillAmount = floatMusicPosition / chartData.songLength;
             }
             // Bottom - Accuracy
-            int currentAccuracy = (playerAccuracyBest * 4) + (playerAccuracyGreat * 3) + (playerAccuracyFine * 2);
-            int currentAccuracyNegative = playerAccuracyGreat + (playerAccuracyFine * 2) + (playerAccuracyMiss * 4);
+            currentAccuracy = (playerAccuracyBest * 4) + (playerAccuracyGreat * 3) + (playerAccuracyFine * 2);
+            currentAccuracyNegative = playerAccuracyGreat + (playerAccuracyFine * 2) + (playerAccuracyMiss * 4);
             if (objectGroupInterfaceAccuracy.activeSelf)
             {
                 imageAccuracyGauge.fillAmount = 1f * currentAccuracy / chartTotalNotes;
                 imageAccuracyNegativeGauge.fillAmount = 1f * currentAccuracyNegative / chartTotalNotes;
+                textAccuracy.text = (imageAccuracyGauge.fillAmount * 100f).ToString("f2") + "%";
             }
             if (PlayerSetting.setting.enableDisplayNoteHitCounterSmall)
             {
-                textAccuracy.text =
+                textNoteJudgeCount.text =
                     "B" + playerAccuracyBest.ToString() + "\n" +
                     "G" + playerAccuracyGreat.ToString() + "\n" +
                     "F" + playerAccuracyFine.ToString() + "\n" +
@@ -543,17 +573,17 @@ public class Game_Control : MonoBehaviour
             }
             if (floatTimeEscapeHeld > 2f)
             {
-                isForcedFailure = true;
+                isForcedEnd = true;
             }
 
             // Alternate force end condition: Current negative accuracy is below tolerance
             if (1f * currentAccuracyNegative / chartTotalNotes > 0.01f * PlayerSetting.setting.intAccuracyTolerance)
             {
-                isForcedFailure = true;
+                isForcedEnd = true;
             }
 
             // Force end consequences: Miss all remaining notes
-            if (isForcedFailure)
+            if (isForcedEnd)
             {
                 if (floatTimeEscapeHeld > 2f)
                 {
@@ -586,19 +616,128 @@ public class Game_Control : MonoBehaviour
 
         float finalAccuracy = ((playerAccuracyBest * 4) + (playerAccuracyGreat * 3) + (playerAccuracyFine * 2)) / (chartTotalNotes * 4);
 #if UNITY_EDITOR
-        Debug.Log("Song finished. Accuracy: " + (finalAccuracy * 100f).ToString("f2"));
+        Debug.Log("Song finished. Accuracy: " + (finalAccuracy * 100f).ToString("f2") + "%");
 #endif
         // Revert settings (cursor, v-sync, etc.)
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
         QualitySettings.vSyncCount = 1;
         Application.targetFrameRate = 60;
+        objectAutoplayIndicator.SetActive(false);
+        textMeshComboCurrent.gameObject.SetActive(false);
         yield return null;
 
-        // Show result screen
-        if (animatorResults != null)
+        // Add and record score
+        textScoreDisabled.gameObject.SetActive(isScoringDisabled);
+        int finalScore = 0;
+        float oldRecordAccuracy = 0f;
+        if (!isScoringDisabled)
         {
-            animatorResults.Play("clip");
+            float gameModeScoreMultiplier = 1f;
+            switch(chartData.chartGameType)
+            {
+                case 0: gameModeScoreMultiplier = 1f; break;
+                case 1: gameModeScoreMultiplier = 1.4f; break;
+                case 2: case 3: case 4: gameModeScoreMultiplier = 1.8f; break;
+            }
+            // Score based on accuracy, best combo, chart level, and game mode.
+            finalScore = Mathf.FloorToInt(
+                (1f * playerComboBest / chartTotalNotes) * finalAccuracy *
+                Mathf.Pow(4 + chartData.chartLevel, 2f) *
+                10 * gameModeScoreMultiplier
+                );
+            // Additional score gained by achieving full combo and perfect accuracy.
+            int additionalScore = 0;
+            if (playerComboBest == chartTotalNotes)
+            {
+                additionalScore += finalScore / 10;
+            }
+            if (playerAccuracyBest == chartTotalNotes)
+            {
+                additionalScore += finalScore / 10;
+            }
+            finalScore += additionalScore;
+            PlayerSetting.setting.ScoreAdd(finalScore);
+
+            oldRecordAccuracy = PlayerPrefs.GetFloat(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString(), 0f);
+            textRecordAccuracy.gameObject.SetActive(true);
+            textRecordAccuracy.text = (oldRecordAccuracy * 100f).ToString("f2");
+
+            if (finalAccuracy > oldRecordAccuracy)
+            {
+                PlayerPrefs.SetFloat(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString(), finalAccuracy);
+            }
+            PlayerSetting.setting.Save();
         }
+        else
+        {
+            textRecordAccuracy.gameObject.SetActive(false);
+        }
+        yield return null;
+
+        // Update texts
+        if (1f * finalAccuracy / chartTotalNotes >= 0.01f * PlayerSetting.setting.intAccuracyTolerance)
+        {
+            textResultHeader.text = "STAGE PASSED";
+            textResultHeader.color = colorResultHeaderPass;
+        }
+        else
+        {
+            textResultHeader.text = "STAGE FAILED";
+            textResultHeader.color = colorResultHeaderFail;
+        }
+
+        // Show result screen
+        animatorResults.gameObject.SetActive(true);
+        animatorResults.Play("clip");
+
+        yield return new WaitForSeconds(0.5f);
+        StartCoroutine(TextFloatGradualIncrease(textResultAccuracy, finalAccuracy, 0.8f));
+        yield return new WaitForSeconds(0.5f);
+        StartCoroutine(TextIntGradualIncrease(textResultJudgeBest, playerAccuracyBest, 0.6f));
+        yield return new WaitForSeconds(0.2f);
+        StartCoroutine(TextIntGradualIncrease(textResultJudgeGreat, playerAccuracyGreat, 0.6f));
+        yield return new WaitForSeconds(0.2f);
+        StartCoroutine(TextIntGradualIncrease(textResultJudgeFine, playerAccuracyFine, 0.6f));
+        yield return new WaitForSeconds(0.2f);
+        StartCoroutine(TextIntGradualIncrease(textResultJudgeMiss, playerAccuracyMiss, 0.6f));
+
+        yield return new WaitForSeconds(1.5f);
+        if (finalAccuracy > oldRecordAccuracy)
+        {
+            animatorNewRecord.Play("clip");
+        }
+        if (isScoringDisabled)
+        {
+            textResultOther.text = stringModList;
+        }
+        else
+        {
+            textResultOther.text = "Score: " + finalScore.ToString();
+        }
+    }
+    IEnumerator TextFloatGradualIncrease(Text text, float value, float duration)
+    {
+        yield return null;
+
+        for (float f = 0f; f < duration; f += Time.deltaTime)
+        {
+            text.text = ((f / duration) * value).ToString("f2") + "%";
+            yield return null;
+        }
+
+        text.text = value.ToString("f2") + "%";
+    }
+    IEnumerator TextIntGradualIncrease(Text text, int value, float duration)
+    {
+        yield return null;
+
+        for (float f = 0f; f < duration; f += Time.deltaTime)
+        {
+            text.text = Mathf.Floor((f / duration) * value).ToString("f0");
+            yield return null;
+        }
+
+        text.text = value.ToString();
     }
 }
