@@ -15,7 +15,7 @@ public class PlayerSetting : MonoBehaviour
     // Affects mouse movement.
     public float floatMouseSensitivity = 0.06f;
     // Affects note scroll speed.
-    public float intScrollSpeed = 40;
+    public int intScrollSpeed = 40;
     // Affects song force end on being unable to achieve a certain accuracy percentage.
     public int intAccuracyTolerance = 30;
 

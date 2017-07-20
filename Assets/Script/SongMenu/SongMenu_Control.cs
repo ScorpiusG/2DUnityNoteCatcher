@@ -26,10 +26,28 @@ public class SongMenu_Control : MonoBehaviour
     public GameObject objectOptionsMenu;
     public GameObject[] groupOptionsMenuPage;
     private int intOptionsMenuPage = 0;
+    public Text textOptionsAccuracyTolerance;
+    public Slider sliderOptionsMouseSensitivity;
+    public Text textOptionsMouseSensitivity;
+    public Text textOptionsGameOffset;
+    public Toggle toggleOptionsVerticalSync;
+    public Toggle toggleOptionsInterfaceSongDetails;
+    public Toggle toggleOptionsInterfaceAccuracy;
+    public Toggle toggleOptionsDisplayCombo;
+    public Toggle toggleOptionsDisplayJudgmentPerHit;
+    public Toggle toggleOptionsDisplayJudgmentCounter;
 
     void Start()
     {
         objectOptionsMenu.SetActive(false);
+
+        sliderOptionsMouseSensitivity.value = PlayerSetting.setting.floatMouseSensitivity;
+        toggleOptionsVerticalSync.isOn = PlayerSetting.setting.enableVSync;
+        toggleOptionsInterfaceSongDetails.isOn = PlayerSetting.setting.enableInterfaceSongDetails;
+        toggleOptionsInterfaceAccuracy.isOn = PlayerSetting.setting.enableInterfaceAccuracy;
+        toggleOptionsDisplayCombo.isOn = PlayerSetting.setting.enableDisplayCombo;
+        toggleOptionsDisplayJudgmentPerHit.isOn = PlayerSetting.setting.enableDisplayNoteJudgment;
+        toggleOptionsDisplayJudgmentCounter.isOn = PlayerSetting.setting.enableDisplayNoteHitCounterSmall;
 
         string path = Directory.GetCurrentDirectory() + stringSongDirectoryPath;
 #if UNITY_EDITOR
@@ -88,6 +106,8 @@ public class SongMenu_Control : MonoBehaviour
         // Destroy the template button
         Destroy(buttonSongIndividual.gameObject);
         buttonSongIndividual = null;
+
+        RefreshTexts();
     }
 
     private void Update()
@@ -107,7 +127,7 @@ public class SongMenu_Control : MonoBehaviour
 
     public void RefreshTexts()
     {
-        textDisplayAccuracy.text = "Accuracy Tolerance: " + PlayerSetting.setting.intAccuracyTolerance.ToString() + "%";
+        textDisplayAccuracy.text = "Accuracy Tolerance: " + PlayerSetting.setting.intAccuracyTolerance.ToString() + "% | Chart Scroll Speed: x" + (0.1f * PlayerSetting.setting.intScrollSpeed).ToString("f1");
         if (PlayerSetting.setting.intGameOffset != 0)
         {
             textDisplayAccuracy.text += " | Offset: " + PlayerSetting.setting.intGameOffset.ToString() + "ms";
@@ -177,6 +197,10 @@ public class SongMenu_Control : MonoBehaviour
             }
             textDisplayMods.text += "ScreenMirror";
         }
+
+        textOptionsAccuracyTolerance.text = PlayerSetting.setting.intAccuracyTolerance.ToString() + "%";
+        textOptionsMouseSensitivity.text = (PlayerSetting.setting.floatMouseSensitivity * 100f).ToString("f2") + "%";
+        textOptionsGameOffset.text = PlayerSetting.setting.intGameOffset.ToString() + " ms";
     }
 
     public void PlaySong(string songName, int gameType, int gameStage)
@@ -236,8 +260,44 @@ public class SongMenu_Control : MonoBehaviour
         }
     }
 
+    public void AdjustScrollSpeed(int mod)
+    {
+        PlayerSetting.setting.intScrollSpeed = Mathf.Clamp(PlayerSetting.setting.intScrollSpeed + mod, 1, 500);
+    }
     public void AdjustAccuracyTolerance(int mod)
     {
-        PlayerSetting.setting.intAccuracyTolerance += mod;
+        PlayerSetting.setting.intAccuracyTolerance = Mathf.Clamp(PlayerSetting.setting.intAccuracyTolerance + mod, 0, 100);
+    }
+    public void AdjustMouseSensitivity()
+    {
+        PlayerSetting.setting.floatMouseSensitivity = sliderOptionsMouseSensitivity.value;
+    }
+    public void AdjustGameOffset(int mod)
+    {
+        PlayerSetting.setting.intGameOffset = Mathf.Clamp(PlayerSetting.setting.intGameOffset + mod, -100, 100);
+    }
+    public void AdjustVerticalSync()
+    {
+        PlayerSetting.setting.enableVSync = toggleOptionsVerticalSync.isOn;
+    }
+    public void AdjustInterfaceSongDetails()
+    {
+        PlayerSetting.setting.enableInterfaceSongDetails = toggleOptionsInterfaceSongDetails.isOn;
+    }
+    public void AdjustInterfaceAccuracy()
+    {
+        PlayerSetting.setting.enableInterfaceAccuracy = toggleOptionsInterfaceAccuracy.isOn;
+    }
+    public void AdjustDisplayCombo()
+    {
+        PlayerSetting.setting.enableDisplayCombo = toggleOptionsDisplayCombo.isOn;
+    }
+    public void AdjustDisplayJudgmentPerHit()
+    {
+        PlayerSetting.setting.enableDisplayNoteJudgment = toggleOptionsDisplayJudgmentPerHit.isOn;
+    }
+    public void AdjustDisplayJudgmentCounter()
+    {
+        PlayerSetting.setting.enableDisplayNoteHitCounterSmall = toggleOptionsDisplayJudgmentCounter.isOn;
     }
 }

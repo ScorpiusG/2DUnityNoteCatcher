@@ -9,7 +9,7 @@ using UnityEngine.SceneManagement;
 public class Game_Control : MonoBehaviour
 {
     public static bool boolCustomSong = true;
-    public static string stringSongFileName = "";
+    public static string stringSongFileName = "test";
     public static int intChartGameType = 0;
     public static int intChartGameChart = 0;
     public static string stringModList = "";
@@ -177,13 +177,18 @@ public class Game_Control : MonoBehaviour
                     Debug.Log("Note judgment - distance: " + dist + " (MISS)");
 #endif
                 }
-                Game_AnimationJudgment anim = SpawnJudgeAnimation();
-                anim.gameObject.SetActive(true);
-                anim.transform.position = Vector3.right * note.position;
-                anim.gameObject.layer = 9 + note.type;
-                anim.spriteRendererJudgment.sprite = spriteJudgment[animJudgeSprite];
-                anim.spriteRendererJudgment.sortingLayerID = animSortingLayerID;
-                anim.animatorJudgment.Play("anim");
+
+                // Show judgment animation
+                if (PlayerSetting.setting.enableDisplayNoteJudgment)
+                {
+                    Game_AnimationJudgment anim = SpawnJudgeAnimation();
+                    anim.gameObject.SetActive(true);
+                    anim.transform.position = Vector3.right * note.position;
+                    anim.gameObject.layer = 9 + note.type;
+                    anim.spriteRendererJudgment.sprite = spriteJudgment[animJudgeSprite];
+                    anim.spriteRendererJudgment.sortingLayerID = animSortingLayerID;
+                    anim.animatorJudgment.Play("anim");
+                }
                 break;
         }
 
@@ -191,11 +196,14 @@ public class Game_Control : MonoBehaviour
         {
             playerComboBest = playerComboCurrent;
         }
-        textMeshComboCurrent.gameObject.SetActive(playerComboCurrent >= floatTextComboAppearComboMinimum);
-        if (textMeshComboCurrent.gameObject.activeSelf)
+        if (PlayerSetting.setting.enableDisplayCombo)
         {
-            floatTextComboScaleCurrent = floatTextComboScaleOnChange;
-            textMeshComboCurrent.transform.localScale = Vector3.one * floatTextComboScaleCurrent;
+            textMeshComboCurrent.gameObject.SetActive(playerComboCurrent >= floatTextComboAppearComboMinimum);
+            if (textMeshComboCurrent.gameObject.activeSelf)
+            {
+                floatTextComboScaleCurrent = floatTextComboScaleOnChange;
+                textMeshComboCurrent.transform.localScale = Vector3.one * floatTextComboScaleCurrent;
+            }
         }
 
         DespawnNote(note);
@@ -258,6 +266,7 @@ public class Game_Control : MonoBehaviour
         textNoteJudgeCount.gameObject.SetActive(PlayerSetting.setting.enableDisplayNoteHitCounterSmall);
         animatorResults.gameObject.SetActive(false);
         animatorNewRecord.gameObject.SetActive(false);
+        textMeshComboCurrent.gameObject.SetActive(PlayerSetting.setting.enableDisplayCombo);
 
         // Read chart from the text file
         string input = "";
