@@ -12,5 +12,7 @@ public class Game_Note : MonoBehaviour
     public List<string> other;
 
     public SpriteRenderer spriteRendererNote;
+    public SpriteRenderer spriteRendererNoteHighlight;
     public SpriteRenderer spriteRendererLength;
+    public SpriteRenderer spriteRendererLengthHighlight;
 }

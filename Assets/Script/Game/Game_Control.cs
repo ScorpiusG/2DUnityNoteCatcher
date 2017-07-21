@@ -20,6 +20,7 @@ public class Game_Control : MonoBehaviour
     public GameObject[] objectGroupType;
     public GameObject objectMouseCrosshair;
     public GameObject[] objectCatcher;
+    public SpriteRenderer[] spriteRendererCatcherHighlight;
 
     public Game_Note notePrefab;
     private List<Game_Note> listNote;
@@ -70,6 +71,7 @@ public class Game_Control : MonoBehaviour
     private int chartJudgeDifficulty = 0;
     private float floatMusicPosition = 0f;
     private float floatMusicBeat = 0f;
+    public float floatHighlightAlpha = 0.5f;
     private float movementHoriAlpha = 0f;
     private float movementVertAlpha = 0f;
 
@@ -376,6 +378,15 @@ public class Game_Control : MonoBehaviour
             floatMusicPosition = audioSourceMusic.time + ((chartData.chartOffset - PlayerSetting.setting.intGameOffset) * 0.001f);
             floatMusicBeat =  floatMusicPosition * chartData.songTempo / 60f;
 
+            // Highlight flash on beat
+            float floatHighlightAlphaCurrent = 0f;
+            if (PlayerSetting.setting.enableNoteAndCatcherHighlightBeatPulse)
+            {
+                floatHighlightAlphaCurrent = (floatMusicBeat - Mathf.Floor(floatMusicBeat)) * floatHighlightAlpha;
+            }
+            Color colorBeatFlash = Color.white;
+            colorBeatFlash.a = floatHighlightAlphaCurrent;
+
             // Crosshair position
             Vector3 mouseCursorPos = objectMouseCrosshair.transform.position;
             // Normal play
@@ -459,6 +470,11 @@ public class Game_Control : MonoBehaviour
             if (objectCatcher[3].activeInHierarchy)
             {
                 objectCatcher[3].transform.position = Vector3.right * objectMouseCrosshair.transform.position.y;
+            }
+            // Catcher flash
+            foreach(SpriteRenderer x in spriteRendererCatcherHighlight)
+            {
+                x.color = colorBeatFlash;
             }
 
             // Text and gauge update
@@ -557,6 +573,13 @@ public class Game_Control : MonoBehaviour
                 if (x.gameObject.activeSelf)
                 {
                     x.transform.position = new Vector3(x.position, (floatMusicBeat - x.time) * (0.01f * PlayerSetting.setting.intScrollSpeed));
+
+                    // Note flash
+                    x.spriteRendererNoteHighlight.color = colorBeatFlash;
+                    if (x.length > 0.01f)
+                    {
+                        x.spriteRendererLengthHighlight.color = colorBeatFlash;
+                    }
 
                     // Note judgment
                     // Normal note or long note end - Go below pos 0 vertically

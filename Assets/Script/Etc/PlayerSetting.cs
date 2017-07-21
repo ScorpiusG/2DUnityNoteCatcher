@@ -20,7 +20,7 @@ public class PlayerSetting : MonoBehaviour
     public int intAccuracyTolerance = 30;
 
     // Interface and frame settings.
-    // Vertical sync.
+    // Vertical synchronization.
     public bool enableVSync = true;
     // Display song details - artist, name, chart developer, chart ID, chart level, time.
     public bool enableInterfaceSongDetails = true;
@@ -32,6 +32,8 @@ public class PlayerSetting : MonoBehaviour
     public bool enableDisplayNoteJudgment = true;
     // Display small counters for each note judgment received.
     public bool enableDisplayNoteHitCounterSmall = false;
+    // Have all catchers and notes pulse on every beat.
+    public bool enableNoteAndCatcherHighlightBeatPulse = true;
 
     // Other fun(?) stuff. DISABLE SCORING if any of these are used.
     // Does nothing while not affecting high score
