@@ -23,7 +23,7 @@ public class Game_Control : MonoBehaviour
     public SpriteRenderer[] spriteRendererCatcherHighlight;
 
     public Game_Note notePrefab;
-    private List<Game_Note> listNote;
+    private List<Game_Note> listNote = new List<Game_Note>();
     public Color[] noteColor = { Color.blue, Color.red, Color.green, Color.yellow };
     public float floatNoteDistanceSpawn = 3f;
 
@@ -35,6 +35,11 @@ public class Game_Control : MonoBehaviour
     public float floatTextComboScaleMinimum = 1f;
     public float floatTextComboScaleChangeRate = 12f;
     private float floatTextComboScaleCurrent = 1f;
+
+    public TextMesh textMeshPopup;
+    public Animator animatorPopup;
+    public List<float> listPopupTimer = new List<float>();
+    public List<string> listPopupText = new List<string>();
 
     public Game_AnimationJudgment objectAnimationJudgmentPrefab;
     private List<Game_AnimationJudgment> listAnimationJudgment;
@@ -372,6 +377,7 @@ public class Game_Control : MonoBehaviour
 #endif
         }
 
+        // Actual game loop
         while (floatMusicPosition < chartData.songLength)
         {
             // Time update
@@ -584,8 +590,8 @@ public class Game_Control : MonoBehaviour
                     // Note judgment
                     // Normal note or long note end - Go below pos 0 vertically
                     // Long note length - Sway too far from the note's center enough to get a "Miss"
-                    if (x.transform.position.y <= 0f || 
-                        (x.transform.position.y - (x.length * (0.01f * PlayerSetting.setting.intScrollSpeed)) < 0f &&
+                    if (floatMusicBeat >= x.time || 
+                        (floatMusicBeat >= x.time - x.length &&
                         Mathf.Abs(x.transform.position.x - objectCatcher[x.type].transform.position.x) > floatDistAccuracyFine[chartJudgeDifficulty])
                         )
                     {
@@ -603,7 +609,7 @@ public class Game_Control : MonoBehaviour
             {
                 floatTimeEscapeHeld = 0f;
             }
-            if (floatTimeEscapeHeld > 2f)
+            if (floatTimeEscapeHeld > 1f)
             {
                 isForcedEnd = true;
             }
@@ -644,6 +650,8 @@ public class Game_Control : MonoBehaviour
 
             yield return null;
         }
+        // End game loop
+
         imageSongProgressGauge.fillAmount = 1f;
 
         float finalAccuracy = ((playerAccuracyBest * 4) + (playerAccuracyGreat * 3) + (playerAccuracyFine * 2)) / (chartTotalNotes * 4);
@@ -723,6 +731,9 @@ public class Game_Control : MonoBehaviour
         animatorResults.gameObject.SetActive(true);
         animatorResults.Play("clip");
 
+        // Click a mouse button or hold space to speed up animation
+        StartCoroutine(AnimatorResultsSpeedUp());
+
         yield return new WaitForSeconds(0.5f);
         StartCoroutine(TextFloatGradualIncrease(textResultAccuracy, finalAccuracy, 0.8f));
         yield return new WaitForSeconds(0.5f);
@@ -748,11 +759,24 @@ public class Game_Control : MonoBehaviour
             textResultOther.text = "Score: " + finalScore.ToString();
         }
     }
+    IEnumerator AnimatorResultsSpeedUp()
+    {
+        yield return null;
+        while (true)
+        {
+            if (Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(0) ||
+                Input.GetKey(KeyCode.Space))
+            {
+                animatorResults.speed = 4f;
+            }
+            yield return null;
+        }
+    }
     IEnumerator TextFloatGradualIncrease(Text text, float value, float duration)
     {
         yield return null;
 
-        for (float f = 0f; f < duration; f += Time.deltaTime)
+        for (float f = 0f; f < duration; f += Time.deltaTime * animatorResults.speed)
         {
             text.text = ((f / duration) * value).ToString("f2") + "%";
             yield return null;
@@ -764,7 +788,7 @@ public class Game_Control : MonoBehaviour
     {
         yield return null;
 
-        for (float f = 0f; f < duration; f += Time.deltaTime)
+        for (float f = 0f; f < duration; f += Time.deltaTime * animatorResults.speed)
         {
             text.text = Mathf.Floor((f / duration) * value).ToString("f0");
             yield return null;
