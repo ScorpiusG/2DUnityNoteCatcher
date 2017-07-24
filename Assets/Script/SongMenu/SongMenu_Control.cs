@@ -54,6 +54,9 @@ public class SongMenu_Control : MonoBehaviour
     public Toggle toggleOptionsDisplayJudgmentPerHit;
     public Toggle toggleOptionsDisplayJudgmentCounter;
 
+    public bool isHighscoreDisabledByMods = false;
+    public bool isHighscoreDisabledByChart = false;
+
     void Start()
     {
         objectGroupDetails.SetActive(false);
@@ -148,6 +151,7 @@ public class SongMenu_Control : MonoBehaviour
 
     public void RefreshTexts()
     {
+        isHighscoreDisabledByMods = false;
         textDisplayScrollSpeed.text = "Game Scroll Speed: x" + (0.1f * PlayerSetting.setting.intScrollSpeed).ToString("f1");
         textDisplayAccuracy.text = "Accuracy Tolerance: " + PlayerSetting.setting.intAccuracyTolerance.ToString() + "%";
         if (PlayerSetting.setting.intGameOffset != 0)
@@ -162,6 +166,7 @@ public class SongMenu_Control : MonoBehaviour
                 textDisplayMods.text += ", ";
             }
             textDisplayMods.text += "DisableScore";
+            isHighscoreDisabledByMods = true;
         }
         if (PlayerSetting.setting.modChartCluster)
         {
@@ -170,6 +175,7 @@ public class SongMenu_Control : MonoBehaviour
                 textDisplayMods.text += ", ";
             }
             textDisplayMods.text += "Cluster";
+            isHighscoreDisabledByMods = true;
         }
         if (PlayerSetting.setting.modChartFlip)
         {
@@ -178,6 +184,7 @@ public class SongMenu_Control : MonoBehaviour
                 textDisplayMods.text += ", ";
             }
             textDisplayMods.text += "ChartFlip";
+            isHighscoreDisabledByMods = true;
         }
         if (PlayerSetting.setting.modChartHell)
         {
@@ -186,6 +193,7 @@ public class SongMenu_Control : MonoBehaviour
                 textDisplayMods.text += ", ";
             }
             textDisplayMods.text += "Hell";
+            isHighscoreDisabledByMods = true;
         }
         if (PlayerSetting.setting.modChartMirror)
         {
@@ -194,6 +202,7 @@ public class SongMenu_Control : MonoBehaviour
                 textDisplayMods.text += ", ";
             }
             textDisplayMods.text += "ChartMirror";
+            isHighscoreDisabledByMods = true;
         }
         if (PlayerSetting.setting.modChartRain)
         {
@@ -202,6 +211,7 @@ public class SongMenu_Control : MonoBehaviour
                 textDisplayMods.text += ", ";
             }
             textDisplayMods.text += "Rain";
+            isHighscoreDisabledByMods = true;
         }
         if (PlayerSetting.setting.modScreenFlip)
         {
@@ -210,6 +220,7 @@ public class SongMenu_Control : MonoBehaviour
                 textDisplayMods.text += ", ";
             }
             textDisplayMods.text += "ScreenFlip";
+            isHighscoreDisabledByMods = true;
         }
         if (PlayerSetting.setting.modScreenMirror)
         {
@@ -218,11 +229,15 @@ public class SongMenu_Control : MonoBehaviour
                 textDisplayMods.text += ", ";
             }
             textDisplayMods.text += "ScreenMirror";
+            isHighscoreDisabledByMods = true;
         }
 
         textOptionsAccuracyTolerance.text = PlayerSetting.setting.intAccuracyTolerance.ToString() + "%";
         textOptionsMouseSensitivity.text = (PlayerSetting.setting.floatMouseSensitivity * 100f).ToString("f2") + "%";
         textOptionsGameOffset.text = PlayerSetting.setting.intGameOffset.ToString() + " ms";
+
+        textDetailsRecord.gameObject.SetActive(!isHighscoreDisabledByMods && !isHighscoreDisabledByChart);
+        textDetailsWarning.gameObject.SetActive(isHighscoreDisabledByMods || isHighscoreDisabledByChart);
     }
 
     public void PlaySong()
@@ -344,6 +359,8 @@ public class SongMenu_Control : MonoBehaviour
             "Judge Level: " + (chartData.chartJudge + 1).ToString();
         textDetailsRecord.text = "Best Accuracy: " + PlayerPrefs.GetFloat(stringSongSelectedCurrent + "-" + intGameType.ToString() + "-" + intGameChart.ToString(), 0f).ToString("f2") + "%";
 
+        isHighscoreDisabledByChart = !chartData.isHighScoreAllowed;
+        RefreshTexts();
         objectGroupDetails.SetActive(true);
     }
 

@@ -14,6 +14,8 @@ public class PlayerSetting : MonoBehaviour
     public int intGameOffset = 0;
     // Affects mouse movement.
     public float floatMouseSensitivity = 0.06f;
+    // Use raw mouse input than smooth input.
+    public bool boolUseMouseRawInput = true;
     // Affects note scroll speed.
     public int intScrollSpeed = 40;
     // Affects song force end on being unable to achieve a certain accuracy percentage.

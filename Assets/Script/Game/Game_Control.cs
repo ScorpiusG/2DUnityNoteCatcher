@@ -399,8 +399,16 @@ public class Game_Control : MonoBehaviour
             if (!boolAutoplay)
             {
                 // Mouse movement
-                movementHoriAlpha = Input.GetAxisRaw("MouseX");
-                movementVertAlpha = Input.GetAxisRaw("MouseY");
+                if (PlayerSetting.setting.boolUseMouseRawInput)
+                {
+                    movementHoriAlpha = Input.GetAxisRaw("MouseX");
+                    movementVertAlpha = Input.GetAxisRaw("MouseY");
+                }
+                else
+                {
+                    movementHoriAlpha = Input.GetAxis("MouseX");
+                    movementVertAlpha = Input.GetAxis("MouseY");
+                }
 
                 mouseCursorPos.x = Mathf.Clamp(mouseCursorPos.x + movementHoriAlpha * PlayerSetting.setting.floatMouseSensitivity, -1f, 1f);
                 mouseCursorPos.y = Mathf.Clamp(mouseCursorPos.y + movementVertAlpha * PlayerSetting.setting.floatMouseSensitivity, -1f, 1f);
@@ -441,10 +449,10 @@ public class Game_Control : MonoBehaviour
                     switch(nextNoteCatcherHori.type)
                     {
                         case 0:
-                            mouseCursorPos.x = Mathf.Lerp(mouseCursorPos.x, nextNoteCatcherHori.position, Time.deltaTime * posLerpRate / nextNoteCatcherVert.transform.position.y);
+                            mouseCursorPos.x = Mathf.Lerp(mouseCursorPos.x, nextNoteCatcherHori.position, Time.deltaTime * posLerpRate / nextNoteCatcherHori.transform.position.y);
                             break;
                         case 1:
-                            mouseCursorPos.x = Mathf.Lerp(mouseCursorPos.x, -nextNoteCatcherHori.position, Time.deltaTime * posLerpRate / nextNoteCatcherVert.transform.position.y);
+                            mouseCursorPos.x = Mathf.Lerp(mouseCursorPos.x, -nextNoteCatcherHori.position, Time.deltaTime * posLerpRate / nextNoteCatcherHori.transform.position.y);
                             break;
                     }
                 }
