@@ -192,7 +192,7 @@ public class PlayerSetting : MonoBehaviour
         return list;
     }
     
-	void Start ()
+	void Awake ()
     {
         if (setting == null)
         {

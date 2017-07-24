@@ -19,7 +19,23 @@ public class SongMenu_Control : MonoBehaviour
     public RectTransform rectSongListParent;
     public Button buttonSongIndividual;
     public float floatVertDistanceBetweenButtons = 80f;
+    private string stringSongSelectedCurrent = "";
 
+    public ScrollRect scrollViewChartList;
+    public RectTransform rectChartListParent;
+    public SongMenu_ButtonChart buttonChartIndividual;
+    public Vector2 sizePositionPerButton = Vector2.one;
+    private int intGameType = 0;
+    private int intGameChart = 0;
+
+    public GameObject objectGroupDetails;
+    public Text textDetailsHeader;
+    public Text textDetailsBody;
+    public Text textDetailsWarning;
+    public Text textDetailsRecord;
+
+    public Slider sliderScrollSpeed;
+    public Text textDisplayScrollSpeed;
     public Text textDisplayAccuracy;
     public Text textDisplayMods;
 
@@ -27,6 +43,7 @@ public class SongMenu_Control : MonoBehaviour
     public GameObject[] groupOptionsMenuPage;
     private int intOptionsMenuPage = 0;
     public Text textOptionsAccuracyTolerance;
+    public Slider sliderOptionsAccuracyTolerance;
     public Slider sliderOptionsMouseSensitivity;
     public Text textOptionsMouseSensitivity;
     public Text textOptionsGameOffset;
@@ -39,8 +56,11 @@ public class SongMenu_Control : MonoBehaviour
 
     void Start()
     {
+        objectGroupDetails.SetActive(false);
         objectOptionsMenu.SetActive(false);
 
+        sliderScrollSpeed.value = PlayerSetting.setting.intScrollSpeed;
+        sliderOptionsAccuracyTolerance.value = PlayerSetting.setting.intAccuracyTolerance;
         sliderOptionsMouseSensitivity.value = PlayerSetting.setting.floatMouseSensitivity;
         toggleOptionsVerticalSync.isOn = PlayerSetting.setting.enableVSync;
         toggleOptionsInterfaceSongDetails.isOn = PlayerSetting.setting.enableInterfaceSongDetails;
@@ -107,6 +127,7 @@ public class SongMenu_Control : MonoBehaviour
         Destroy(buttonSongIndividual.gameObject);
         buttonSongIndividual = null;
 
+        PlayerSetting.setting.Load();
         RefreshTexts();
     }
 
@@ -127,7 +148,8 @@ public class SongMenu_Control : MonoBehaviour
 
     public void RefreshTexts()
     {
-        textDisplayAccuracy.text = "Accuracy Tolerance: " + PlayerSetting.setting.intAccuracyTolerance.ToString() + "% | Chart Scroll Speed: x" + (0.1f * PlayerSetting.setting.intScrollSpeed).ToString("f1");
+        textDisplayScrollSpeed.text = "Game Scroll Speed: x" + (0.1f * PlayerSetting.setting.intScrollSpeed).ToString("f1");
+        textDisplayAccuracy.text = "Accuracy Tolerance: " + PlayerSetting.setting.intAccuracyTolerance.ToString() + "%";
         if (PlayerSetting.setting.intGameOffset != 0)
         {
             textDisplayAccuracy.text += " | Offset: " + PlayerSetting.setting.intGameOffset.ToString() + "ms";
@@ -203,12 +225,12 @@ public class SongMenu_Control : MonoBehaviour
         textOptionsGameOffset.text = PlayerSetting.setting.intGameOffset.ToString() + " ms";
     }
 
-    public void PlaySong(string songName, int gameType, int gameStage)
+    public void PlaySong()
     {
         // Store song name, game type, game stage, and custom song (bool) information for use in the game scene
-        Game_Control.stringSongFileName = songName;
-        Game_Control.intChartGameType = gameType;
-        Game_Control.intChartGameChart = gameStage;
+        Game_Control.stringSongFileName = stringSongSelectedCurrent;
+        Game_Control.intChartGameType = intGameType;
+        Game_Control.intChartGameChart = intGameChart;
         Game_Control.stringModList = textDisplayMods.text;
         Game_Control.boolCustomSong = isLoadCustomSongs;
 
@@ -220,7 +242,109 @@ public class SongMenu_Control : MonoBehaviour
 #if UNITY_EDITOR
         Debug.Log("Clicked on \"" + folder.name + "\" folder.");
 #endif
-        // TODO: Display chart information from first chart in the folder
+        stringSongSelectedCurrent = folder.name;
+        return;
+
+        // Clear all chart buttons on scene
+        SongMenu_ButtonChart[] listOldButtons = FindObjectsOfType<SongMenu_ButtonChart>();
+        foreach(SongMenu_ButtonChart x in listOldButtons)
+        {
+            Destroy(x.gameObject);
+        }
+
+        // Display chart information from first chart in the folder
+
+        // Check for each chart in the folder
+        SongMenu_ButtonChart firstChart = null;
+        StreamReader reader;
+        ChartData chartData = ScriptableObject.CreateInstance(typeof(ChartData)) as ChartData;
+        // Game mode ID
+        for (int gameModeID = 0; gameModeID < 5; gameModeID++)
+        {
+            // Chart ID
+            for (int chartID = 0; ; chartID++)
+            {
+                string path = Directory.GetCurrentDirectory() + stringSongDirectoryPath + "/" + folder.name + "/" + folder.name + "-" + gameModeID.ToString() + "-" + chartID.ToString() + ".txt";
+                if (File.Exists(path))
+                {
+                    reader = new StreamReader(path);
+                    string input = reader.ReadToEnd();
+                    reader.Close();
+                    JsonUtility.FromJsonOverwrite(input, chartData);
+
+                    // Button info and positioning
+                    SongMenu_ButtonChart nb = Instantiate(buttonChartIndividual);
+                    nb.transform.SetParent(rectChartListParent);
+                    nb.transform.localScale = Vector3.one;
+                    nb.transform.localPosition = Vector3.right * sizePositionPerButton.x + Vector3.down * sizePositionPerButton.y;
+                    nb.intGameMode = gameModeID;
+                    nb.intChart = chartID;
+
+                    // Button display
+                    string stringText = "";
+                    switch(gameModeID)
+                    {
+                        case 0: stringText = "LN"; break;
+                        case 1: stringText = "DB"; break;
+                        case 2: stringText = "QD"; break;
+                        case 3: stringText = "PWF"; break;
+                        case 4: stringText = "C&T"; break;
+                    }
+                    stringText += " " + (chartID + 1).ToString() + "\nLvl " + chartData.chartLevel.ToString();
+                    nb.textButton.text = stringText;
+
+                    // If it is the first chart found, it will be selected first
+                    if (firstChart == null)
+                    {
+                        firstChart = nb;
+                    }
+                }
+                else
+                {
+                    break;
+                }
+            }
+        }
+
+        UseChartInfo(firstChart);
+    }
+
+    public void UseChartInfo(SongMenu_ButtonChart button)
+    {
+        intGameType = button.intGameMode;
+        intGameChart = button.intChart;
+        string path = Directory.GetCurrentDirectory() + stringSongDirectoryPath + "/" + stringSongSelectedCurrent + "/" +
+            stringSongSelectedCurrent + "-" + intGameType.ToString() + "-" + intGameChart.ToString() + ".txt";
+
+        ChartData chartData = ScriptableObject.CreateInstance(typeof(ChartData)) as ChartData;
+        StreamReader reader = new StreamReader(path);
+        string input = reader.ReadToEnd();
+        reader.Close();
+        JsonUtility.FromJsonOverwrite(input, chartData);
+
+        string stringMode = "";
+        switch (chartData.chartGameType)
+        {
+            case 0: stringMode = "LN"; break;
+            case 1: stringMode = "DB"; break;
+            case 2: stringMode = "QD"; break;
+            case 3: stringMode = "PWF"; break;
+            case 4: stringMode = "C&T"; break;
+        }
+        float actualLength = chartData.songLength * 60f / chartData.songTempo;
+
+        textDetailsHeader.text = chartData.songName;
+        textDetailsBody.text =
+            chartData.songArtist + "\n\n" +
+            "Chart Producer: " + chartData.chartDeveloper + "\n" +
+            "Mode: " + stringMode + "\n" +
+            "Level: " + chartData.chartLevel.ToString() + "\n" +
+            "Length: " + Mathf.Floor(actualLength / 60f).ToString() + ":" + (actualLength % 60f).ToString("f2") + "\n" +
+            "BPM: " + chartData.songTempo.ToString("f0") + "\n" +
+            "Judge Level: " + (chartData.chartJudge + 1).ToString();
+        textDetailsRecord.text = "Best Accuracy: " + PlayerPrefs.GetFloat(stringSongSelectedCurrent + "-" + intGameType.ToString() + "-" + intGameChart.ToString(), 0f).ToString("f2") + "%";
+
+        objectGroupDetails.SetActive(true);
     }
 
     public void RestartScene()
@@ -260,13 +384,17 @@ public class SongMenu_Control : MonoBehaviour
         }
     }
 
-    public void AdjustScrollSpeed(int mod)
+    public void AdjustScrollSpeed()
     {
-        PlayerSetting.setting.intScrollSpeed = Mathf.Clamp(PlayerSetting.setting.intScrollSpeed + mod, 1, 500);
+        PlayerSetting.setting.intScrollSpeed = Mathf.RoundToInt(sliderScrollSpeed.value);
     }
     public void AdjustAccuracyTolerance(int mod)
     {
-        PlayerSetting.setting.intAccuracyTolerance = Mathf.Clamp(PlayerSetting.setting.intAccuracyTolerance + mod, 0, 100);
+        sliderOptionsAccuracyTolerance.value = PlayerSetting.setting.intAccuracyTolerance = Mathf.Clamp(PlayerSetting.setting.intAccuracyTolerance + mod, 0, 100);
+    }
+    public void AdjustAccuracyToleranceAlt()
+    {
+        PlayerSetting.setting.intAccuracyTolerance = Mathf.RoundToInt(sliderOptionsAccuracyTolerance.value);
     }
     public void AdjustMouseSensitivity()
     {
