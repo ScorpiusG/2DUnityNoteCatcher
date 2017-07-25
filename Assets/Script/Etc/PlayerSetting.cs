@@ -6,6 +6,8 @@ public class PlayerSetting : MonoBehaviour
 {
     public static PlayerSetting setting;
 
+    // Player in-game level maxed out. If true, prevent calculations.
+    public bool boolPlayerLevelMax = false;
     // Player accumulated score.
     public List<int> intPlayerTotalScore = new List<int>();
 
@@ -97,7 +99,14 @@ public class PlayerSetting : MonoBehaviour
         string s = "";
         for (int i = intPlayerTotalScore.Count - 1; i >= 0; i++)
         {
-            s += intPlayerTotalScore[i];
+            if (i == intPlayerTotalScore.Count - 1)
+            {
+                s += intPlayerTotalScore[i].ToString("0");
+            }
+            else
+            {
+                s += intPlayerTotalScore[i].ToString("000");
+            }
             if (i > 0) s += ",";
         }
         return s;
@@ -164,6 +173,27 @@ public class PlayerSetting : MonoBehaviour
                 break;
             }
         }
+        if (level >= 100) boolPlayerLevelMax = true;
+        return level;
+    }
+
+    /// <summary>
+    /// Get player level with its internally recorded total score. Returns 100 at maximum.
+    /// </summary>
+    /// <returns></returns>
+    public int GetPlayerLevel()
+    {
+        if (boolPlayerLevelMax)
+        {
+            return 100;
+        }
+
+        int level = CalculateLevel(intPlayerTotalScore);
+        if (level > 100)
+        {
+            level = 100;
+            boolPlayerLevelMax = true;
+        }
         return level;
     }
 
@@ -193,8 +223,22 @@ public class PlayerSetting : MonoBehaviour
         }
         return list;
     }
-    
-	void Awake ()
+    /// <summary>
+    /// Converts a list of 3-digit integers to an integer
+    /// </summary>
+    /// <param name="value"></param>
+    /// <returns></returns>
+    public int ConvertListIntToInt(List<int> list)
+    {
+        int value = 0;
+        for (int i = 0; i < list.Count; i++)
+        {
+            value += list[i] * (1000 * i);
+        }
+        return value;
+    }
+
+    void Awake ()
     {
         if (setting == null)
         {

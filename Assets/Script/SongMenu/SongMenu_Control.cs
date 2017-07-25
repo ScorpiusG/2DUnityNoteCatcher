@@ -21,6 +21,11 @@ public class SongMenu_Control : MonoBehaviour
     public float floatVertDistanceBetweenButtons = 80f;
     private string stringSongSelectedCurrent = "";
 
+    public Image imagePlayerLevelMax;
+    public Text textPlayerLevel;
+    public Text textPlayerScore;
+    public Image imageScoreGauge;
+
     public ScrollRect scrollViewChartList;
     public RectTransform rectChartListParent;
     public SongMenu_ButtonChart buttonChartIndividual;
@@ -62,6 +67,27 @@ public class SongMenu_Control : MonoBehaviour
         objectGroupDetails.SetActive(false);
         objectOptionsMenu.SetActive(false);
 
+        if (PlayerSetting.setting.boolPlayerLevelMax)
+        {
+            imagePlayerLevelMax.gameObject.SetActive(true);
+            textPlayerLevel.gameObject.SetActive(false);
+            textPlayerScore.text = PlayerSetting.setting.GetScore();
+            imageScoreGauge.fillAmount = 1f;
+        }
+        else
+        {
+            int currentLevel = PlayerSetting.setting.GetPlayerLevel();
+            int prevLevelScore = PlayerSetting.setting.GetLevelScoreRequirement(currentLevel - 1);
+            int currentScore = PlayerSetting.setting.ConvertListIntToInt(PlayerSetting.setting.intPlayerTotalScore);
+            int nextLevelScore = PlayerSetting.setting.GetLevelScoreRequirement(currentLevel);
+
+            imagePlayerLevelMax.gameObject.SetActive(false);
+            textPlayerLevel.gameObject.SetActive(true);
+            textPlayerLevel.text = currentLevel.ToString();
+            textPlayerScore.text = PlayerSetting.setting.GetScore() + " (Next Level: " +
+                (nextLevelScore - currentScore).ToString("n0") + ")";
+            imageScoreGauge.fillAmount = 1f * (currentScore - prevLevelScore) / (nextLevelScore - prevLevelScore);
+        }
         sliderScrollSpeed.value = PlayerSetting.setting.intScrollSpeed;
         sliderOptionsAccuracyTolerance.value = PlayerSetting.setting.intAccuracyTolerance;
         sliderOptionsMouseSensitivity.value = PlayerSetting.setting.floatMouseSensitivity;
@@ -130,7 +156,7 @@ public class SongMenu_Control : MonoBehaviour
         Destroy(buttonSongIndividual.gameObject);
         buttonSongIndividual = null;
 
-        PlayerSetting.setting.Load();
+        //PlayerSetting.setting.Load();
         RefreshTexts();
     }
 
@@ -273,15 +299,25 @@ public class SongMenu_Control : MonoBehaviour
         SongMenu_ButtonChart firstChart = null;
         StreamReader reader;
         ChartData chartData = ScriptableObject.CreateInstance(typeof(ChartData)) as ChartData;
+        bool gameModeExist = false;
+        int gameModeExists = 0;
         // Game mode ID
         for (int gameModeID = 0; gameModeID < 5; gameModeID++)
         {
+            gameModeExist = false;
+
             // Chart ID
             for (int chartID = 0; ; chartID++)
             {
                 string path = Directory.GetCurrentDirectory() + stringSongDirectoryPath + "/" + folder.name + "/" + folder.name + "-" + gameModeID.ToString() + "-" + chartID.ToString() + ".txt";
                 if (File.Exists(path))
                 {
+                    if (!gameModeExist)
+                    {
+                        gameModeExist = true;
+                        gameModeExists++;
+                    }
+
                     reader = new StreamReader(path);
                     string input = reader.ReadToEnd();
                     reader.Close();
@@ -291,7 +327,7 @@ public class SongMenu_Control : MonoBehaviour
                     SongMenu_ButtonChart nb = Instantiate(buttonChartIndividual);
                     nb.transform.SetParent(rectChartListParent);
                     nb.transform.localScale = Vector3.one;
-                    nb.transform.localPosition = Vector3.right * sizePositionPerButton.x + Vector3.down * sizePositionPerButton.y;
+                    nb.transform.localPosition = (Vector3.right * sizePositionPerButton.x * chartID) + (Vector3.down * sizePositionPerButton.y * gameModeExists);
                     nb.intGameMode = gameModeID;
                     nb.intChart = chartID;
 
