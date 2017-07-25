@@ -1027,6 +1027,8 @@ public class Creator_Control : MonoBehaviour
                     // If there is a note of a type from the opposite catcher, place on the opposite horizontal position
                     foreach (Creator_Note x in listNotePool)
                     {
+                        // Note main position
+                        Creator_Note sameNote = null;
                         Creator_Note oppositeNote = null;
                         float dist = Mathf.Abs(time - x.transform.position.y);
                         if (dist < 0.01f)
@@ -1041,6 +1043,7 @@ public class Creator_Control : MonoBehaviour
                         }
                         if (x.length > 0.01f)
                         {
+                            // Long note end
                             dist = Mathf.Abs(time - (x.transform.position.y + x.length));
                             if (dist < 0.01f)
                             {
@@ -1052,8 +1055,28 @@ public class Creator_Control : MonoBehaviour
                                     case 3: if (x.type == 2) oppositeNote = x; break;
                                 }
                             }
+
+                            // Long note length
+                            if (time < x.transform.position.y + x.length - Mathf.Epsilon && time > x.transform.position.y + Mathf.Epsilon)
+                            {
+                                if ((type == 0 || type == 1) && (x.type == 0 || x.type == 1))
+                                {
+                                    if (type == x.type) sameNote = x;
+                                    else oppositeNote = x;
+                                }
+                                if ((type == 2 || type == 3) && (x.type == 2 || x.type == 3))
+                                {
+                                    if (type == x.type) sameNote = x;
+                                    else oppositeNote = x;
+                                }
+                            }
                         }
 
+                        if (sameNote != null)
+                        {
+                            pos = x.transform.position.x;
+                            break;
+                        }
                         if (oppositeNote != null)
                         {
                             pos = -x.transform.position.x;
