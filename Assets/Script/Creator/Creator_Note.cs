@@ -5,6 +5,7 @@ using UnityEngine;
 public class Creator_Note : MonoBehaviour
 {
     public SpriteRenderer spriteRendererLength;
+    public SpriteRenderer spriteRendererLengthEndNote;
     public TextMesh textMeshNoteType;
     public TextMesh textMeshNoteOther;
 

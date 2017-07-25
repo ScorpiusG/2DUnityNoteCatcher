@@ -381,7 +381,7 @@ public class Game_Control : MonoBehaviour
         while (floatMusicPosition < chartData.songLength)
         {
             // Time update
-            floatMusicPosition = audioSourceMusic.time + ((chartData.chartOffset - PlayerSetting.setting.intGameOffset) * 0.001f);
+            floatMusicPosition = audioSourceMusic.time - ((chartData.chartOffset + PlayerSetting.setting.intGameOffset) * 0.001f);
             floatMusicBeat =  floatMusicPosition * chartData.songTempo / 60f;
 
             // Highlight flash on beat

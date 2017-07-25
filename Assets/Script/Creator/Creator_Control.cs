@@ -287,11 +287,14 @@ public class Creator_Control : MonoBehaviour
                 newNote.spriteRendererLength.transform.localScale.x,
                 25f * note.length,
                 newNote.spriteRendererLength.transform.localScale.z);
+            newNote.spriteRendererLengthEndNote.gameObject.SetActive(true);
+            newNote.spriteRendererLengthEndNote.transform.localPosition = Vector3.up * note.length;
         }
         else
         {
             newNote.length = 0;
             newNote.spriteRendererLength.gameObject.SetActive(false);
+            newNote.spriteRendererLengthEndNote.gameObject.SetActive(false);
         }
         newNote.other = note.other;
 
@@ -304,6 +307,7 @@ public class Creator_Control : MonoBehaviour
             dim.g *= 0.7f;
             dim.b *= 0.7f;
             newNote.spriteRendererLength.color = dim;
+            newNote.spriteRendererLengthEndNote.color = dim;
         }
 
         // Update note's text mesh
@@ -1017,6 +1021,43 @@ public class Creator_Control : MonoBehaviour
                                     break;
                                 }
                             }
+                        }
+                    }
+
+                    // If there is a note of a type from the opposite catcher, place on the opposite horizontal position
+                    foreach (Creator_Note x in listNotePool)
+                    {
+                        Creator_Note oppositeNote = null;
+                        float dist = Mathf.Abs(time - x.transform.position.y);
+                        if (dist < 0.01f)
+                        {
+                            switch (type)
+                            {
+                                case 0: if (x.type == 1) oppositeNote = x; break;
+                                case 1: if (x.type == 0) oppositeNote = x; break;
+                                case 2: if (x.type == 3) oppositeNote = x; break;
+                                case 3: if (x.type == 2) oppositeNote = x; break;
+                            }
+                        }
+                        if (x.length > 0.01f)
+                        {
+                            dist = Mathf.Abs(time - (x.transform.position.y + x.length));
+                            if (dist < 0.01f)
+                            {
+                                switch (type)
+                                {
+                                    case 0: if (x.type == 1) oppositeNote = x; break;
+                                    case 1: if (x.type == 0) oppositeNote = x; break;
+                                    case 2: if (x.type == 3) oppositeNote = x; break;
+                                    case 3: if (x.type == 2) oppositeNote = x; break;
+                                }
+                            }
+                        }
+
+                        if (oppositeNote != null)
+                        {
+                            pos = -x.transform.position.x;
+                            break;
                         }
                     }
 
