@@ -62,6 +62,7 @@ public class Game_Control : MonoBehaviour
     public Color colorResultHeaderPass = Color.green;
     public Color colorResultHeaderFail = Color.red;
     public Text textResultAccuracy;
+    public Text textResultBestCombo;
     public Text textResultJudgeBest;
     public Text textResultJudgeGreat;
     public Text textResultJudgeFine;
@@ -112,7 +113,7 @@ public class Game_Control : MonoBehaviour
         SceneManager.LoadScene(sceneName);
     }
 
-    public Game_Note SpawnNote()
+    private Game_Note SpawnNote()
     {
         foreach (Game_Note x in listNote)
         {
@@ -127,12 +128,12 @@ public class Game_Control : MonoBehaviour
         return newNote;
     }
 
-    public void DespawnNote(Game_Note note)
+    private void DespawnNote(Game_Note note)
     {
         note.gameObject.SetActive(false);
     }
 
-    public void JudgeNote(Game_Note note, GameObject catcher)
+    private void JudgeNote(Game_Note note, GameObject catcher)
     {
         float dist = Mathf.Abs(note.transform.position.x - catcher.transform.position.x);
         switch (chartData.chartGameType)
@@ -216,7 +217,7 @@ public class Game_Control : MonoBehaviour
         DespawnNote(note);
     }
 
-    public Game_AnimationJudgment SpawnJudgeAnimation()
+    private Game_AnimationJudgment SpawnJudgeAnimation()
     {
         foreach (Game_AnimationJudgment x in listAnimationJudgment)
         {
@@ -531,7 +532,7 @@ public class Game_Control : MonoBehaviour
                 string[] noteInfo = chartData.listNoteInfo[j].Split('|');
                 float time = float.Parse(noteInfo[2]);
                 // Spawn note if position of note < current beat pos / FOV (scroll speed)
-                if (time < floatMusicBeat + (floatNoteDistanceSpawn / (0.01f * PlayerSetting.setting.intScrollSpeed)))
+                if (time < floatMusicBeat + (floatNoteDistanceSpawn / (0.1f * PlayerSetting.setting.intScrollSpeed)))
                 {
                     Game_Note note = SpawnNote();
                     note.type = int.Parse(noteInfo[0]);
@@ -565,10 +566,10 @@ public class Game_Control : MonoBehaviour
                         note.spriteRendererNote.color = noteColor[note.type];
 
                         note.spriteRendererLength.gameObject.SetActive(true);
-                        note.spriteRendererLength.transform.localPosition = Vector3.down * longNoteLength * (0.01f * PlayerSetting.setting.intScrollSpeed) / 2f;
+                        note.spriteRendererLength.transform.localPosition = Vector3.down * longNoteLength * (0.1f * PlayerSetting.setting.intScrollSpeed) / 2f;
                         note.spriteRendererLength.transform.localScale = new Vector3(
                             note.spriteRendererLength.transform.localScale.x,
-                            longNoteLength * (0.01f * PlayerSetting.setting.intScrollSpeed),
+                            longNoteLength * (0.1f * PlayerSetting.setting.intScrollSpeed),
                             1f);
                         note.spriteRendererLength.color = noteColor[note.type];
                     }
@@ -586,7 +587,7 @@ public class Game_Control : MonoBehaviour
             {
                 if (x.gameObject.activeSelf)
                 {
-                    x.transform.position = new Vector3(x.position, (floatMusicBeat - x.time) * (0.01f * PlayerSetting.setting.intScrollSpeed));
+                    x.transform.position = new Vector3(x.position, (floatMusicBeat - x.time) * (0.1f * PlayerSetting.setting.intScrollSpeed));
 
                     // Note flash
                     x.spriteRendererNoteHighlight.color = colorBeatFlash;
@@ -661,6 +662,8 @@ public class Game_Control : MonoBehaviour
         // End game loop
 
         imageSongProgressGauge.fillAmount = 1f;
+        Cursor.lockState = CursorLockMode.Locked;
+        yield return null;
 
         float finalAccuracy = ((playerAccuracyBest * 4) + (playerAccuracyGreat * 3) + (playerAccuracyFine * 2)) / (chartTotalNotes * 4);
 #if UNITY_EDITOR
@@ -674,6 +677,13 @@ public class Game_Control : MonoBehaviour
         objectAutoplayIndicator.SetActive(false);
         textMeshComboCurrent.gameObject.SetActive(false);
         yield return null;
+
+        // If the game was being autoplayed, skip result screen.
+        if (boolAutoplay)
+        {
+            ExitGameScene();
+            yield break;
+        }
 
         // Add and record score
         textScoreDisabled.gameObject.SetActive(isScoringDisabled);
@@ -734,6 +744,10 @@ public class Game_Control : MonoBehaviour
             textResultHeader.text = "STAGE FAILED";
             textResultHeader.color = colorResultHeaderFail;
         }
+        if (isScoringDisabled)
+        {
+            textResultOther.text = stringModList;
+        }
 
         // Show result screen
         animatorResults.gameObject.SetActive(true);
@@ -744,6 +758,7 @@ public class Game_Control : MonoBehaviour
 
         yield return new WaitForSeconds(0.5f);
         StartCoroutine(TextFloatGradualIncrease(textResultAccuracy, finalAccuracy, 0.8f));
+        StartCoroutine(TextIntGradualIncrease(textResultBestCombo, playerComboBest, 0.8f));
         yield return new WaitForSeconds(0.5f);
         StartCoroutine(TextIntGradualIncrease(textResultJudgeBest, playerAccuracyBest, 0.6f));
         yield return new WaitForSeconds(0.2f);
@@ -754,15 +769,11 @@ public class Game_Control : MonoBehaviour
         StartCoroutine(TextIntGradualIncrease(textResultJudgeMiss, playerAccuracyMiss, 0.6f));
 
         yield return new WaitForSeconds(1.5f);
-        if (finalAccuracy > oldRecordAccuracy)
+        if (finalAccuracy > oldRecordAccuracy && !isScoringDisabled)
         {
             animatorNewRecord.Play("clip");
         }
-        if (isScoringDisabled)
-        {
-            textResultOther.text = stringModList;
-        }
-        else
+        if (!isScoringDisabled)
         {
             textResultOther.text = "Score: " + finalScore.ToString();
         }

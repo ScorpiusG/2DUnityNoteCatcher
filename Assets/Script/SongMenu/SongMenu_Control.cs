@@ -67,6 +67,7 @@ public class SongMenu_Control : MonoBehaviour
         objectGroupDetails.SetActive(false);
         objectOptionsMenu.SetActive(false);
 
+        // Has already reached maximum level (100), display score only.
         if (PlayerSetting.setting.boolPlayerLevelMax)
         {
             imagePlayerLevelMax.gameObject.SetActive(true);
@@ -74,6 +75,7 @@ public class SongMenu_Control : MonoBehaviour
             textPlayerScore.text = PlayerSetting.setting.GetScore();
             imageScoreGauge.fillAmount = 1f;
         }
+        // Otherwise; show level, score, and score required to next level.
         else
         {
             int currentLevel = PlayerSetting.setting.GetPlayerLevel();
