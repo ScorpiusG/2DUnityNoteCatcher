@@ -7,6 +7,8 @@ using UnityEngine.SceneManagement;
 
 public class Creator_Control : MonoBehaviour
 {
+    public static Creator_Control control;
+
     public Camera cameraMain;
     public Canvas canvasCreatorSetting;
 
@@ -39,6 +41,10 @@ public class Creator_Control : MonoBehaviour
     private List<string> listStringNoteOther = new List<string>();
 
     public Text textMouseScrollSetting;
+    public Text textSongPreviewLength;
+    public Slider sliderSongPreviewLength;
+    public Text textSongPreviewFade;
+    public Slider sliderSongPreviewFade;
 
     public ChartData chartData;
 
@@ -65,10 +71,15 @@ public class Creator_Control : MonoBehaviour
     public int[] intBeatSnapDivisorValue = { 2, 3, 4, 6, 8 };
     private int intHoriPosSnapDivisor = 0;
     public int[] intHoriPosSnapDivisorValue = { 2, 3, 4, 6, 8 };
-    private int intCursorPosition = 0;
+    [HideInInspector] public int intCursorPosition = 0;
     private int intChartLevel = 0;
 
     private bool fixedUpdateCheckOtherFrame = false;
+
+    void Awake()
+    {
+        control = this;
+    }
 
     void Start()
     {
@@ -80,6 +91,8 @@ public class Creator_Control : MonoBehaviour
         intBeatSnapDivisor = PlayerPrefs.GetInt("creator_intBeatSnapDivisor", 0);
         intHoriPosSnapDivisor = PlayerPrefs.GetInt("creator_intHoriPosSnapDivisor", 2);
         sliderZoom.value = PlayerPrefs.GetFloat("creator_sliderZoom", 0.5f);
+        sliderSongPreviewLength.value = PlayerPrefs.GetFloat("creator_floatSongPreviewLength", 8f);
+        sliderSongPreviewFade.value = PlayerPrefs.GetFloat("creator_floatSongPreviewFade", 3f);
 
         RefreshGridSnapDivisorGuide();
         CalculateChartLevel();
@@ -247,6 +260,7 @@ public class Creator_Control : MonoBehaviour
         }
 
         CalculateChartLevel();
+        Creator_SongPreview.mSongPreview.ClearClip();
     }
 
     /// <summary>
@@ -649,6 +663,8 @@ public class Creator_Control : MonoBehaviour
         PlayerPrefs.SetInt("creator_intBeatSnapDivisor", intBeatSnapDivisor);
         PlayerPrefs.SetInt("creator_intHoriPosSnapDivisor", intHoriPosSnapDivisor);
         PlayerPrefs.SetFloat("creator_sliderZoom", sliderZoom.value);
+        PlayerPrefs.SetFloat("creator_floatSongPreviewLength", sliderSongPreviewLength.value);
+        PlayerPrefs.SetFloat("creator_floatSongPreviewFade", sliderSongPreviewFade.value);
 
         PlayerPrefs.Save();
     }
@@ -852,6 +868,8 @@ public class Creator_Control : MonoBehaviour
         }
 
         textMouseScrollSetting.text = stringMouseScrollSetting[intMouseScrollSetting];
+        textSongPreviewLength.text = sliderSongPreviewLength.value.ToString("f2");
+        textSongPreviewFade.text = sliderSongPreviewFade.value.ToString("f2");
     }
 
     private void Update()
@@ -962,6 +980,12 @@ public class Creator_Control : MonoBehaviour
         if ((Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.LeftCommand)) && Input.GetMouseButtonDown(0))
 #endif
         {
+            // Do nothing if settings window is on
+            if (canvasCreatorSetting.gameObject.activeSelf)
+            {
+                return;
+            }
+
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             RaycastHit hit;
 
@@ -1005,7 +1029,6 @@ public class Creator_Control : MonoBehaviour
                     {
                         if (x.gameObject.activeSelf && type == x.type)
                         {
-                            //float dist = Vector3.Distance(new Vector3(hit.point.x, hit.point.y), x.transform.position);
                             float dist = Mathf.Abs(time - x.transform.position.y);
                             if (dist < 0.01f)
                             {
@@ -1019,6 +1042,26 @@ public class Creator_Control : MonoBehaviour
                                 {
                                     createNote = false;
                                     break;
+                                }
+                            }
+
+                            // Same for long note ends
+                            if (length > 0.01f)
+                            {
+                                dist = Mathf.Abs(time + length - x.transform.position.y);
+                                if (dist < 0.01f)
+                                {
+                                    createNote = false;
+                                    break;
+                                }
+                                if (x.length > 0.01f)
+                                {
+                                    dist = Mathf.Abs(time + length - (x.transform.position.y + x.length));
+                                    if (dist < 0.01f)
+                                    {
+                                        createNote = false;
+                                        break;
+                                    }
                                 }
                             }
                         }
