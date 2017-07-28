@@ -81,6 +81,7 @@ public class Game_Control : MonoBehaviour
     private float movementHoriAlpha = 0f;
     private float movementVertAlpha = 0f;
 
+    public float floatNoteScrollMultiplier = 0.05f;
     public float[] floatDistAccuracyBest = { 0.16f, 0.14f, 0.125f, 0.11f, 0.1f };
     public float[] floatDistAccuracyGreat = { 0.19f, 0.165f, 0.15f, 0.125f, 0.113f };
     public float[] floatDistAccuracyFine = { 0.21f, 0.183f, 0.164f, 0.138f, 0.122f };
@@ -247,7 +248,7 @@ public class Game_Control : MonoBehaviour
         else
         {
             QualitySettings.vSyncCount = 0;
-            Application.targetFrameRate = 9999;
+            Application.targetFrameRate = 999999;
         }
 
         // Enable/Disable groups depending on game type
@@ -532,7 +533,7 @@ public class Game_Control : MonoBehaviour
                 string[] noteInfo = chartData.listNoteInfo[j].Split('|');
                 float time = float.Parse(noteInfo[2]);
                 // Spawn note if position of note < current beat pos / FOV (scroll speed)
-                if (time < floatMusicBeat + (floatNoteDistanceSpawn / (0.1f * PlayerSetting.setting.intScrollSpeed)))
+                if (time < floatMusicBeat + (floatNoteDistanceSpawn / (floatNoteScrollMultiplier * PlayerSetting.setting.intScrollSpeed)))
                 {
                     Game_Note note = SpawnNote();
                     note.type = int.Parse(noteInfo[0]);
@@ -566,10 +567,10 @@ public class Game_Control : MonoBehaviour
                         note.spriteRendererNote.color = noteColor[note.type];
 
                         note.spriteRendererLength.gameObject.SetActive(true);
-                        note.spriteRendererLength.transform.localPosition = Vector3.down * longNoteLength * (0.1f * PlayerSetting.setting.intScrollSpeed) / 2f;
+                        note.spriteRendererLength.transform.localPosition = Vector3.down * longNoteLength * (floatNoteScrollMultiplier * PlayerSetting.setting.intScrollSpeed) / 2f;
                         note.spriteRendererLength.transform.localScale = new Vector3(
                             note.spriteRendererLength.transform.localScale.x,
-                            longNoteLength * (0.1f * PlayerSetting.setting.intScrollSpeed),
+                            longNoteLength * (floatNoteScrollMultiplier * PlayerSetting.setting.intScrollSpeed),
                             1f);
                         note.spriteRendererLength.color = noteColor[note.type];
                     }
@@ -587,7 +588,7 @@ public class Game_Control : MonoBehaviour
             {
                 if (x.gameObject.activeSelf)
                 {
-                    x.transform.position = new Vector3(x.position, (floatMusicBeat - x.time) * (0.1f * PlayerSetting.setting.intScrollSpeed));
+                    x.transform.position = new Vector3(x.position, (floatMusicBeat - x.time) * (floatNoteScrollMultiplier * PlayerSetting.setting.intScrollSpeed));
 
                     // Note flash
                     x.spriteRendererNoteHighlight.color = colorBeatFlash;
@@ -600,7 +601,8 @@ public class Game_Control : MonoBehaviour
                     // Normal note or long note end - Go below pos 0 vertically
                     // Long note length - Sway too far from the note's center enough to get a "Miss"
                     if (floatMusicBeat >= x.time || 
-                        (floatMusicBeat >= x.time - x.length &&
+                        (x.length > 0.01f &&
+                        floatMusicBeat >= x.time - x.length &&
                         Mathf.Abs(x.transform.position.x - objectCatcher[x.type].transform.position.x) > floatDistAccuracyFine[chartJudgeDifficulty])
                         )
                     {
