@@ -241,6 +241,15 @@ public class SongMenu_Control : MonoBehaviour
             textDisplayMods.text += "Rain";
             isHighscoreDisabledByMods = true;
         }
+        if (PlayerSetting.setting.modChartRandom)
+        {
+            if (textDisplayMods.text != "")
+            {
+                textDisplayMods.text += ", ";
+            }
+            textDisplayMods.text += "ChartRandom";
+            isHighscoreDisabledByMods = true;
+        }
         if (PlayerSetting.setting.modScreenFlip)
         {
             if (textDisplayMods.text != "")

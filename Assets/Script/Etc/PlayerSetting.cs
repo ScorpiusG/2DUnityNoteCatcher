@@ -50,6 +50,10 @@ public class PlayerSetting : MonoBehaviour
     public bool modChartFlip = false;
     // All notes' horizontal positions are inverted.
     public bool modChartMirror = false;
+    // All notes' horizontal positions are randomly assigned with fixed distances between each other. (If the note is somehow positioned outside the field, position it back in the center.)
+    public bool modChartRandom = false;
+    // All notes' horizontal positions are randomly assigned. Unlike ChartRandom mod above, this one has no fixed distances between each note and is completely random.
+    public bool modChartBerserk = false;
     // Random fake(!) notes appear around the real note.
     public bool modChartCluster = false;
     // A thermometer will appear on screen. With little to no movement, the temperature rises. Moving the cursor will lower the temperature. Force end on maxed temperature.
