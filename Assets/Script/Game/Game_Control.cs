@@ -44,6 +44,7 @@ public class Game_Control : MonoBehaviour
     public Game_AnimationJudgment objectAnimationJudgmentPrefab;
     private List<Game_AnimationJudgment> listAnimationJudgment;
     public Sprite[] spriteJudgment;
+    public Color[] colorJudgmentParticle = { Color.blue, Color.green, Color.yellow };
 
     public Text textSongAndArtistName;
     public Text textSongDetails;
@@ -140,14 +141,14 @@ public class Game_Control : MonoBehaviour
         switch (chartData.chartGameType)
         {
             default:
-                int animJudgeSprite = 0;
+                int animJudgeID = 0;
                 int animSortingLayerID = 0;
                 // BEST
                 if (dist < floatDistAccuracyBest[chartJudgeDifficulty] || boolAutoplay)
                 {
                     playerAccuracyBest++;
                     playerComboCurrent++;
-                    animJudgeSprite = 0;
+                    animJudgeID = 0;
                     animSortingLayerID = playerComboCurrent;
 #if UNITY_EDITOR
                     Debug.Log("Note judgment - distance: " + dist + " (BEST)");
@@ -158,7 +159,7 @@ public class Game_Control : MonoBehaviour
                 {
                     playerAccuracyGreat++;
                     playerComboCurrent++;
-                    animJudgeSprite = 1;
+                    animJudgeID = 1;
                     animSortingLayerID = playerComboCurrent;
 #if UNITY_EDITOR
                     Debug.Log("Note judgment - distance: " + dist + " (GREAT)");
@@ -169,7 +170,7 @@ public class Game_Control : MonoBehaviour
                 {
                     playerAccuracyFine++;
                     playerComboCurrent++;
-                    animJudgeSprite = 2;
+                    animJudgeID = 2;
                     animSortingLayerID = playerComboCurrent;
 #if UNITY_EDITOR
                     Debug.Log("Note judgment - distance: " + dist + " (FINE)");
@@ -181,7 +182,7 @@ public class Game_Control : MonoBehaviour
                     animSortingLayerID = playerComboCurrent + 1;
                     playerAccuracyMiss++;
                     playerComboCurrent = 0;
-                    animJudgeSprite = 3;
+                    animJudgeID = 3;
 #if UNITY_EDITOR
                     Debug.Log("Note judgment - distance: " + dist + " (MISS)");
 #endif
@@ -194,9 +195,15 @@ public class Game_Control : MonoBehaviour
                     anim.gameObject.SetActive(true);
                     anim.transform.position = Vector3.right * note.position;
                     anim.gameObject.layer = 9 + note.type;
-                    anim.spriteRendererJudgment.sprite = spriteJudgment[animJudgeSprite];
+                    anim.spriteRendererJudgment.sprite = spriteJudgment[animJudgeID];
                     anim.spriteRendererJudgment.sortingLayerID = animSortingLayerID;
                     anim.animatorJudgment.Play("anim");
+                    if (animJudgeID < 3)
+                    {
+                        ParticleSystem.MainModule animParticleModule = anim.particleSystemJudgment.main;
+                        animParticleModule.startColor = colorJudgmentParticle[animJudgeID];
+                        anim.particleSystemJudgment.Play();
+                    }
                 }
                 break;
         }
