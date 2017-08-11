@@ -20,6 +20,8 @@ public class Creator_Control : MonoBehaviour
     public float cameraSizeMax = 10f;
 
     public InputField textFileName;
+    public Text textFileGameType;
+    public InputField textFileChart;
     public InputField textSongName;
     public InputField textSongArtist;
     public InputField textChartDeveloper;
@@ -85,8 +87,10 @@ public class Creator_Control : MonoBehaviour
     {
         chartData = ScriptableObject.CreateInstance(typeof(ChartData)) as ChartData;
         canvasCreatorSetting.gameObject.SetActive(false);
-
+        
         textFileName.text = PlayerPrefs.GetString("creator_textFileName", "");
+        intChartGameType = PlayerPrefs.GetInt("creator_intChartGameType", 0);
+        textFileChart.text = PlayerPrefs.GetString("creator_textFileChart", "0");
         intMouseScrollSetting = PlayerPrefs.GetInt("creator_intMouseScrollSetting", 0);
         intBeatSnapDivisor = PlayerPrefs.GetInt("creator_intBeatSnapDivisor", 0);
         intHoriPosSnapDivisor = PlayerPrefs.GetInt("creator_intHoriPosSnapDivisor", 2);
@@ -169,7 +173,7 @@ public class Creator_Control : MonoBehaviour
 #endif
 
         // Output to file
-        string path = "MyCharts/" + textFileName.text + ".txt";
+        string path = "MyCharts/" + textFileName.text + "-" + intChartGameType.ToString() + "-" + textFileChart.text + ".txt";
         if (File.Exists(path))
         {
             File.Delete(path);
@@ -184,7 +188,7 @@ public class Creator_Control : MonoBehaviour
     /// </summary>
     public void LoadChart()
     {
-        string input = textFileName.text;
+        string input = textFileName.text + "-" + intChartGameType.ToString() + "-" + textFileChart.text;
 
         ClearChart();
 
@@ -214,7 +218,7 @@ public class Creator_Control : MonoBehaviour
         textSongLength.text = chartData.songLength.ToString();
         textSongTempo.text = chartData.songTempo.ToString("f2");
         textChartJudge.text = chartData.chartJudge.ToString();
-        intChartGameType = chartData.chartGameType;
+        //intChartGameType = chartData.chartGameType;
 
         ChartData.NoteInfo newNote = ScriptableObject.CreateInstance(typeof(ChartData.NoteInfo)) as ChartData.NoteInfo;
         foreach (string x in chartData.listNoteInfo)
@@ -659,6 +663,8 @@ public class Creator_Control : MonoBehaviour
     public void SaveCreatorSettings()
     {
         PlayerPrefs.SetString("creator_textFileName", textFileName.text);
+        PlayerPrefs.SetInt("creator_intChartGameType", intChartGameType);
+        PlayerPrefs.SetString("creator_textFileChart", textFileChart.text);
         PlayerPrefs.SetInt("creator_intMouseScrollSetting", intMouseScrollSetting);
         PlayerPrefs.SetInt("creator_intBeatSnapDivisor", intBeatSnapDivisor);
         PlayerPrefs.SetInt("creator_intHoriPosSnapDivisor", intHoriPosSnapDivisor);
@@ -860,6 +866,7 @@ public class Creator_Control : MonoBehaviour
 
         // Current selection
         textChartGameType.text = stringChartGameType[intChartGameType];
+        textFileGameType.text = "- " + intChartGameType.ToString() + " -";
         textNotePlacementType.text = stringNotePlacementType[intNotePlacementType];
         textNoteOther.text = "";
         foreach (string s in listStringNoteOther)

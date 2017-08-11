@@ -295,7 +295,6 @@ public class SongMenu_Control : MonoBehaviour
         Debug.Log("Clicked on \"" + folder.name + "\" folder.");
 #endif
         stringSongSelectedCurrent = folder.name;
-        return;
 
         // Clear all chart buttons on scene
         SongMenu_ButtonChart[] listOldButtons = FindObjectsOfType<SongMenu_ButtonChart>();

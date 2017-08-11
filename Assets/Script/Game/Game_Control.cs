@@ -546,7 +546,7 @@ public class Game_Control : MonoBehaviour
                     note.type = int.Parse(noteInfo[0]);
                     note.size = int.Parse(noteInfo[1]);
                     note.time = time;
-                    note.position = float.Parse(noteInfo[3]);
+                    note.position = Mathf.Clamp(float.Parse(noteInfo[3]), -1f, 1f);
                     note.other = new List<string>();
                     if (noteInfo.Length > 5)
                     {
@@ -567,7 +567,7 @@ public class Game_Control : MonoBehaviour
                         note.type = int.Parse(noteInfo[0]);
                         note.size = int.Parse(noteInfo[1]);
                         note.time = time;
-                        note.position = float.Parse(noteInfo[3]) + longNoteLength;
+                        note.position = Mathf.Clamp(float.Parse(noteInfo[3]), -1f, 1f);
                         note.length = longNoteLength;
                         note.other = new List<string>();
                         note.gameObject.layer = 9 + note.type;
