@@ -296,6 +296,14 @@ public class SongMenu_Control : MonoBehaviour
 #endif
         stringSongSelectedCurrent = folder.name;
 
+        // The selected folder is darkened. The rest remain at normal color.
+        Button[] listAllButtons = FindObjectsOfType<Button>();
+        foreach(Button x in listAllButtons)
+        {
+            x.image.color = Color.white;
+        }
+        folder.image.color = Color.grey;
+
         // Clear all chart buttons on scene
         SongMenu_ButtonChart[] listOldButtons = FindObjectsOfType<SongMenu_ButtonChart>();
         foreach(SongMenu_ButtonChart x in listOldButtons)
@@ -372,6 +380,13 @@ public class SongMenu_Control : MonoBehaviour
 
     public void UseChartInfo(SongMenu_ButtonChart button)
     {
+        SongMenu_ButtonChart[] listOldButtons = FindObjectsOfType<SongMenu_ButtonChart>();
+        foreach (SongMenu_ButtonChart x in listOldButtons)
+        {
+            x.imageButton.color = Color.white;
+        }
+        button.imageButton.color = Color.grey;
+
         intGameType = button.intGameMode;
         intGameChart = button.intChart;
         string path = Directory.GetCurrentDirectory() + stringSongDirectoryPath + "/" + stringSongSelectedCurrent + "/" +
@@ -389,8 +404,8 @@ public class SongMenu_Control : MonoBehaviour
             case 0: stringMode = "LN"; break;
             case 1: stringMode = "DB"; break;
             case 2: stringMode = "QD"; break;
-            case 3: stringMode = "PWF"; break;
-            case 4: stringMode = "C&T"; break;
+            case 3: stringMode = "C&T"; break;
+            case 4: stringMode = "PWF"; break;
         }
         float actualLength = chartData.songLength * 60f / chartData.songTempo;
 

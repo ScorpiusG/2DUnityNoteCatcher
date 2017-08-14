@@ -45,7 +45,7 @@ public class Creator_SongPreview : MonoBehaviour
         // Play the (hopefully) loaded clip
         mAudioSource.Play();
         mAudioSource.time = currentSecond;
-        mAudioSource.volume = 1f;
+        mAudioSource.volume = PlayerSetting.setting.floatVolumeMusic;
 
         // Preview area
         while (mAudioSource.isPlaying && mAudioSource.time < endSecond)

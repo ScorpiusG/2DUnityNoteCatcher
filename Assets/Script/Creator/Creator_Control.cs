@@ -63,6 +63,13 @@ public class Creator_Control : MonoBehaviour
     private List<GameObject> listObjectHoriPosSnapDivisorGuide = new List<GameObject>();
     public GameObject objectHoriPosSnapDivisorGuidePrefab;
 
+    public AudioSource mAudioSource;
+    public AudioClip clipSelect;
+    public AudioClip clipTick;
+    public AudioClip clipCancel;
+    public AudioClip clipNoteCreate;
+    public AudioClip clipNoteDelete;
+
     private int intMouseScrollSetting = 0;
     public string[] stringMouseScrollSetting = { "Move Chart", "Zoom Chart", "Change Note Type"};
     private int intChartGameType = 0;
@@ -107,6 +114,7 @@ public class Creator_Control : MonoBehaviour
     /// </summary>
     public void SaveChart()
     {
+        PlaySound(clipSelect);
         CalculateChartLevel();
 
         Creator_Note[] listNoteC = FindObjectsOfType<Creator_Note>();
@@ -248,6 +256,8 @@ public class Creator_Control : MonoBehaviour
     /// </summary>
     public void ClearChart()
     {
+        PlaySound(clipSelect);
+
         //textFileName.text = "";
         textSongName.text = "";
         textSongArtist.text = "";
@@ -459,6 +469,7 @@ public class Creator_Control : MonoBehaviour
     {
         if (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.LeftCommand)) return;
 
+        PlaySound(clipTick);
         intChartGameType += modifier;
         if (intChartGameType < 0)
         {
@@ -474,6 +485,7 @@ public class Creator_Control : MonoBehaviour
     {
         if (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.LeftCommand)) return;
 
+        PlaySound(clipTick);
         if (listStringNoteOther.Count >= 8)
         {
             return;
@@ -484,12 +496,14 @@ public class Creator_Control : MonoBehaviour
     {
         if (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.LeftCommand)) return;
 
+        PlaySound(clipTick);
         listStringNoteOther.Remove(text.text);
     }
     public void ClearAllNoteEffect()
     {
         if (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.LeftCommand)) return;
 
+        PlaySound(clipTick);
         listStringNoteOther.Clear();
     }
 
@@ -501,6 +515,7 @@ public class Creator_Control : MonoBehaviour
     {
         if (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.LeftCommand)) return;
 
+        PlaySound(clipTick);
         intNotePlacementType += modifier;
         if (intNotePlacementType < 0)
         {
@@ -514,6 +529,7 @@ public class Creator_Control : MonoBehaviour
 
     public void MouseScrollSettingChange(int modifier)
     {
+        PlaySound(clipTick);
         intMouseScrollSetting += modifier;
         if (intMouseScrollSetting < 0)
         {
@@ -533,6 +549,7 @@ public class Creator_Control : MonoBehaviour
     {
         if (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.LeftCommand)) return;
 
+        PlaySound(clipTick);
         intBeatSnapDivisor += modifier;
         if (intBeatSnapDivisor < -1)
         {
@@ -548,6 +565,7 @@ public class Creator_Control : MonoBehaviour
     {
         if (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.LeftCommand)) return;
 
+        PlaySound(clipTick);
         intHoriPosSnapDivisor += modifier;
         if (intHoriPosSnapDivisor < 0)
         {
@@ -657,6 +675,7 @@ public class Creator_Control : MonoBehaviour
             SaveCreatorSettings();
         }
 
+        PlaySound(clipSelect);
         canvasCreatorSetting.gameObject.SetActive(!canvasCreatorSetting.gameObject.activeSelf);
     }
 
@@ -814,6 +833,15 @@ public class Creator_Control : MonoBehaviour
         return calc;
     }
 
+    public void PlaySound(AudioClip clip)
+    {
+        if (mAudioSource == null || clip == null)
+        {
+            return;
+        }
+        mAudioSource.PlayOneShot(clip, PlayerSetting.setting.floatVolumeEffect);
+    }
+
     private void FixedUpdate()
     {
         if (fixedUpdateCheckOtherFrame)
@@ -866,7 +894,7 @@ public class Creator_Control : MonoBehaviour
 
         // Current selection
         textChartGameType.text = stringChartGameType[intChartGameType];
-        textFileGameType.text = "- " + intChartGameType.ToString() + " -";
+        textFileGameType.text = "-" + intChartGameType.ToString() + "-";
         textNotePlacementType.text = stringNotePlacementType[intNotePlacementType];
         textNoteOther.text = "";
         foreach (string s in listStringNoteOther)
@@ -886,6 +914,7 @@ public class Creator_Control : MonoBehaviour
         // Cursor movement by input
         if (Input.GetKey(KeyCode.DownArrow) && holdDelayCurrent < 0f)
         {
+            PlaySound(clipTick);
             if (Input.GetKey(KeyCode.LeftArrow))
             {
                 intCursorPosition -= 16;
@@ -898,6 +927,7 @@ public class Creator_Control : MonoBehaviour
         }
         if (Input.GetKey(KeyCode.UpArrow) && holdDelayCurrent < 0f)
         {
+            PlaySound(clipTick);
             if (Input.GetKey(KeyCode.RightArrow))
             {
                 intCursorPosition += 16;
@@ -910,11 +940,13 @@ public class Creator_Control : MonoBehaviour
         }
         if (Input.GetKey(KeyCode.LeftArrow) && holdDelayCurrent < 0f)
         {
+            PlaySound(clipTick);
             intCursorPosition -= 4;
             holdDelayCurrent = holdDelay;
         }
         if (Input.GetKey(KeyCode.RightArrow) && holdDelayCurrent < 0f)
         {
+            PlaySound(clipTick);
             intCursorPosition += 4;
             holdDelayCurrent = holdDelay;
         }
@@ -931,30 +963,36 @@ public class Creator_Control : MonoBehaviour
             case 0:
                 if (Input.GetAxis("MouseScrollWheel") >  Mathf.Epsilon)
                 {
+                    PlaySound(clipTick);
                     intCursorPosition++;
                 }
                 if (Input.GetAxis("MouseScrollWheel") < -Mathf.Epsilon)
                 {
+                    PlaySound(clipTick);
                     intCursorPosition--;
                 }
                 break;
             case 1:
                 if (Input.GetAxis("MouseScrollWheel") > Mathf.Epsilon)
                 {
+                    PlaySound(clipTick);
                     intCursorPosition--;
                 }
                 if (Input.GetAxis("MouseScrollWheel") < -Mathf.Epsilon)
                 {
+                    PlaySound(clipTick);
                     intCursorPosition++;
                 }
                 break;
             case 2:
                 if (Input.GetAxis("MouseScrollWheel") > Mathf.Epsilon)
                 {
+                    PlaySound(clipTick);
                     sliderZoom.value = Mathf.Clamp01(sliderZoom.value - 0.08f);
                 }
                 if (Input.GetAxis("MouseScrollWheel") < -Mathf.Epsilon)
                 {
+                    PlaySound(clipTick);
                     sliderZoom.value = Mathf.Clamp01(sliderZoom.value + 0.08f);
                 }
                 break;
@@ -1140,7 +1178,12 @@ public class Creator_Control : MonoBehaviour
                         Debug.Log("Note creation: pos " + pos.ToString("f3") + ", time " + time.ToString("f3") + ", type " + type.ToString() + ", length " + length.ToString("f3"));
 #endif
                         CreateNote(pos, time, type, 0, length, listStringNoteOther);
+                        PlaySound(clipNoteCreate);
                         CalculateChartLevel();
+                    }
+                    else
+                    {
+                        PlaySound(clipCancel);
                     }
                 }
             }
@@ -1159,6 +1202,7 @@ public class Creator_Control : MonoBehaviour
             if (Physics.Raycast(ray, out hit, 15f) && hit.collider.tag == "Creator_Note")
             {
                 DeleteNote(hit.collider.GetComponent<Creator_Note>());
+                PlaySound(clipNoteDelete);
                 CalculateChartLevel();
             }
         }

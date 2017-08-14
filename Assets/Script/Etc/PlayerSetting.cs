@@ -22,6 +22,10 @@ public class PlayerSetting : MonoBehaviour
     public int intScrollSpeed = 40;
     // Affects song force end on being unable to achieve a certain accuracy percentage.
     public int intAccuracyTolerance = 30;
+    // Music volume
+    public float floatVolumeMusic = 1f;
+    // Sound effect volume
+    public float floatVolumeEffect = 1f;
 
     // Interface and frame settings.
     // Vertical synchronization.
