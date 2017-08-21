@@ -22,8 +22,10 @@ public class Game_Control : MonoBehaviour
     public GameObject[] objectCatcher;
     public SpriteRenderer[] spriteRendererCatcherHighlight;
 
-    public Game_Note notePrefab;
-    private List<Game_Note> listNote = new List<Game_Note>();
+    public Game_Note noteCatchPrefab;
+    private List<Game_Note> listNoteCatch = new List<Game_Note>();
+    public Game_Note noteTapPrefab;
+    private List<Game_Note> listNoteTap = new List<Game_Note>();
     public Color[] noteColor = { Color.blue, Color.red, Color.green, Color.yellow };
     public float floatNoteDistanceSpawn = 3f;
 
@@ -115,9 +117,9 @@ public class Game_Control : MonoBehaviour
         SceneManager.LoadScene(sceneName);
     }
 
-    private Game_Note SpawnNote()
+    private Game_Note SpawnNoteCatch()
     {
-        foreach (Game_Note x in listNote)
+        foreach (Game_Note x in listNoteCatch)
         {
             if (x.gameObject.activeSelf)
             {
@@ -125,8 +127,22 @@ public class Game_Control : MonoBehaviour
             }
         }
 
-        Game_Note newNote = Instantiate(notePrefab);
-        listNote.Add(newNote);
+        Game_Note newNote = Instantiate(noteCatchPrefab);
+        listNoteCatch.Add(newNote);
+        return newNote;
+    }
+    private Game_Note SpawnNoteTap()
+    {
+        foreach (Game_Note x in listNoteTap)
+        {
+            if (x.gameObject.activeSelf)
+            {
+                return x;
+            }
+        }
+
+        Game_Note newNote = Instantiate(noteTapPrefab);
+        listNoteTap.Add(newNote);
         return newNote;
     }
 
@@ -339,7 +355,7 @@ public class Game_Control : MonoBehaviour
             imageSongProgressGauge.gameObject.SetActive(false);
         }
         objectGroupInterfaceAccuracy.SetActive(PlayerSetting.setting.enableInterfaceAccuracy);
-        chartTotalNotes = chartData.listNoteInfo.Count;
+        chartTotalNotes = chartData.listNoteCatchInfo.Count;
         chartJudgeDifficulty = chartData.chartJudge;
         if (chartJudgeDifficulty >= floatDistAccuracyBest.Length) chartJudgeDifficulty = floatDistAccuracyBest.Length - 1;
 
@@ -428,7 +444,7 @@ public class Game_Control : MonoBehaviour
             {
                 Game_Note nextNoteCatcherHori = null;
                 Game_Note nextNoteCatcherVert = null;
-                foreach (Game_Note x in listNote)
+                foreach (Game_Note x in listNoteCatch)
                 {
                     if (x.gameObject.activeSelf)
                     {
@@ -535,14 +551,15 @@ public class Game_Control : MonoBehaviour
             textMeshComboCurrent.transform.localScale = Vector3.one * floatTextComboScaleCurrent;
 
             // Note spawning
-            for (int j = 0; j < chartData.listNoteInfo.Count; j++)
+            // Catch note
+            for (int j = 0; j < chartData.listNoteCatchInfo.Count; j++)
             {
-                string[] noteInfo = chartData.listNoteInfo[j].Split('|');
+                string[] noteInfo = chartData.listNoteCatchInfo[j].Split('|');
                 float time = float.Parse(noteInfo[2]);
                 // Spawn note if position of note < current beat pos / FOV (scroll speed)
                 if (time < floatMusicBeat + (floatNoteDistanceSpawn / (floatNoteScrollMultiplier * PlayerSetting.setting.intScrollSpeed)))
                 {
-                    Game_Note note = SpawnNote();
+                    Game_Note note = SpawnNoteCatch();
                     note.type = int.Parse(noteInfo[0]);
                     note.size = int.Parse(noteInfo[1]);
                     note.time = time;
@@ -563,7 +580,7 @@ public class Game_Control : MonoBehaviour
                     float longNoteLength = float.Parse(noteInfo[4]);
                     if (longNoteLength > 0.01f)
                     {
-                        note = SpawnNote();
+                        note = SpawnNoteCatch();
                         note.type = int.Parse(noteInfo[0]);
                         note.size = int.Parse(noteInfo[1]);
                         note.time = time;
@@ -586,12 +603,66 @@ public class Game_Control : MonoBehaviour
                         note.spriteRendererLength.gameObject.SetActive(false);
                     }
 
-                    chartData.listNoteInfo.RemoveAt(j);
+                    chartData.listNoteCatchInfo.RemoveAt(j);
+                }
+            }
+            // Tap note
+            for (int j = 0; j < chartData.listNoteTapInfo.Count; j++)
+            {
+                string[] noteInfo = chartData.listNoteTapInfo[j].Split('|');
+                float time = float.Parse(noteInfo[2]);
+                if (time < floatMusicBeat + (floatNoteDistanceSpawn / (floatNoteScrollMultiplier * PlayerSetting.setting.intScrollSpeed)))
+                {
+                    Game_Note note = SpawnNoteTap();
+                    note.type = int.Parse(noteInfo[0]);
+                    note.size = int.Parse(noteInfo[1]);
+                    note.time = time;
+                    note.position = Mathf.Clamp(float.Parse(noteInfo[3]), -1f, 1f);
+                    note.other = new List<string>();
+                    if (noteInfo.Length > 5)
+                    {
+                        for (int i = 5; i < noteInfo.Length; i++)
+                        {
+                            note.other.Add(noteInfo[i]);
+                        }
+                    }
+                    note.gameObject.layer = 9 + note.type;
+                    note.spriteRendererNote.color = noteColor[note.type];
+                    note.gameObject.SetActive(true);
+                    
+                    float longNoteLength = float.Parse(noteInfo[4]);
+                    if (longNoteLength > 0.01f)
+                    {
+                        note = SpawnNoteTap();
+                        note.type = int.Parse(noteInfo[0]);
+                        note.size = int.Parse(noteInfo[1]);
+                        note.time = time;
+                        note.position = 0f;
+                        //note.position = Mathf.Clamp(float.Parse(noteInfo[3]), -1f, 1f);
+                        note.length = longNoteLength;
+                        note.other = new List<string>();
+                        note.gameObject.layer = 9 + note.type;
+                        note.spriteRendererNote.color = noteColor[note.type];
+
+                        note.spriteRendererLength.gameObject.SetActive(true);
+                        note.spriteRendererLength.transform.localPosition = Vector3.down * longNoteLength * (floatNoteScrollMultiplier * PlayerSetting.setting.intScrollSpeed) / 2f;
+                        note.spriteRendererLength.transform.localScale = new Vector3(
+                            note.spriteRendererLength.transform.localScale.x,
+                            longNoteLength * (floatNoteScrollMultiplier * PlayerSetting.setting.intScrollSpeed),
+                            1f);
+                        note.spriteRendererLength.color = noteColor[note.type];
+                    }
+                    else
+                    {
+                        note.spriteRendererLength.gameObject.SetActive(false);
+                    }
+
+                    chartData.listNoteTapInfo.RemoveAt(j);
                 }
             }
 
             // Note positioning
-            foreach (Game_Note x in listNote)
+            foreach (Game_Note x in listNoteCatch)
             {
                 if (x.gameObject.activeSelf)
                 {
@@ -643,7 +714,7 @@ public class Game_Control : MonoBehaviour
             {
                 if (floatTimeEscapeHeld > 2f)
                 {
-                    foreach (string s in chartData.listNoteInfo)
+                    foreach (string s in chartData.listNoteCatchInfo)
                     {
                         string[] noteInfo = s.Split('|');
                         playerAccuracyMiss++;
@@ -654,7 +725,7 @@ public class Game_Control : MonoBehaviour
                         }
                     }
                 }
-                foreach (Game_Note x in listNote)
+                foreach (Game_Note x in listNoteCatch)
                 {
                     if (x.gameObject.activeSelf)
                     {

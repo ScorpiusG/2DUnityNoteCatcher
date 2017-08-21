@@ -50,8 +50,10 @@ public class Creator_Control : MonoBehaviour
 
     public ChartData chartData;
 
-    private List<Creator_Note> listNotePool = new List<Creator_Note>();
-    public Creator_Note objectNotePrefab;
+    private List<Creator_Note> listNoteCatchPool = new List<Creator_Note>();
+    public Creator_Note objectNoteCatchPrefab;
+    private List<Creator_Note> listNoteTapPool = new List<Creator_Note>();
+    public Creator_Note objectNoteTapPrefab;
     public Color[] colorNote = { Color.blue, Color.red, Color.green, Color.yellow };
 
     private List<Creator_SpecialEffect> listSpecialEffectPool = new List<Creator_SpecialEffect>();
@@ -120,10 +122,13 @@ public class Creator_Control : MonoBehaviour
         Creator_Note[] listNoteC = FindObjectsOfType<Creator_Note>();
         if (listNoteC.Length < 1)
         {
+#if UNITY_EDITOR
+            Debug.LogWarning("WARNING: There are no notes in this chart. Save cancelled.");
+#endif
             return;
         }
 
-        chartData.listNoteInfo = new List<string>();
+        chartData.listNoteCatchInfo = new List<string>();
         chartData.listSpecialEffectInfo = new List<string>();
 
         chartData.songName = textSongName.text;
@@ -141,8 +146,13 @@ public class Creator_Control : MonoBehaviour
         
         //ChartData.NoteInfo newNote = new ChartData.NoteInfo();
         ChartData.NoteInfo newNote = ScriptableObject.CreateInstance(typeof(ChartData.NoteInfo)) as ChartData.NoteInfo;
-        foreach (Creator_Note x in listNoteC)
+        foreach (Creator_Note x in listNoteCatchPool)
         {
+            if (!x.gameObject.activeInHierarchy)
+            {
+                continue;
+            }
+
             newNote.time = x.transform.position.y;
             newNote.position = x.transform.position.x;
             newNote.type = x.type;
@@ -157,6 +167,7 @@ public class Creator_Control : MonoBehaviour
             }
             newNote.other = x.other;
 
+            // Format: <type> | <size> | <time> | <hori-position> | <length (long note)>
             string stringNote = newNote.type.ToString() + "|" +
                 newNote.size.ToString() + "|" +
                 newNote.time.ToString() + "|" +
@@ -166,7 +177,46 @@ public class Creator_Control : MonoBehaviour
             {
                 stringNote += "|" + s;
             }
-            chartData.listNoteInfo.Add(stringNote);
+            chartData.listNoteCatchInfo.Add(stringNote);
+
+            if (newNote.position > chartData.songLength - 4f)
+            {
+                chartData.songLength = newNote.position + 4f;
+                textSongLength.text = (newNote.position + 4f).ToString();
+            }
+        }
+        foreach (Creator_Note x in listNoteTapPool)
+        {
+            if (!x.gameObject.activeInHierarchy)
+            {
+                continue;
+            }
+
+            newNote.time = x.transform.position.y;
+            newNote.position = x.transform.position.x;
+            newNote.type = x.type;
+            newNote.size = x.size;
+            if (x.length > 0.01f)
+            {
+                newNote.length = x.length;
+            }
+            else
+            {
+                newNote.length = 0;
+            }
+            newNote.other = x.other;
+
+            // Format: <type> | <size> | <time> | <hori-position> | <length (long note)>
+            string stringNote = newNote.type.ToString() + "|" +
+                newNote.size.ToString() + "|" +
+                newNote.time.ToString() + "|" +
+                newNote.position.ToString() + "|" +
+                newNote.length.ToString();
+            foreach (string s in newNote.other)
+            {
+                stringNote += "|" + s;
+            }
+            chartData.listNoteTapInfo.Add(stringNote);
 
             if (newNote.position > chartData.songLength - 4f)
             {
@@ -229,7 +279,7 @@ public class Creator_Control : MonoBehaviour
         //intChartGameType = chartData.chartGameType;
 
         ChartData.NoteInfo newNote = ScriptableObject.CreateInstance(typeof(ChartData.NoteInfo)) as ChartData.NoteInfo;
-        foreach (string x in chartData.listNoteInfo)
+        foreach (string x in chartData.listNoteCatchInfo)
         {
             newNote.other = new List<string>();
             string[] y = x.Split('|');
@@ -245,7 +295,25 @@ public class Creator_Control : MonoBehaviour
                     newNote.other.Add(y[i]);
                 }
             }
-            CreateNote(newNote);
+            CreateNoteCatch(newNote);
+        }
+        foreach (string x in chartData.listNoteTapInfo)
+        {
+            newNote.other = new List<string>();
+            string[] y = x.Split('|');
+            newNote.type = int.Parse(y[0]);
+            newNote.size = int.Parse(y[1]);
+            newNote.time = float.Parse(y[2]);
+            newNote.position = float.Parse(y[3]);
+            newNote.length = float.Parse(y[4]);
+            if (y.Length > 5)
+            {
+                for (int i = 5; i < y.Length; i++)
+                {
+                    newNote.other.Add(y[i]);
+                }
+            }
+            CreateNoteTap(newNote);
         }
 
         CalculateChartLevel();
@@ -281,12 +349,12 @@ public class Creator_Control : MonoBehaviour
     /// Create a note using the chart's note data.
     /// </summary>
     /// <param name="note"></param>
-    public void CreateNote(ChartData.NoteInfo note)
+    public void CreateNoteCatch(ChartData.NoteInfo note)
     {
         // Object pooling - try to get an unused object from the pool, and make a new object if there are no unused ones
         bool createNote = true;
         Creator_Note newNote = null;
-        foreach (Creator_Note x in listNotePool)
+        foreach (Creator_Note x in listNoteCatchPool)
         {
             if (!x.gameObject.activeSelf)
             {
@@ -297,13 +365,13 @@ public class Creator_Control : MonoBehaviour
         }
         if (createNote)
         {
-            newNote = Instantiate(objectNotePrefab);
-            listNotePool.Add(newNote);
+            newNote = Instantiate(objectNoteCatchPrefab);
+            listNoteCatchPool.Add(newNote);
         }
 
         // Modify note to use information given
         newNote.transform.position = new Vector3(note.position, note.time);
-        newNote.type = note.type;
+        newNote.type = note.type % 4;
         newNote.size = note.size;
         // Long note visualization
         if (note.length > 0.01f)
@@ -327,7 +395,7 @@ public class Creator_Control : MonoBehaviour
         newNote.other = note.other;
 
         // Colorize note based on type
-        newNote.GetComponent<SpriteRenderer>().color = colorNote[note.type];
+        newNote.GetComponent<SpriteRenderer>().color = colorNote[note.type % 4];
         if (colorNote.Length > 0.01f)
         {
             Color dim = colorNote[note.type];
@@ -345,24 +413,24 @@ public class Creator_Control : MonoBehaviour
                 newNote.textMeshNoteType.gameObject.SetActive(false);
                 break;
             case 0:
+            case 4:
                 newNote.textMeshNoteType.text = "1";
                 newNote.textMeshNoteType.anchor = TextAnchor.LowerRight;
                 break;
             case 1:
+            case 5:
                 newNote.textMeshNoteType.text = "2";
                 newNote.textMeshNoteType.anchor = TextAnchor.LowerLeft;
                 break;
             case 2:
+            case 6:
                 newNote.textMeshNoteType.text = "3";
                 newNote.textMeshNoteType.anchor = TextAnchor.UpperRight;
                 break;
             case 3:
+            case 7:
                 newNote.textMeshNoteType.text = "4";
                 newNote.textMeshNoteType.anchor = TextAnchor.UpperLeft;
-                break;
-            case 4:
-                newNote.textMeshNoteType.text = "SHAKE";
-                newNote.textMeshNoteType.anchor = TextAnchor.MiddleCenter;
                 break;
         }
         newNote.textMeshNoteOther.text = "";
@@ -382,7 +450,7 @@ public class Creator_Control : MonoBehaviour
     /// <param name="type">Note's type. Determines which catcher it will appear for.</param>
     /// <param name="size">Note's size. Larger sizes make note judgment easier. Also affects note's appearance. The default value is 0 and cannot be lower than that.</param>
     /// <param name="other">Note's additional attributes.</param>
-    public void CreateNote(float position, float time, int type = 0, int size = 0, float length = 0f, List<string> other = null)
+    public void CreateNoteCatch(float position, float time, int type = 0, int size = 0, float length = 0f, List<string> other = null)
     {
         //ChartData.NoteInfo newNote = new ChartData.NoteInfo();
         ChartData.NoteInfo newNote = ScriptableObject.CreateInstance(typeof(ChartData.NoteInfo)) as ChartData.NoteInfo;
@@ -400,7 +468,126 @@ public class Creator_Control : MonoBehaviour
             newNote.other = other;
         }
 
-        CreateNote(newNote);
+        CreateNoteCatch(newNote);
+    }
+
+    /// <summary>
+    /// Create a note using the chart's note data.
+    /// </summary>
+    /// <param name="note"></param>
+    public void CreateNoteTap(ChartData.NoteInfo note)
+    {
+        bool createNote = true;
+        Creator_Note newNote = null;
+        foreach (Creator_Note x in listNoteTapPool)
+        {
+            if (!x.gameObject.activeSelf)
+            {
+                newNote = x;
+                createNote = false;
+                break;
+            }
+        }
+        if (createNote)
+        {
+            newNote = Instantiate(objectNoteTapPrefab);
+            listNoteTapPool.Add(newNote);
+        }
+        
+        newNote.transform.position = new Vector3(0f, note.time);
+        newNote.type = note.type % 4;
+        newNote.size = note.size;
+        if (note.length > 0.01f)
+        {
+            newNote.length = note.length;
+            newNote.spriteRendererLength.gameObject.SetActive(true);
+            newNote.spriteRendererLength.transform.localPosition = Vector3.up * note.length * 0.5f;
+            newNote.spriteRendererLength.transform.localScale = new Vector3(
+                newNote.spriteRendererLength.transform.localScale.x,
+                25f * note.length,
+                newNote.spriteRendererLength.transform.localScale.z);
+            newNote.spriteRendererLengthEndNote.gameObject.SetActive(true);
+            newNote.spriteRendererLengthEndNote.transform.localPosition = Vector3.up * note.length;
+        }
+        else
+        {
+            newNote.length = 0;
+            newNote.spriteRendererLength.gameObject.SetActive(false);
+            newNote.spriteRendererLengthEndNote.gameObject.SetActive(false);
+        }
+        newNote.other = note.other;
+        
+        newNote.GetComponent<SpriteRenderer>().color = colorNote[note.type % 4];
+        if (colorNote.Length > 0.01f)
+        {
+            Color dim = colorNote[note.type % 4];
+            dim.r *= 0.7f;
+            dim.g *= 0.7f;
+            dim.b *= 0.7f;
+            newNote.spriteRendererLength.color = dim;
+            newNote.spriteRendererLengthEndNote.color = dim;
+        }
+        
+        switch (newNote.type)
+        {
+            default:
+                newNote.textMeshNoteType.gameObject.SetActive(false);
+                break;
+            case 0:
+            case 4:
+                newNote.textMeshNoteType.text = "1";
+                newNote.textMeshNoteType.anchor = TextAnchor.LowerRight;
+                break;
+            case 1:
+            case 5:
+                newNote.textMeshNoteType.text = "2";
+                newNote.textMeshNoteType.anchor = TextAnchor.LowerLeft;
+                break;
+            case 2:
+            case 6:
+                newNote.textMeshNoteType.text = "3";
+                newNote.textMeshNoteType.anchor = TextAnchor.UpperRight;
+                break;
+            case 3:
+            case 7:
+                newNote.textMeshNoteType.text = "4";
+                newNote.textMeshNoteType.anchor = TextAnchor.UpperLeft;
+                break;
+        }
+        newNote.textMeshNoteOther.text = "";
+        foreach (string x in newNote.other)
+        {
+            newNote.textMeshNoteOther.text = " " + x + " ";
+        }
+
+        // Make note active
+        newNote.gameObject.SetActive(true);
+    }
+    /// <summary>
+    /// Create a new custom note from scratch.
+    /// </summary>
+    /// <param name="time">Note's time. Determines when the note will pass the catcher's position.</param>
+    /// <param name="type">Note's type. Determines which catcher it will appear for.</param>
+    /// <param name="size">Note's size. Larger sizes make note judgment easier. Also affects note's appearance. The default value is 0 and cannot be lower than that.</param>
+    /// <param name="other">Note's additional attributes.</param>
+    public void CreateNoteTap(float time, int type = 0, int size = 0, float length = 0f, List<string> other = null)
+    {
+        //ChartData.NoteInfo newNote = new ChartData.NoteInfo();
+        ChartData.NoteInfo newNote = ScriptableObject.CreateInstance(typeof(ChartData.NoteInfo)) as ChartData.NoteInfo;
+        newNote.time = time;
+        newNote.type = type;
+        newNote.size = size;
+        newNote.length = length;
+        if (other == null)
+        {
+            newNote.other = new List<string>();
+        }
+        else
+        {
+            newNote.other = other;
+        }
+
+        CreateNoteTap(newNote);
     }
 
     /// <summary>
@@ -708,7 +895,7 @@ public class Creator_Control : MonoBehaviour
         List<Vector2> listNotePosVert = new List<Vector2>();
 
         // Get all the catcher points in the chart
-        foreach (Creator_Note x in listNotePool)
+        foreach (Creator_Note x in listNoteCatchPool)
         {
             if (x.gameObject.activeSelf)
             {
@@ -852,19 +1039,19 @@ public class Creator_Control : MonoBehaviour
         fixedUpdateCheckOtherFrame = true;
 
         // Sort note order
-        if (listNotePool.Count >= 2)
+        if (listNoteCatchPool.Count >= 2)
         {
             bool keepSorting = false;
             do
             {
                 keepSorting = false;
-                for (int i = 0; i < listNotePool.Count - 1; i++)
+                for (int i = 0; i < listNoteCatchPool.Count - 1; i++)
                 {
-                    if (listNotePool[i].transform.position.y > listNotePool[i + 1].transform.position.y + Mathf.Epsilon)
+                    if (listNoteCatchPool[i].transform.position.y > listNoteCatchPool[i + 1].transform.position.y + Mathf.Epsilon)
                     {
-                        Creator_Note tempNote = listNotePool[i];
-                        listNotePool[i] = listNotePool[i + 1];
-                        listNotePool[i + 1] = tempNote;
+                        Creator_Note tempNote = listNoteCatchPool[i];
+                        listNoteCatchPool[i] = listNoteCatchPool[i + 1];
+                        listNoteCatchPool[i + 1] = tempNote;
                         keepSorting = true;
                     }
                 }
@@ -1070,30 +1257,14 @@ public class Creator_Control : MonoBehaviour
                     }
 
                     // If the new note is too close to another note of the same type, don't create
-                    foreach (Creator_Note x in listNotePool)
+                    if (type < 4)
                     {
-                        if (x.gameObject.activeSelf && type == x.type)
+                        // Catch note
+                        foreach (Creator_Note x in listNoteCatchPool)
                         {
-                            float dist = Mathf.Abs(time - x.transform.position.y);
-                            if (dist < 0.01f)
+                            if (x.gameObject.activeSelf && type == x.type)
                             {
-                                createNote = false;
-                                break;
-                            }
-                            if (x.length > 0.01f)
-                            {
-                                dist = Mathf.Abs(time - (x.transform.position.y + x.length));
-                                if (dist < 0.01f)
-                                {
-                                    createNote = false;
-                                    break;
-                                }
-                            }
-
-                            // Same for long note ends
-                            if (length > 0.01f)
-                            {
-                                dist = Mathf.Abs(time + length - x.transform.position.y);
+                                float dist = Mathf.Abs(time - x.transform.position.y);
                                 if (dist < 0.01f)
                                 {
                                     createNote = false;
@@ -1101,11 +1272,75 @@ public class Creator_Control : MonoBehaviour
                                 }
                                 if (x.length > 0.01f)
                                 {
-                                    dist = Mathf.Abs(time + length - (x.transform.position.y + x.length));
+                                    dist = Mathf.Abs(time - (x.transform.position.y + x.length));
                                     if (dist < 0.01f)
                                     {
                                         createNote = false;
                                         break;
+                                    }
+                                }
+
+                                // Same for long note ends
+                                if (length > 0.01f)
+                                {
+                                    dist = Mathf.Abs(time + length - x.transform.position.y);
+                                    if (dist < 0.01f)
+                                    {
+                                        createNote = false;
+                                        break;
+                                    }
+                                    if (x.length > 0.01f)
+                                    {
+                                        dist = Mathf.Abs(time + length - (x.transform.position.y + x.length));
+                                        if (dist < 0.01f)
+                                        {
+                                            createNote = false;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // Tap note
+                        foreach (Creator_Note x in listNoteTapPool)
+                        {
+                            if (x.gameObject.activeSelf)
+                            {
+                                float dist = Mathf.Abs(time - x.transform.position.y);
+                                if (dist < 0.01f)
+                                {
+                                    createNote = false;
+                                    break;
+                                }
+                                if (x.length > 0.01f)
+                                {
+                                    dist = Mathf.Abs(time - (x.transform.position.y + x.length));
+                                    if (dist < 0.01f)
+                                    {
+                                        createNote = false;
+                                        break;
+                                    }
+                                }
+                                
+                                if (length > 0.01f)
+                                {
+                                    dist = Mathf.Abs(time + length - x.transform.position.y);
+                                    if (dist < 0.01f)
+                                    {
+                                        createNote = false;
+                                        break;
+                                    }
+                                    if (x.length > 0.01f)
+                                    {
+                                        dist = Mathf.Abs(time + length - (x.transform.position.y + x.length));
+                                        if (dist < 0.01f)
+                                        {
+                                            createNote = false;
+                                            break;
+                                        }
                                     }
                                 }
                             }
@@ -1113,7 +1348,7 @@ public class Creator_Control : MonoBehaviour
                     }
 
                     // If there is a note of a type from the opposite catcher, place on the opposite horizontal position
-                    foreach (Creator_Note x in listNotePool)
+                    foreach (Creator_Note x in listNoteCatchPool)
                     {
                         // Note main position
                         Creator_Note sameNote = null;
@@ -1177,7 +1412,14 @@ public class Creator_Control : MonoBehaviour
 #if UNITY_EDITOR
                         Debug.Log("Note creation: pos " + pos.ToString("f3") + ", time " + time.ToString("f3") + ", type " + type.ToString() + ", length " + length.ToString("f3"));
 #endif
-                        CreateNote(pos, time, type, 0, length, listStringNoteOther);
+                        if (type < 4)
+                        {
+                            CreateNoteCatch(pos, time, type, 0, length, listStringNoteOther);
+                        }
+                        else
+                        {
+                            CreateNoteTap(time, type, 0, length, listStringNoteOther);
+                        }
                         PlaySound(clipNoteCreate);
                         CalculateChartLevel();
                     }

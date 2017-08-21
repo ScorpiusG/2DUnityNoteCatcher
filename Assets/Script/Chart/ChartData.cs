@@ -19,7 +19,8 @@ public class ChartData : ScriptableObject
     public bool isHighScoreAllowed = true;
     public bool isModifierAllowed = true;
 
-    public List<string> listNoteInfo;
+    public List<string> listNoteCatchInfo;
+    public List<string> listNoteTapInfo;
     public List<string> listSpecialEffectInfo;
     
     public class NoteInfo : ScriptableObject
