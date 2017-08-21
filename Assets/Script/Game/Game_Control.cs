@@ -62,6 +62,7 @@ public class Game_Control : MonoBehaviour
 
     public Animator animatorResults;
     public Text textResultHeader;
+    public Color colorResultHeaderPerfect = Color.yellow;
     public Color colorResultHeaderPass = Color.green;
     public Color colorResultHeaderFail = Color.red;
     public Text textResultAccuracy;
@@ -85,9 +86,13 @@ public class Game_Control : MonoBehaviour
     private float movementVertAlpha = 0f;
 
     public float floatNoteScrollMultiplier = 0.05f;
-    public float[] floatDistAccuracyBest = { 0.16f, 0.14f, 0.125f, 0.11f, 0.1f };
-    public float[] floatDistAccuracyGreat = { 0.19f, 0.165f, 0.15f, 0.125f, 0.113f };
-    public float[] floatDistAccuracyFine = { 0.21f, 0.183f, 0.164f, 0.138f, 0.122f };
+    public float[] floatDistAccuracyCatchBest = { 0.12f, 0.11f, 0.1f, 0.09f, 0.81f };
+    public float[] floatDistAccuracyCatchGreat = { 0.15f, 0.139f, 0.128f, 0.115f, 0.101f };
+    public float[] floatDistAccuracyCatchFine = { 0.168f, 0.156f, 0.142f, 0.128f, 0.114f };
+    public float[] floatDistAccuracyTapBest = { 0.12f, 0.11f, 0.1f, 0.09f, 0.81f };
+    public float[] floatDistAccuracyTapGreat = { 0.15f, 0.139f, 0.128f, 0.115f, 0.101f };
+    public float[] floatDistAccuracyTapFine = { 0.168f, 0.156f, 0.142f, 0.128f, 0.114f };
+    public float[] floatDistAccuracyTapMiss = { 0.17f, 0.16f, 0.15f, 0.14f, 0.13f };
 
     private bool isForcedEnd = false;
     private bool isScoringDisabled = false;
@@ -151,77 +156,155 @@ public class Game_Control : MonoBehaviour
         note.gameObject.SetActive(false);
     }
 
-    private void JudgeNote(Game_Note note, GameObject catcher)
+    private void JudgeNote(Game_Note note, GameObject catcher, bool isTapNote)
     {
-        float dist = Mathf.Abs(note.transform.position.x - catcher.transform.position.x);
-        switch (chartData.chartGameType)
+        // Catch note
+        if (!isTapNote)
         {
-            default:
-                int animJudgeID = 0;
-                int animSortingLayerID = 0;
-                // BEST
-                if (dist < floatDistAccuracyBest[chartJudgeDifficulty] || boolAutoplay)
-                {
-                    playerAccuracyBest++;
-                    playerComboCurrent++;
-                    animJudgeID = 0;
-                    animSortingLayerID = playerComboCurrent;
-#if UNITY_EDITOR
-                    Debug.Log("Note judgment - distance: " + dist + " (BEST)");
-#endif
-                }
-                // GREAT
-                else if (dist < floatDistAccuracyGreat[chartJudgeDifficulty])
-                {
-                    playerAccuracyGreat++;
-                    playerComboCurrent++;
-                    animJudgeID = 1;
-                    animSortingLayerID = playerComboCurrent;
-#if UNITY_EDITOR
-                    Debug.Log("Note judgment - distance: " + dist + " (GREAT)");
-#endif
-                }
-                // FINE
-                else if (dist < floatDistAccuracyFine[chartJudgeDifficulty])
-                {
-                    playerAccuracyFine++;
-                    playerComboCurrent++;
-                    animJudgeID = 2;
-                    animSortingLayerID = playerComboCurrent;
-#if UNITY_EDITOR
-                    Debug.Log("Note judgment - distance: " + dist + " (FINE)");
-#endif
-                }
-                // MISS
-                else
-                {
-                    animSortingLayerID = playerComboCurrent + 1;
-                    playerAccuracyMiss++;
-                    playerComboCurrent = 0;
-                    animJudgeID = 3;
-#if UNITY_EDITOR
-                    Debug.Log("Note judgment - distance: " + dist + " (MISS)");
-#endif
-                }
-
-                // Show judgment animation
-                if (PlayerSetting.setting.enableDisplayNoteJudgment)
-                {
-                    Game_AnimationJudgment anim = SpawnJudgeAnimation();
-                    anim.gameObject.SetActive(true);
-                    anim.transform.position = Vector3.right * note.position;
-                    anim.gameObject.layer = 9 + note.type;
-                    anim.spriteRendererJudgment.sprite = spriteJudgment[animJudgeID];
-                    anim.spriteRendererJudgment.sortingLayerID = animSortingLayerID;
-                    anim.animatorJudgment.Play("anim");
-                    if (animJudgeID < 3)
+            float dist = Mathf.Abs(note.transform.position.x - catcher.transform.position.x);
+            switch (chartData.chartGameType)
+            {
+                default:
+                    int animJudgeID = 0;
+                    int animSortingLayerID = 0;
+                    // BEST
+                    if (dist < floatDistAccuracyCatchBest[chartJudgeDifficulty] || boolAutoplay)
                     {
-                        ParticleSystem.MainModule animParticleModule = anim.particleSystemJudgment.main;
-                        animParticleModule.startColor = colorJudgmentParticle[animJudgeID];
-                        anim.particleSystemJudgment.Play();
+                        playerAccuracyBest++;
+                        playerComboCurrent++;
+                        animJudgeID = 0;
+                        animSortingLayerID = playerComboCurrent;
+#if UNITY_EDITOR
+                        Debug.Log("Catch note judgment - distance: " + dist + " (BEST)");
+#endif
                     }
-                }
-                break;
+                    // GREAT
+                    else if (dist < floatDistAccuracyCatchGreat[chartJudgeDifficulty])
+                    {
+                        playerAccuracyGreat++;
+                        playerComboCurrent++;
+                        animJudgeID = 1;
+                        animSortingLayerID = playerComboCurrent;
+#if UNITY_EDITOR
+                        Debug.Log("Catch note judgment - distance: " + dist + " (GREAT)");
+#endif
+                    }
+                    // FINE
+                    else if (dist < floatDistAccuracyCatchFine[chartJudgeDifficulty])
+                    {
+                        playerAccuracyFine++;
+                        playerComboCurrent++;
+                        animJudgeID = 2;
+                        animSortingLayerID = playerComboCurrent;
+#if UNITY_EDITOR
+                        Debug.Log("Catch note judgment - distance: " + dist + " (FINE)");
+#endif
+                    }
+                    // MISS
+                    else
+                    {
+                        animSortingLayerID = playerComboCurrent + 1;
+                        playerAccuracyMiss++;
+                        playerComboCurrent = 0;
+                        animJudgeID = 3;
+#if UNITY_EDITOR
+                        Debug.Log("Catch note judgment - distance: " + dist + " (MISS)");
+#endif
+                    }
+
+                    // Show judgment animation
+                    if (PlayerSetting.setting.enableDisplayNoteJudgment)
+                    {
+                        Game_AnimationJudgment anim = SpawnJudgeAnimation();
+                        anim.gameObject.SetActive(true);
+                        anim.transform.position = Vector3.right * note.position;
+                        anim.gameObject.layer = 9 + note.type;
+                        anim.spriteRendererJudgment.sprite = spriteJudgment[animJudgeID];
+                        anim.spriteRendererJudgment.sortingLayerID = animSortingLayerID;
+                        anim.animatorJudgment.Play("anim");
+                        if (animJudgeID < 3)
+                        {
+                            ParticleSystem.MainModule animParticleModule = anim.particleSystemJudgment.main;
+                            animParticleModule.startColor = colorJudgmentParticle[animJudgeID];
+                            anim.particleSystemJudgment.Play();
+                        }
+                    }
+                    break;
+            }
+        }
+        // Tap note
+        else
+        {
+            float dist = Mathf.Abs(floatMusicBeat - note.time);
+            switch (chartData.chartGameType)
+            {
+                default:
+                    int animJudgeID = 0;
+                    int animSortingLayerID = 0;
+                    // BEST
+                    if (dist < floatDistAccuracyCatchBest[chartJudgeDifficulty] || boolAutoplay)
+                    {
+                        playerAccuracyBest++;
+                        playerComboCurrent++;
+                        animJudgeID = 0;
+                        animSortingLayerID = playerComboCurrent;
+#if UNITY_EDITOR
+                        Debug.Log("Tap note judgment - distance: " + dist + " (BEST)");
+#endif
+                    }
+                    // GREAT
+                    else if (dist < floatDistAccuracyCatchGreat[chartJudgeDifficulty])
+                    {
+                        playerAccuracyGreat++;
+                        playerComboCurrent++;
+                        animJudgeID = 1;
+                        animSortingLayerID = playerComboCurrent;
+#if UNITY_EDITOR
+                        Debug.Log("Tap note judgment - distance: " + dist + " (GREAT)");
+#endif
+                    }
+                    // FINE
+                    else if (dist < floatDistAccuracyCatchFine[chartJudgeDifficulty])
+                    {
+                        playerAccuracyFine++;
+                        playerComboCurrent++;
+                        animJudgeID = 2;
+                        animSortingLayerID = playerComboCurrent;
+#if UNITY_EDITOR
+                        Debug.Log("Tap note judgment - distance: " + dist + " (FINE)");
+#endif
+                    }
+                    // MISS
+                    else
+                    {
+                        animSortingLayerID = playerComboCurrent + 1;
+                        playerAccuracyMiss++;
+                        playerComboCurrent = 0;
+                        animJudgeID = 3;
+#if UNITY_EDITOR
+                        Debug.Log("Tap note judgment - distance: " + dist + " (MISS)");
+#endif
+                    }
+
+                    // Show judgment animation
+                    if (PlayerSetting.setting.enableDisplayNoteJudgment)
+                    {
+                        Game_AnimationJudgment anim = SpawnJudgeAnimation();
+                        anim.gameObject.SetActive(true);
+                        anim.transform.position = Vector3.right * note.position;
+                        anim.gameObject.layer = 9 + note.type;
+                        anim.spriteRendererJudgment.sprite = spriteJudgment[animJudgeID];
+                        anim.spriteRendererJudgment.sortingLayerID = animSortingLayerID;
+                        anim.animatorJudgment.Play("anim");
+                        if (animJudgeID < 3)
+                        {
+                            ParticleSystem.MainModule animParticleModule = anim.particleSystemJudgment.main;
+                            animParticleModule.startColor = colorJudgmentParticle[animJudgeID];
+                            anim.particleSystemJudgment.Play();
+                        }
+                    }
+                    break;
+            }
         }
 
         if (playerComboCurrent > playerComboBest)
@@ -357,7 +440,7 @@ public class Game_Control : MonoBehaviour
         objectGroupInterfaceAccuracy.SetActive(PlayerSetting.setting.enableInterfaceAccuracy);
         chartTotalNotes = chartData.listNoteCatchInfo.Count;
         chartJudgeDifficulty = chartData.chartJudge;
-        if (chartJudgeDifficulty >= floatDistAccuracyBest.Length) chartJudgeDifficulty = floatDistAccuracyBest.Length - 1;
+        if (chartJudgeDifficulty >= floatDistAccuracyCatchBest.Length) chartJudgeDifficulty = floatDistAccuracyCatchBest.Length - 1;
 
         StartCoroutine("GameLoop");
     }
@@ -662,6 +745,7 @@ public class Game_Control : MonoBehaviour
             }
 
             // Note positioning
+            // Catch note
             foreach (Game_Note x in listNoteCatch)
             {
                 if (x.gameObject.activeSelf)
@@ -681,10 +765,45 @@ public class Game_Control : MonoBehaviour
                     if (floatMusicBeat >= x.time || 
                         (x.length > 0.01f &&
                         floatMusicBeat >= x.time - x.length &&
-                        Mathf.Abs(x.transform.position.x - objectCatcher[x.type].transform.position.x) > floatDistAccuracyFine[chartJudgeDifficulty])
+                        Mathf.Abs(x.transform.position.x - objectCatcher[x.type].transform.position.x) > floatDistAccuracyCatchFine[chartJudgeDifficulty])
                         )
                     {
-                        JudgeNote(x, objectCatcher[x.type]);
+                        JudgeNote(x, objectCatcher[x.type], false);
+                    }
+                }
+            }
+            // Tap note
+            foreach (Game_Note x in listNoteTap)
+            {
+                if (x.gameObject.activeSelf)
+                {
+                    x.transform.position = new Vector3(x.position, (floatMusicBeat - x.time) * (floatNoteScrollMultiplier * PlayerSetting.setting.intScrollSpeed));
+
+                    // Note flash
+                    x.spriteRendererNoteHighlight.color = colorBeatFlash;
+                    if (x.length > 0.01f)
+                    {
+                        x.spriteRendererLengthHighlight.color = colorBeatFlash;
+                    }
+
+                    // Note judgment
+                    // Judge if below "fine" for "miss"
+                    if (floatMusicBeat > x.time + floatDistAccuracyTapFine[chartJudgeDifficulty])
+                    {
+                        JudgeNote(x, objectCatcher[x.type], true);
+                    }
+                }
+            }
+
+            // Tap note input
+            if (Input.anyKeyDown)
+            {
+                foreach (Game_Note x in listNoteTap)
+                {
+                    float dist = Mathf.Abs(floatMusicBeat - x.time);
+                    if (dist < floatDistAccuracyTapMiss[chartJudgeDifficulty])
+                    {
+                        JudgeNote(x, objectCatcher[x.type], true);
                     }
                 }
             }
@@ -814,14 +933,19 @@ public class Game_Control : MonoBehaviour
         yield return null;
 
         // Update texts
-        if (1f * finalAccuracy / chartTotalNotes >= 0.01f * PlayerSetting.setting.intAccuracyTolerance)
+        if (playerAccuracyFine == 0 && playerAccuracyGreat == 0 && playerAccuracyMiss == 0)
         {
-            textResultHeader.text = "STAGE PASSED";
+            textResultHeader.text = "PERFECT RHYTHM";
+            textResultHeader.color = colorResultHeaderPerfect;
+        }
+        else if (1f * finalAccuracy / chartTotalNotes >= 0.01f * PlayerSetting.setting.intAccuracyTolerance)
+        {
+            textResultHeader.text = "COMPLETE RHYTHM";
             textResultHeader.color = colorResultHeaderPass;
         }
         else
         {
-            textResultHeader.text = "STAGE FAILED";
+            textResultHeader.text = "UNDESIRED RHYTHM";
             textResultHeader.color = colorResultHeaderFail;
         }
         if (isScoringDisabled)
