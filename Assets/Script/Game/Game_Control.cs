@@ -23,6 +23,9 @@ public class Game_Control : MonoBehaviour
     public GameObject[] objectCatcher;
     public SpriteRenderer[] spriteRendererCatcherHighlight;
 
+    public Camera[] cameraGame;
+    public float floatCameraRotation;
+
     public Game_Note noteCatchPrefab;
     private List<Game_Note> listNoteCatch = new List<Game_Note>();
     public Game_Note noteTapPrefab;
@@ -471,6 +474,14 @@ public class Game_Control : MonoBehaviour
         if (chartJudgeDifficulty >= floatDistAccuracyCatchBest.Length) chartJudgeDifficulty = floatDistAccuracyCatchBest.Length - 1;
 
         StartCoroutine("GameLoop");
+    }
+
+    void Update()
+    {
+        for (int i = 0; i < cameraGame.Length; i++)
+        {
+            cameraGame[i].transform.rotation = Quaternion.Euler(0f, 0f, (i * 90f) + floatCameraRotation);
+        }
     }
 	
 	private IEnumerator GameLoop ()
