@@ -72,6 +72,8 @@ public class Creator_Control : MonoBehaviour
     public AudioClip clipNoteCreate;
     public AudioClip clipNoteDelete;
 
+    public string stringSceneNameTitle = "Title";
+
     private int intMouseScrollSetting = 0;
     public string[] stringMouseScrollSetting = { "Move Chart", "Zoom Chart", "Change Note Type"};
     private int intChartGameType = 0;
@@ -672,6 +674,14 @@ public class Creator_Control : MonoBehaviour
     {
         if (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.LeftCommand)) return;
 
+        text.text.Trim(' ');
+        text.text.TrimStart(' ');
+        text.text.TrimEnd(' ');
+        if (text.text.Length <= 0)
+        {
+            return;
+        }
+
         PlaySound(clipTick);
         if (listStringNoteOther.Count >= 8)
         {
@@ -1027,6 +1037,17 @@ public class Creator_Control : MonoBehaviour
             return;
         }
         mAudioSource.PlayOneShot(clip, PlayerSetting.setting.floatVolumeEffect);
+    }
+
+    public void SceneTransferToTitle()
+    {
+        SaveCreatorSettings();
+        StartCoroutine("_SceneTransferToTitle");
+    }
+    private IEnumerator _SceneTransferToTitle()
+    {
+        yield return null;
+        SceneManager.LoadScene(stringSceneNameTitle);
     }
 
     private void FixedUpdate()

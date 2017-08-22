@@ -74,6 +74,7 @@ public class SongMenu_Control : MonoBehaviour
         objectGroupDetails.SetActive(false);
         objectOptionsMenu.SetActive(false);
         objectButtonPlay.SetActive(false);
+        buttonChartIndividual.gameObject.SetActive(false);
 
         // Has already reached maximum level (100), display score only.
         if (PlayerSetting.setting.boolPlayerLevelMax)
@@ -318,7 +319,10 @@ public class SongMenu_Control : MonoBehaviour
         SongMenu_ButtonChart[] listOldButtons = FindObjectsOfType<SongMenu_ButtonChart>();
         foreach(SongMenu_ButtonChart x in listOldButtons)
         {
-            Destroy(x.gameObject);
+            if (x.gameObject.activeSelf)
+            {
+                Destroy(x.gameObject);
+            }
         }
 
         // Display chart information from first chart in the folder
@@ -353,6 +357,7 @@ public class SongMenu_Control : MonoBehaviour
 
                     // Button info and positioning
                     SongMenu_ButtonChart nb = Instantiate(buttonChartIndividual);
+                    nb.gameObject.SetActive(true);
                     nb.transform.SetParent(rectChartListParent);
                     nb.transform.localScale = Vector3.one;
                     nb.transform.localPosition = (Vector3.right * sizePositionPerButton.x * chartID) + (Vector3.down * sizePositionPerButton.y * gameModeExists);
@@ -360,17 +365,19 @@ public class SongMenu_Control : MonoBehaviour
                     nb.intChart = chartID;
 
                     // Button display
-                    string stringText = "";
-                    switch(gameModeID)
+                    string stringMode = "";
+                    switch (gameModeID)
                     {
-                        case 0: stringText = "LN"; break;
-                        case 1: stringText = "DB"; break;
-                        case 2: stringText = "QD"; break;
-                        case 3: stringText = "PWF"; break;
-                        case 4: stringText = "C&T"; break;
+                        case 0: stringMode = "LN"; break;
+                        case 1: stringMode = "DB"; break;
+                        case 2: stringMode = "QD"; break;
+                        case 3: stringMode = "PWF"; break;
+                        case 4: stringMode = "SP"; break;
+                        case 5: stringMode = "ULT"; break;
+                        case 6: stringMode = "BC"; break;
+                        case 7: stringMode = "ND"; break;
                     }
-                    stringText += " " + (chartID + 1).ToString() + "\nLvl " + chartData.chartLevel.ToString();
-                    nb.textButton.text = stringText;
+                    nb.textButton.text = stringMode + " " + (chartID + 1).ToString() + "\nLvl " + chartData.chartLevel.ToString();
 
                     // If it is the first chart found, it will be selected first
                     if (firstChart == null)
@@ -389,6 +396,19 @@ public class SongMenu_Control : MonoBehaviour
         if (firstChart != null)
         {
             UseChartInfo(firstChart);
+        }
+        else
+        {
+            objectButtonPlay.SetActive(false);
+            textDetailsHeader.text = "";
+            textDetailsBody.text =
+                "There are no map charts in\n" +
+                "this song folder's contents.\n" +
+                "\n" +
+                "Please make sure your map\n" +
+                "chart files are named in the\n" +
+                "correct format.";
+            textDetailsRecord.text = "";
         }
         
         // iTween song window tween effect
@@ -435,11 +455,14 @@ public class SongMenu_Control : MonoBehaviour
         string stringMode = "";
         switch (chartData.chartGameType)
         {
-            case 0: stringMode = "LN"; break;
-            case 1: stringMode = "DB"; break;
-            case 2: stringMode = "QD"; break;
-            case 3: stringMode = "C&T"; break;
-            case 4: stringMode = "PWF"; break;
+            case 0: stringMode = "Linear"; break;
+            case 1: stringMode = "Double"; break;
+            case 2: stringMode = "Quad"; break;
+            case 3: stringMode = "Powerful"; break;
+            case 4: stringMode = "Super"; break;
+            case 5: stringMode = "Ultra"; break;
+            case 6: stringMode = "Black Core"; break;
+            case 7: stringMode = "Note Dodge"; break;
         }
         float actualLength = chartData.songLength * 60f / chartData.songTempo;
 

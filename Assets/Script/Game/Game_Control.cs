@@ -436,6 +436,18 @@ public class Game_Control : MonoBehaviour
         //audioSourceMusic.clip = (AudioClip)fileMusic as AudioClip;
 
         string gameTypeAbbr = "";
+        //switch (chartData.chartGameType)
+        switch (intChartGameType)
+        {
+            case 0: gameTypeAbbr = "LN"; break;
+            case 1: gameTypeAbbr = "DB"; break;
+            case 2: gameTypeAbbr = "QD"; break;
+            case 3: gameTypeAbbr = "PWF"; break;
+            case 4: gameTypeAbbr = "SP"; break;
+            case 5: gameTypeAbbr = "ULT"; break;
+            case 6: gameTypeAbbr = "BC"; break;
+            case 7: gameTypeAbbr = "ND"; break;
+        }
 
         if (PlayerSetting.setting.enableInterfaceSongDetails)
         {
