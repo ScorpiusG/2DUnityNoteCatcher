@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using TMPro;
 
 public class Game_Control : MonoBehaviour
 {
@@ -31,19 +32,18 @@ public class Game_Control : MonoBehaviour
 
     public AudioSource audioSourceMusic;
 
-    public TextMesh textMeshComboCurrent;
+    public TextMeshPro textMeshComboCurrent;
     public int floatTextComboAppearComboMinimum = 4;
     public float floatTextComboScaleOnChange = 3f;
     public float floatTextComboScaleMinimum = 1f;
     public float floatTextComboScaleChangeRate = 12f;
     private float floatTextComboScaleCurrent = 1f;
-    public TextMesh textMeshRecordGhost;
+    public TextMeshPro textMeshRecordGhost;
     public float floatPreviousRecord = 0f;
     public Color colorRecordGhostNeutral = Color.white;
     public Color colorRecordGhostBetter = Color.green;
     public Color colorRecordGhostWorse = Color.red;
-
-    public TextMesh textMeshPopup;
+    
     public Animator animatorPopup;
     public List<float> listPopupTimer = new List<float>();
     public List<string> listPopupText = new List<string>();

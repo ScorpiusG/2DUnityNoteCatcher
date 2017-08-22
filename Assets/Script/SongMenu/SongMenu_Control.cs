@@ -34,10 +34,12 @@ public class SongMenu_Control : MonoBehaviour
     private int intGameChart = 0;
 
     public GameObject objectGroupDetails;
+    public Vector3 positionGroupDetailsInit;
     public Text textDetailsHeader;
     public Text textDetailsBody;
     public Text textDetailsWarning;
     public Text textDetailsRecord;
+    public GameObject objectButtonPlay;
 
     public Slider sliderScrollSpeed;
     public Text textDisplayScrollSpeed;
@@ -65,8 +67,13 @@ public class SongMenu_Control : MonoBehaviour
 
     void Start()
     {
+        // Variable initialization
+        positionGroupDetailsInit = objectGroupDetails.transform.position;
+
+        // Object initialization
         objectGroupDetails.SetActive(false);
         objectOptionsMenu.SetActive(false);
+        objectButtonPlay.SetActive(false);
 
         // Has already reached maximum level (100), display score only.
         if (PlayerSetting.setting.boolPlayerLevelMax)
@@ -278,7 +285,7 @@ public class SongMenu_Control : MonoBehaviour
         textDetailsWarning.gameObject.SetActive(isHighscoreDisabledByMods || isHighscoreDisabledByChart);
     }
 
-    public void PlaySong()
+    public void PlaySong(bool isAutoplay)
     {
         // Store song name, game type, game stage, and custom song (bool) information for use in the game scene
         Game_Control.stringSongFileName = stringSongSelectedCurrent;
@@ -286,6 +293,8 @@ public class SongMenu_Control : MonoBehaviour
         Game_Control.intChartGameChart = intGameChart;
         Game_Control.stringModList = textDisplayMods.text;
         Game_Control.boolCustomSong = isLoadCustomSongs;
+
+        Game_Control.boolAutoplay = isAutoplay;
 
         SceneManager.LoadScene(stringSceneNameGame);
     }
@@ -376,7 +385,31 @@ public class SongMenu_Control : MonoBehaviour
             }
         }
 
-        UseChartInfo(firstChart);
+        // Automatically select the first chart in the list
+        if (firstChart != null)
+        {
+            UseChartInfo(firstChart);
+        }
+        
+        // iTween song window tween effect
+        float tweenDuration = 0.31f;
+        objectGroupDetails.SetActive(true);
+        objectGroupDetails.transform.position = positionGroupDetailsInit + Vector3.right * 1000f;
+        iTween.MoveTo(objectGroupDetails, positionGroupDetailsInit, tweenDuration);
+        /*
+        Text[] tGrpDts = objectGroupDetails.GetComponentsInChildren<Text>();
+        foreach (Text x in tGrpDts)
+        {
+            x.color = new Color(1f, 1f, 1f, 0f);
+            iTween.ColorTo(x.gameObject, Color.white, tweenDuration);
+        }
+        Image[] iGrpDts = objectGroupDetails.GetComponentsInChildren<Image>();
+        foreach (Image x in iGrpDts)
+        {
+            x.color = new Color(1f, 1f, 1f, 0f);
+            iTween.ColorTo(x.gameObject, Color.white, tweenDuration);
+        }
+        */
     }
 
     public void UseChartInfo(SongMenu_ButtonChart button)
@@ -423,7 +456,14 @@ public class SongMenu_Control : MonoBehaviour
 
         isHighscoreDisabledByChart = !chartData.isHighScoreAllowed;
         RefreshTexts();
-        objectGroupDetails.SetActive(true);
+
+        // Play button enable and animate
+        objectButtonPlay.SetActive(true);
+        objectButtonPlay.GetComponent<Animator>().Play("clip");
+        /*
+        objectButtonPlay.transform.rotation = Quaternion.Euler(0f, 0f, -90f);
+        iTween.RotateTo(objectButtonPlay, iTween.Hash("rotation", Vector3.zero, "time", 0.31f, "isLocal", true, "easetype", iTween.EaseType.easeOutBack));
+        */
     }
 
     public void RestartScene()
