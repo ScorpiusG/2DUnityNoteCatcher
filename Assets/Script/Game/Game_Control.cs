@@ -37,6 +37,11 @@ public class Game_Control : MonoBehaviour
     public float floatTextComboScaleMinimum = 1f;
     public float floatTextComboScaleChangeRate = 12f;
     private float floatTextComboScaleCurrent = 1f;
+    public TextMesh textMeshRecordGhost;
+    public float floatPreviousRecord = 0f;
+    public Color colorRecordGhostNeutral = Color.white;
+    public Color colorRecordGhostBetter = Color.green;
+    public Color colorRecordGhostWorse = Color.red;
 
     public TextMesh textMeshPopup;
     public Animator animatorPopup;
@@ -56,6 +61,7 @@ public class Game_Control : MonoBehaviour
     public Image imageAccuracyGauge;
     public Image imageAccuracyNegativeGauge;
     public Text textAccuracy;
+    public float floatAccuracyDisplay = 0f;
     public Text textNoteJudgeCount;
     public Image imageAccuracyTolerance;
     public float floatAccuracyGaugeWidth = 928f;
@@ -346,6 +352,7 @@ public class Game_Control : MonoBehaviour
         Cursor.lockState = CursorLockMode.Confined;
 
         // Vertical synchronization
+        /*
         if (PlayerSetting.setting.enableVSync)
         {
             QualitySettings.vSyncCount = 1;
@@ -356,12 +363,16 @@ public class Game_Control : MonoBehaviour
             QualitySettings.vSyncCount = 0;
             Application.targetFrameRate = 999999;
         }
+        */
 
         // Enable/Disable groups depending on game type
         objectGroupType[0].SetActive(true);
         objectGroupType[1].SetActive(intChartGameType >= 1);
         objectGroupType[2].SetActive(intChartGameType >= 2);
         objectGroupType[3].SetActive(intChartGameType >= 2);
+
+        // Variable initialization
+        floatPreviousRecord = PlayerPrefs.GetFloat(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString(), 0f);
 
         // Object initialization
         objectAutoplayIndicator.SetActive(boolAutoplay);
@@ -382,6 +393,11 @@ public class Game_Control : MonoBehaviour
         animatorResults.gameObject.SetActive(false);
         animatorNewRecord.gameObject.SetActive(false);
         textMeshComboCurrent.gameObject.SetActive(PlayerSetting.setting.enableDisplayCombo);
+        textMeshRecordGhost.gameObject.SetActive(PlayerSetting.setting.enableDisplayRecordGhost && floatPreviousRecord > Mathf.Epsilon);
+        if (PlayerSetting.setting.enableDisplayRecordGhost && !PlayerSetting.setting.enableDisplayCombo)
+        {
+            textMeshRecordGhost.transform.position = Vector3.zero;
+        }
 
         // Read chart from the text file
         string input = "";
@@ -428,7 +444,7 @@ public class Game_Control : MonoBehaviour
             textSongProgressTime.gameObject.SetActive(true);
             imageSongProgressGauge.gameObject.SetActive(true);
             textSongAndArtistName.text = chartData.songArtist + " - " + chartData.songName;
-            textSongDetails.text = chartData.chartDeveloper + " - " + gameTypeAbbr + " #" + (intChartGameChart + 1).ToString() + " - Level" + chartData.chartLevel;
+            textSongDetails.text = "Mapchart by " + chartData.chartDeveloper + " [" + gameTypeAbbr + " #" + (intChartGameChart + 1).ToString() + "] (Level " + chartData.chartLevel + ")";
         }
         else
         {
@@ -616,9 +632,10 @@ public class Game_Control : MonoBehaviour
             currentAccuracyNegative = playerAccuracyGreat + (playerAccuracyFine * 2) + (playerAccuracyMiss * 4);
             if (objectGroupInterfaceAccuracy.activeSelf)
             {
-                imageAccuracyGauge.fillAmount = 1f * currentAccuracy / chartTotalNotes;
-                imageAccuracyNegativeGauge.fillAmount = 1f * currentAccuracyNegative / chartTotalNotes;
-                textAccuracy.text = (imageAccuracyGauge.fillAmount * 100f).ToString("f2") + "%";
+                floatAccuracyDisplay = Mathf.Lerp(floatAccuracyDisplay, 1f * currentAccuracy / (chartTotalNotes * 4), Time.deltaTime * 8f);
+                imageAccuracyGauge.fillAmount = floatAccuracyDisplay;
+                imageAccuracyNegativeGauge.fillAmount = 1f * currentAccuracyNegative / (chartTotalNotes * 4);
+                textAccuracy.text = (floatAccuracyDisplay * 100f).ToString("f2") + "%";
             }
             if (PlayerSetting.setting.enableDisplayNoteHitCounterSmall)
             {
@@ -629,9 +646,31 @@ public class Game_Control : MonoBehaviour
                     "M" + playerAccuracyMiss.ToString();
             }
             // Center - Combo and judgment
-            floatTextComboScaleCurrent = Mathf.Clamp(floatTextComboScaleCurrent - Time.deltaTime * floatTextComboScaleChangeRate, floatTextComboScaleMinimum, floatTextComboScaleOnChange);
-            textMeshComboCurrent.text = playerComboCurrent.ToString();
-            textMeshComboCurrent.transform.localScale = Vector3.one * floatTextComboScaleCurrent;
+            if (textMeshComboCurrent.gameObject.activeSelf)
+            {
+                floatTextComboScaleCurrent = Mathf.Clamp(floatTextComboScaleCurrent - Time.deltaTime * floatTextComboScaleChangeRate, floatTextComboScaleMinimum, floatTextComboScaleOnChange);
+                textMeshComboCurrent.text = playerComboCurrent.ToString();
+                textMeshComboCurrent.transform.localScale = Vector3.one * floatTextComboScaleCurrent;
+            }
+            if (textMeshRecordGhost.gameObject.activeSelf)
+            {
+                float currentAccuracyPercentage = 1f * currentAccuracy / (chartTotalNotes * 4);
+                float ghostAccuracy = 1f * floatPreviousRecord * (playerAccuracyBest + playerAccuracyGreat + playerAccuracyFine) / chartTotalNotes;
+                textMeshRecordGhost.text = (100f * (currentAccuracyPercentage - ghostAccuracy)).ToString("f2") + "%";
+
+                if (currentAccuracyPercentage > ghostAccuracy + Mathf.Epsilon)
+                {
+                    textMeshRecordGhost.color = colorRecordGhostBetter;
+                }
+                else if (currentAccuracyPercentage > ghostAccuracy + Mathf.Epsilon)
+                {
+                    textMeshRecordGhost.color = colorRecordGhostWorse;
+                }
+                else
+                {
+                    textMeshRecordGhost.color = colorRecordGhostNeutral;
+                }
+            }
 
             // Note spawning
             // Catch note

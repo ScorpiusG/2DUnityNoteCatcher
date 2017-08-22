@@ -56,6 +56,7 @@ public class SongMenu_Control : MonoBehaviour
     public Toggle toggleOptionsInterfaceSongDetails;
     public Toggle toggleOptionsInterfaceAccuracy;
     public Toggle toggleOptionsDisplayCombo;
+    public Toggle toggleOptionsDisplayRecordGhost;
     public Toggle toggleOptionsDisplayJudgmentPerHit;
     public Toggle toggleOptionsDisplayJudgmentCounter;
 
@@ -497,6 +498,10 @@ public class SongMenu_Control : MonoBehaviour
     public void AdjustDisplayCombo()
     {
         PlayerSetting.setting.enableDisplayCombo = toggleOptionsDisplayCombo.isOn;
+    }
+    public void AdjustDisplayRecordGhost()
+    {
+        PlayerSetting.setting.enableDisplayRecordGhost = toggleOptionsDisplayRecordGhost.isOn;
     }
     public void AdjustDisplayJudgmentPerHit()
     {

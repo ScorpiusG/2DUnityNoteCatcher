@@ -36,6 +36,8 @@ public class PlayerSetting : MonoBehaviour
     public bool enableInterfaceAccuracy = true;
     // Display current combo.
     public bool enableDisplayCombo = true;
+    // Display player record's "ghost" accuracy. It will be displayed below the combo value.
+    public bool enableDisplayRecordGhost = false;
     // Display note hit judgment.
     public bool enableDisplayNoteJudgment = true;
     // Display small counters for each note judgment received.
