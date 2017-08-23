@@ -98,7 +98,7 @@ public class SongMenu_Control : MonoBehaviour
             textPlayerLevel.gameObject.SetActive(true);
             textPlayerLevel.text = currentLevel.ToString();
             textPlayerScoreNextLevel.gameObject.SetActive(true);
-            textPlayerScoreNextLevel.text = " (Next Level: " + (nextLevelScore - currentScore).ToString("n0") + ")";
+            textPlayerScoreNextLevel.text = "(" + Translator.GetStringTranslation("SONGMENU_PLAYERNEXTLEVELSCORE", "Next Level:") + " " + (nextLevelScore - currentScore).ToString("n0") + ")";
             imageScoreGauge.fillAmount = 1f * (currentScore - prevLevelScore) / (nextLevelScore - prevLevelScore);
         }
         sliderScrollSpeed.value = PlayerSetting.setting.intScrollSpeed;

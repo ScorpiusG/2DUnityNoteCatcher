@@ -131,6 +131,7 @@ public class Creator_Control : MonoBehaviour
         }
 
         chartData.listNoteCatchInfo = new List<string>();
+        chartData.listNoteTapInfo = new List<string>();
         chartData.listSpecialEffectInfo = new List<string>();
 
         chartData.songName = textSongName.text;

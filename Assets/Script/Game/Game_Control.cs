@@ -23,6 +23,7 @@ public class Game_Control : MonoBehaviour
     public GameObject[] objectCatcher;
     public SpriteRenderer[] spriteRendererCatcherHighlight;
 
+    public Camera cameraMain;
     public Camera[] cameraGame;
     public float floatCameraRotation = 0f;
     public bool boolCameraRotationNoLerp = false;
@@ -493,6 +494,7 @@ public class Game_Control : MonoBehaviour
                 cameraGame[i].transform.rotation = Quaternion.Euler(0f, 0f, (i * 90f) + floatCameraRotation);
             }
         }
+        cameraMain.transform.rotation = cameraGame[0].transform.rotation;
     }
 	
 	private IEnumerator GameLoop ()

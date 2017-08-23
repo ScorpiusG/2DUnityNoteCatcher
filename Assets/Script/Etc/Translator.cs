@@ -10,9 +10,8 @@ public class Translator : MonoBehaviour
      */
 
     public static Translator mTranslator;
-
-    public int intLanguageCurrent = 0;
-    public string[] stringLanguageCode;
+    
+    public string stringLanguageCode;
     public Font[] fontLanguageCode;
 
     private List<string> stringTranslation = new List<string>();
@@ -21,9 +20,9 @@ public class Translator : MonoBehaviour
     /// Try to get the stored localized string from the text document. If it fails, the second argument will be used as the main text.
     /// </summary>
     /// <param name="code">The code value before the '|' character.</param>
-    /// <param name="origin">If it fails to get the localized string, it will return as this default value.</param>
+    /// <param name="defaultValue">If it fails to get the localized string, it will return as this default value.</param>
     /// <returns></returns>
-    public static string GetStringTranslation(string code, string origin = "")
+    public static string GetStringTranslation(string code, string defaultValue = "")
     {
         foreach (string x in mTranslator.stringTranslation)
         {
@@ -49,7 +48,7 @@ public class Translator : MonoBehaviour
             }
         }
 
-        return origin;
+        return defaultValue;
     }
 
     /// <summary>
@@ -58,38 +57,36 @@ public class Translator : MonoBehaviour
     /// <returns></returns>
     public static Font GetLanguageFont()
     {
-        if (mTranslator.intLanguageCurrent <= 0 ||
-            mTranslator.intLanguageCurrent + 1 < mTranslator.fontLanguageCode.Length)
+        if (mTranslator.stringLanguageCode.Length <= 0)
         {
             return null;
         }
 
-        return mTranslator.fontLanguageCode[mTranslator.intLanguageCurrent - 1];
+        return mTranslator.fontLanguageCode[int.Parse(GetStringTranslation("TRANSLATION_FONT", "0"))];
     }
 
     /// <summary>
     /// Switch current language with the language from the assigned ID.
     /// </summary>
     /// <param name="ID"></param>
-    public static void SwitchLanguage(int id)
+    public static void SwitchLanguage(string id)
     {
-        PlayerPrefs.SetInt("manual_translation_id", id);
+        PlayerPrefs.SetString("manual_translation_code", id);
         PlayerPrefs.Save();
-        mTranslator.intLanguageCurrent = id;
+        mTranslator.stringLanguageCode = id;
         mTranslator.LoadTranslationDocument();
     }
 
     private void LoadTranslationDocument()
     {
-        if (intLanguageCurrent <= 0 ||
-            intLanguageCurrent + 1 < stringLanguageCode.Length)
+        if (stringLanguageCode.Length <= 0)
         {
             return;
         }
 
-        string nameFile = "translation_" + stringLanguageCode[intLanguageCurrent - 1] + ".txt";
+        string nameFile = "Translation/" + stringLanguageCode + ".txt";
 
-        // Read the translation_<x>.txt file
+        // Read the text file
         if (!File.Exists(nameFile))
         {
 #if UNITY_EDITOR
@@ -118,7 +115,7 @@ public class Translator : MonoBehaviour
         mTranslator = this;
         DontDestroyOnLoad(gameObject);
 
-        intLanguageCurrent = PlayerPrefs.GetInt("manual_translation_id", 1);
+        stringLanguageCode = PlayerPrefs.GetString("manual_translation_code", "joke");
         LoadTranslationDocument();
     }
 }
