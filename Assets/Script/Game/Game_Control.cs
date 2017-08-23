@@ -24,7 +24,10 @@ public class Game_Control : MonoBehaviour
     public SpriteRenderer[] spriteRendererCatcherHighlight;
 
     public Camera[] cameraGame;
-    public float floatCameraRotation;
+    public float floatCameraRotation = 0f;
+    public bool boolCameraRotationNoLerp = false;
+    public float floatCameraRotationChangeRate = 0f;
+    public float floatCameraRotationLerpRate = 8f;
 
     public Game_Note noteCatchPrefab;
     private List<Game_Note> listNoteCatch = new List<Game_Note>();
@@ -375,7 +378,7 @@ public class Game_Control : MonoBehaviour
         objectGroupType[3].SetActive(intChartGameType >= 2);
 
         // Variable initialization
-        floatPreviousRecord = PlayerPrefs.GetFloat(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString(), 0f);
+        floatPreviousRecord = PlayerPrefs.GetFloat(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-recordaccuracy", 0f);
 
         // Object initialization
         objectAutoplayIndicator.SetActive(boolAutoplay);
@@ -478,9 +481,17 @@ public class Game_Control : MonoBehaviour
 
     void Update()
     {
+        floatCameraRotation += floatCameraRotationChangeRate * Time.deltaTime * chartData.songTempo / 60f;
         for (int i = 0; i < cameraGame.Length; i++)
         {
-            cameraGame[i].transform.rotation = Quaternion.Euler(0f, 0f, (i * 90f) + floatCameraRotation);
+            if (boolCameraRotationNoLerp)
+            {
+                cameraGame[i].transform.rotation = Quaternion.Lerp(cameraGame[i].transform.rotation, Quaternion.Euler(0f, 0f, (i * 90f) + floatCameraRotation), Time.deltaTime * floatCameraRotationLerpRate);
+            }
+            else
+            {
+                cameraGame[i].transform.rotation = Quaternion.Euler(0f, 0f, (i * 90f) + floatCameraRotation);
+            }
         }
     }
 	
@@ -978,14 +989,21 @@ public class Game_Control : MonoBehaviour
             finalScore += additionalScore;
             PlayerSetting.setting.ScoreAdd(finalScore);
 
-            oldRecordAccuracy = PlayerPrefs.GetFloat(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString(), 0f);
+            oldRecordAccuracy = PlayerPrefs.GetFloat(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-recordaccuracy", 0f);
             textRecordAccuracy.gameObject.SetActive(true);
             textRecordAccuracy.text = (oldRecordAccuracy * 100f).ToString("f2");
 
+            // Accuracy record
             if (finalAccuracy > oldRecordAccuracy)
             {
-                PlayerPrefs.SetFloat(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString(), finalAccuracy);
+                PlayerPrefs.SetFloat(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-recordaccuracy", finalAccuracy);
             }
+
+            // Mapchart play count increase
+            int songPlayCount = PlayerPrefs.GetInt(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-playcount", 0);
+            songPlayCount++;
+            PlayerPrefs.SetInt(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-playcount", songPlayCount);
+
             PlayerSetting.setting.Save();
         }
         else

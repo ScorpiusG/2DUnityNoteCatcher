@@ -327,6 +327,7 @@ public class Creator_Control : MonoBehaviour
     public void ClearChart()
     {
         PlaySound(clipSelect);
+        intCursorPosition = 0;
 
         //textFileName.text = "";
         textSongName.text = "";
@@ -1018,9 +1019,9 @@ public class Creator_Control : MonoBehaviour
         if (intChartLevel < 1) intChartLevel = 1;
 
 #if UNITY_EDITOR
-        textChartLevel.text = "CHART LEVEL " + intChartLevel.ToString() + " (" + (1 + finalChartLevel).ToString("f3") + ")";
+        textChartLevel.text = Translator.GetStringTranslation("CREATOR_CHARTLEVEL", "CHART LEVEL") + " " + intChartLevel.ToString() + " (" + (1 + finalChartLevel).ToString("f3") + ")";
 #else
-        textChartLevel.text = "CHART LEVEL " + intChartLevel.ToString();
+        textChartLevel.text = Translator.GetStringTranslation("CREATOR_CHARTLEVEL", "CHART LEVEL") + " " + intChartLevel.ToString();
 #endif
     }
     public float CalculateIntensityOfNotes(Vector2 point1, Vector2 point2)
@@ -1081,14 +1082,14 @@ public class Creator_Control : MonoBehaviour
 
         // Display cursor position
         float songTempo = 0;
-        textTimeCurrentMeasure.text = "Measure " + ((intCursorPosition / 4) + 1).ToString() + ", Beat " + ((intCursorPosition % 4) + 1).ToString();
+        textTimeCurrentMeasure.text = Translator.GetStringTranslation("CREATOR_CURRENTMEASURE", "Measure") + " " + ((intCursorPosition / 4) + 1).ToString() + " " + Translator.GetStringTranslation("CREATOR_CURRENTBEAT", "Beat") + " " + ((intCursorPosition % 4) + 1).ToString();
         if (float.TryParse(textSongTempo.text, out songTempo))
         {
-            textTimeCurrentLength.text = "Song Pos " + (Mathf.FloorToInt(60f / songTempo * intCursorPosition / 60f)).ToString("0") + ":" + (60f / songTempo * intCursorPosition % 60f).ToString("00.00");
+            textTimeCurrentLength.text = Translator.GetStringTranslation("CREATOR_CURRENTSONGPOSITION", "Song Pos") + " " + (Mathf.FloorToInt(60f / songTempo * intCursorPosition / 60f)).ToString("0") + ":" + (60f / songTempo * intCursorPosition % 60f).ToString("00.00");
         }
         else
         {
-            textTimeCurrentLength.text = "Song Pos UNKNOWN";
+            textTimeCurrentLength.text = Translator.GetStringTranslation("CREATOR_CURRENTSONGPOSITIONUNKNOWN", "Song Pos UNKNOWN");
         }
         if (intBeatSnapDivisor >= 0)
         {
@@ -1101,16 +1102,16 @@ public class Creator_Control : MonoBehaviour
         textHoriPosSnapDivisor.text = "1/" + intHoriPosSnapDivisorValue[intHoriPosSnapDivisor].ToString();
 
         // Current selection
-        textChartGameType.text = stringChartGameType[intChartGameType];
+        textChartGameType.text = Translator.GetStringTranslation("CREATOR_CHARTGAMETYPEBODY" + intChartGameType.ToString(), stringChartGameType[intChartGameType]);
         textFileGameType.text = "-" + intChartGameType.ToString() + "-";
-        textNotePlacementType.text = stringNotePlacementType[intNotePlacementType];
+        textNotePlacementType.text = Translator.GetStringTranslation("CREATOR_NOTEPLACETYPEBODY" + intNotePlacementType.ToString(), stringNotePlacementType[intNotePlacementType]);
         textNoteOther.text = "";
         foreach (string s in listStringNoteOther)
         {
             textNoteOther.text += s + "\n";
         }
 
-        textMouseScrollSetting.text = stringMouseScrollSetting[intMouseScrollSetting];
+        textMouseScrollSetting.text = Translator.GetStringTranslation("CREATOR_OPTIONSMOUSESCROLLFUNCBODY" + intMouseScrollSetting.ToString(), stringMouseScrollSetting[intMouseScrollSetting]);
         textSongPreviewLength.text = sliderSongPreviewLength.value.ToString("f2");
         textSongPreviewFade.text = sliderSongPreviewFade.value.ToString("f2");
     }

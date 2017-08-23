@@ -24,6 +24,7 @@ public class SongMenu_Control : MonoBehaviour
     public Image imagePlayerLevelMax;
     public Text textPlayerLevel;
     public Text textPlayerScore;
+    public Text textPlayerScoreNextLevel;
     public Image imageScoreGauge;
 
     public ScrollRect scrollViewChartList;
@@ -76,12 +77,13 @@ public class SongMenu_Control : MonoBehaviour
         objectButtonPlay.SetActive(false);
         buttonChartIndividual.gameObject.SetActive(false);
 
+        textPlayerScore.text = PlayerSetting.setting.GetScore();
         // Has already reached maximum level (100), display score only.
         if (PlayerSetting.setting.boolPlayerLevelMax)
         {
             imagePlayerLevelMax.gameObject.SetActive(true);
             textPlayerLevel.gameObject.SetActive(false);
-            textPlayerScore.text = PlayerSetting.setting.GetScore();
+            textPlayerScoreNextLevel.gameObject.SetActive(false);
             imageScoreGauge.fillAmount = 1f;
         }
         // Otherwise; show level, score, and score required to next level.
@@ -95,8 +97,8 @@ public class SongMenu_Control : MonoBehaviour
             imagePlayerLevelMax.gameObject.SetActive(false);
             textPlayerLevel.gameObject.SetActive(true);
             textPlayerLevel.text = currentLevel.ToString();
-            textPlayerScore.text = PlayerSetting.setting.GetScore() + " (Next Level: " +
-                (nextLevelScore - currentScore).ToString("n0") + ")";
+            textPlayerScoreNextLevel.gameObject.SetActive(true);
+            textPlayerScoreNextLevel.text = " (Next Level: " + (nextLevelScore - currentScore).ToString("n0") + ")";
             imageScoreGauge.fillAmount = 1f * (currentScore - prevLevelScore) / (nextLevelScore - prevLevelScore);
         }
         sliderScrollSpeed.value = PlayerSetting.setting.intScrollSpeed;
@@ -189,11 +191,11 @@ public class SongMenu_Control : MonoBehaviour
     public void RefreshTexts()
     {
         isHighscoreDisabledByMods = false;
-        textDisplayScrollSpeed.text = "Game Scroll Speed: x" + (0.1f * PlayerSetting.setting.intScrollSpeed).ToString("f1");
-        textDisplayAccuracy.text = "Accuracy Tolerance: " + PlayerSetting.setting.intAccuracyTolerance.ToString() + "%";
+        textDisplayScrollSpeed.text = Translator.GetStringTranslation("SONGMENU_SCROLLSPEED", "Game Scroll Speed:") + " x" + (0.1f * PlayerSetting.setting.intScrollSpeed).ToString("f1");
+        textDisplayAccuracy.text = Translator.GetStringTranslation("SONGMENU_ACCURACYTOLERANCE", "Accuracy Tolerance:") + " " + PlayerSetting.setting.intAccuracyTolerance.ToString() + "%";
         if (PlayerSetting.setting.intGameOffset != 0)
         {
-            textDisplayAccuracy.text += " | Offset: " + PlayerSetting.setting.intGameOffset.ToString() + "ms";
+            textDisplayAccuracy.text += " | " + Translator.GetStringTranslation("SONGMENU_GAMEOFFSET", "Offset:") + " " + PlayerSetting.setting.intGameOffset.ToString() + "ms";
         }
         textDisplayMods.text = "";
         if (PlayerSetting.setting.modDisableScore)
@@ -239,15 +241,6 @@ public class SongMenu_Control : MonoBehaviour
                 textDisplayMods.text += ", ";
             }
             textDisplayMods.text += "ChartMirror";
-            isHighscoreDisabledByMods = true;
-        }
-        if (PlayerSetting.setting.modChartRain)
-        {
-            if (textDisplayMods.text != "")
-            {
-                textDisplayMods.text += ", ";
-            }
-            textDisplayMods.text += "Rain";
             isHighscoreDisabledByMods = true;
         }
         if (PlayerSetting.setting.modChartRandom)
@@ -377,7 +370,7 @@ public class SongMenu_Control : MonoBehaviour
                         case 6: stringMode = "BC"; break;
                         case 7: stringMode = "ND"; break;
                     }
-                    nb.textButton.text = stringMode + " " + (chartID + 1).ToString() + "\nLvl " + chartData.chartLevel.ToString();
+                    nb.textButton.text = stringMode + " " + (chartID + 1).ToString() + "\n*" + chartData.chartLevel.ToString();
 
                     // If it is the first chart found, it will be selected first
                     if (firstChart == null)
@@ -402,12 +395,13 @@ public class SongMenu_Control : MonoBehaviour
             objectButtonPlay.SetActive(false);
             textDetailsHeader.text = "";
             textDetailsBody.text =
+                Translator.GetStringTranslation("SONGMENU_CHARTNONEXISTS",
                 "There are no map charts in\n" +
                 "this song folder's contents.\n" +
                 "\n" +
                 "Please make sure your map\n" +
                 "chart files are named in the\n" +
-                "correct format.";
+                "correct format.");
             textDetailsRecord.text = "";
         }
         
@@ -464,18 +458,22 @@ public class SongMenu_Control : MonoBehaviour
             case 6: stringMode = "Black Core"; break;
             case 7: stringMode = "Note Dodge"; break;
         }
+        stringMode = Translator.GetStringTranslation("SONGMENU_CHARTGAMETYPEBODY" + chartData.chartGameType, stringMode);
         float actualLength = chartData.songLength * 60f / chartData.songTempo;
 
+        // Display song details
         textDetailsHeader.text = chartData.songName;
         textDetailsBody.text =
             chartData.songArtist + "\n\n" +
-            "Chart Producer: " + chartData.chartDeveloper + "\n" +
-            "Mode: " + stringMode + "\n" +
-            "Level: " + chartData.chartLevel.ToString() + "\n" +
-            "Length: " + Mathf.Floor(actualLength / 60f).ToString() + ":" + (actualLength % 60f).ToString("f2") + "\n" +
-            "BPM: " + chartData.songTempo.ToString("f0") + "\n" +
-            "Judge Level: " + (chartData.chartJudge + 1).ToString();
-        textDetailsRecord.text = "Best Accuracy: " + PlayerPrefs.GetFloat(stringSongSelectedCurrent + "-" + intGameType.ToString() + "-" + intGameChart.ToString(), 0f).ToString("f2") + "%";
+            Translator.GetStringTranslation("SONGMENU_CHARTDEV", "Chart Producer:") + " " + chartData.chartDeveloper + "\n" +
+            Translator.GetStringTranslation("SONGMENU_CHARTGAMETYPEBODY", "Mode:") + " " + stringMode + "\n" +
+            Translator.GetStringTranslation("SONGMENU_CHARTLEVEL", "Level:") + " " + chartData.chartLevel.ToString() + "\n" +
+            Translator.GetStringTranslation("SONGMENU_CHARTLENGTH", "Length:") + " " + Mathf.Floor(actualLength / 60f).ToString() + ":" + (actualLength % 60f).ToString("f2") + "\n" +
+            Translator.GetStringTranslation("SONGMENU_CHARTBPM", "BPM:") + " " + chartData.songTempo.ToString("f0") + "\n" +
+            Translator.GetStringTranslation("SONGMENU_CHARTJUDGELEVEL", "Judge Level:") + " " + (chartData.chartJudge + 1).ToString();
+        textDetailsRecord.text =
+            Translator.GetStringTranslation("SONGMENU_RECORDACCURACY", "Best Accuracy:") + " " + PlayerPrefs.GetFloat(stringSongSelectedCurrent + "-" + intGameType.ToString() + "-" + intGameChart.ToString() + "-recordaccuracy", 0f).ToString("f2") + "%\n" +
+            Translator.GetStringTranslation("SONGMENU_RECORDPLAYCOUNT", "Attempts:") + " " + PlayerPrefs.GetInt(stringSongSelectedCurrent + "-" + intGameType.ToString() + "-" + intGameChart.ToString() + "-playcount", 0).ToString("n0");
 
         isHighscoreDisabledByChart = !chartData.isHighScoreAllowed;
         RefreshTexts();

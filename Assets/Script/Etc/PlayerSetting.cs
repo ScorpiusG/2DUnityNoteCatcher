@@ -64,8 +64,6 @@ public class PlayerSetting : MonoBehaviour
     public bool modChartCluster = false;
     // A thermometer will appear on screen. With little to no movement, the temperature rises. Moving the cursor will lower the temperature. Force end on maxed temperature.
     public bool modChartHell = false;
-    // The cursor will become a ship. Notes will spawn rings of bullets (higher judgment = more bullets!). Lose a life if cursor hits a bullet. Accuracy = Chart progress. If 5 lives are lost, force end.
-    public bool modChartRain = false;
 
     /// <summary>
     /// Adds score to the total amount. The score limit implemented is super high and may take centuries to reach. (Or in this case, a few years?)
