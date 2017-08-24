@@ -62,6 +62,23 @@ SONGMENU_BUTTONSETTINGSSHOWHITJUDGMENTHEADER|show hit judge
 SONGMENU_BUTTONSETTINGSSHOWHITJUDGMENTBODY|im pretty sure u like to see how bad u hit these notes. its kinda necessary tho
 SONGMENU_BUTTONSETTINGSSHOWCOUNTJUDGMENTHEADER|show judg count
 SONGMENU_BUTTONSETTINGSSHOWCOUNTJUDGMENTBODY|ever wanted 2 kno how u got that < 100% acc in da middle of a song? now u can!
+GAME_CHARTDEV|tis mapcharts maed by
+GAME_CHARTLEVEL|levul
+GAME_FULLCOMBONORMAL|u rock dude|no misses
+GAME_FULLCOMBOPERFECT|omg u da man|all best hits
+GAME_RESULTPLAYPERFECT|OMG U PURFECTED THE CHRT
+GAME_RESULTPLAYCLEAR|U BEAT THE CHRT
+GAME_RESULTPLAYFAIL|u suck haha
+GAME_RESULTTITLE1|ur report
+GAME_RESULTTITLE2|old rekurd
+GAME_RESULTTITLE3|wat u wanna do now
+GAME_RESULTBESTCOMBO|hi combuh
+GAME_RESULTJUDGELABEL|bset|nice|meh|noooo
+GAME_RESULTSCOREADD|skore:
+GAME_RESULTRECORDDISABLE|oh noes ur scors not gunna be recorded cuz it no wurkx
+GAME_RESULTNEWRECORD|u r|da best
+GAME_RESULTBUTTONRETRY|keep tryin
+GAME_RESULTBUTTONEXIT|lemme out
 CREATOR_INPUTFIELDFILENAME|UR CHART FILE
 CREATOR_INPUTFIELDOPTIONAL|U KNO U DON AKSUALLY NID 2 PUT STUF HRE
 CREATOR_INPUTFIELDENTERTEXT|U CNA TYPE HERE
@@ -129,11 +146,11 @@ CREATOR_BUTTONNO|HELL NO
 CREATOR_BUTTONUP|up
 CREATOR_BUTTONDOWN|dn
 CREATOR_CLEARCONFIRMHEADER|delete ur chart?
-CREATOR_CLEARCONFIRMBODY|u gona start frm scrtch?||were not responsible for ur sory ass if ur currnt work is not saved|cuz <color=ff3030>u cannot rewind time to save ur work</color>||r u sure???????
+CREATOR_CLEARCONFIRMBODY|u gona start frm scrtch?||were not responsible for ur sory ass if ur currnt work is not saved|cuz u cannot rewind time to save ur work||r u sure???????
 CREATOR_SAVECONFIRMHEADER|write ur chart on a txt fle?
-CREATOR_SAVECONFIRMBODY|u gona save ur chart onto a text file||were not responsible for ur sory ass if ur old chart exists and is saved over|cuz <color=ff3030>u cannot rewind time to save ur old chart</color>||r u sure???????
+CREATOR_SAVECONFIRMBODY|u gona save ur chart onto a text file||were not responsible for ur sory ass if ur old chart exists and is saved over|cuz u cannot rewind time to save ur old chart||r u sure???????
 CREATOR_LOADCONFIRMHEADER|read ur chart frm a txt fle?
-CREATOR_LOADCONFIRMBODY|u gona load ur chart onto a text file||were not responsible for ur sory ass if ur currnt work is not saved|cuz <color=ff3030>u cannot rewind time to save ur work</color>||r u sure???????
+CREATOR_LOADCONFIRMBODY|u gona load ur chart onto a text file||were not responsible for ur sory ass if ur currnt work is not saved|cuz u cannot rewind time to save ur work||r u sure???????
 CREATOR_EXITCONFIRMHEADER|exit da editur?
-CREATOR_EXITCONFIRMBODY|u gona exit 2 da titl scrin||were not responsible for ur sory ass if ur currnt work is not saved|cuz <color=ff3030>u cannot rewind time to save ur work</color>||r u sure???????
+CREATOR_EXITCONFIRMBODY|u gona exit 2 da titl scrin||were not responsible for ur sory ass if ur currnt work is not saved|cuz u cannot rewind time to save ur work||r u sure???????
 ERROR|If you're reading this, I messed up.

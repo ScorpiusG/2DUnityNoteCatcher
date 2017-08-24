@@ -73,6 +73,8 @@ public class Game_Control : MonoBehaviour
     public Image imageAccuracyTolerance;
     public float floatAccuracyGaugeWidth = 928f;
 
+    public Animator animatorFullCombo;
+
     public Animator animatorResults;
     public Text textResultHeader;
     public Color colorResultHeaderPerfect = Color.yellow;
@@ -321,10 +323,12 @@ public class Game_Control : MonoBehaviour
             }
         }
 
+        // Check for best combo
         if (playerComboCurrent > playerComboBest)
         {
             playerComboBest = playerComboCurrent;
         }
+        // Display combo
         if (PlayerSetting.setting.enableDisplayCombo)
         {
             textMeshComboCurrent.gameObject.SetActive(playerComboCurrent >= floatTextComboAppearComboMinimum);
@@ -332,6 +336,21 @@ public class Game_Control : MonoBehaviour
             {
                 floatTextComboScaleCurrent = floatTextComboScaleOnChange;
                 textMeshComboCurrent.transform.localScale = Vector3.one * floatTextComboScaleCurrent;
+            }
+        }
+
+        // Animate full combo (combo = number of notes)
+        if (playerAccuracyBest + playerAccuracyGreat + playerAccuracyFine == chartTotalNotes && animatorFullCombo != null)
+        {
+            // Perfect accuracy
+            if (playerAccuracyBest == chartTotalNotes)
+            {
+                animatorFullCombo.Play("perfect");
+            }
+            // Non-perfect accuracy
+            else
+            {
+                animatorFullCombo.Play("normal");
             }
         }
 
@@ -401,7 +420,7 @@ public class Game_Control : MonoBehaviour
         animatorResults.gameObject.SetActive(false);
         animatorNewRecord.gameObject.SetActive(false);
         textMeshComboCurrent.gameObject.SetActive(PlayerSetting.setting.enableDisplayCombo);
-        textMeshRecordGhost.gameObject.SetActive(PlayerSetting.setting.enableDisplayRecordGhost && floatPreviousRecord > Mathf.Epsilon);
+        textMeshRecordGhost.gameObject.SetActive(PlayerSetting.setting.enableDisplayRecordGhost && floatPreviousRecord > Mathf.Epsilon && !boolAutoplay);
         if (PlayerSetting.setting.enableDisplayRecordGhost && !PlayerSetting.setting.enableDisplayCombo)
         {
             textMeshRecordGhost.transform.position = Vector3.zero;
@@ -464,7 +483,7 @@ public class Game_Control : MonoBehaviour
             textSongProgressTime.gameObject.SetActive(true);
             imageSongProgressGauge.gameObject.SetActive(true);
             textSongAndArtistName.text = chartData.songArtist + " - " + chartData.songName;
-            textSongDetails.text = "Mapchart by " + chartData.chartDeveloper + " [" + gameTypeAbbr + " #" + (intChartGameChart + 1).ToString() + "] (Level " + chartData.chartLevel + ")";
+            textSongDetails.text = Translator.GetStringTranslation("GAME_CHARTDEV", "Mapchart by") + " " + chartData.chartDeveloper + " [" + gameTypeAbbr + " #" + (intChartGameChart + 1).ToString() + "] (" + Translator.GetStringTranslation("GAME_CHARTLEVEL", "Level") + " " + chartData.chartLevel + ")";
         }
         else
         {
@@ -868,18 +887,34 @@ public class Game_Control : MonoBehaviour
                     {
                         JudgeNote(x, objectCatcher[x.type], true);
                     }
+                    // Autoplay
+                    if (boolAutoplay && floatMusicBeat > x.time)
+                    {
+                        JudgeNote(x, objectCatcher[x.type], true);
+                    }
                 }
             }
 
             // Tap note input
-            if (Input.anyKeyDown)
+            if (Input.anyKeyDown && !boolAutoplay)
             {
+                // Get the lowest positioned note
+                Game_Note lowestNote = null;
                 foreach (Game_Note x in listNoteTap)
                 {
-                    float dist = Mathf.Abs(floatMusicBeat - x.time);
+                    if (lowestNote == null || x.position < lowestNote.position)
+                    {
+                        lowestNote = x;
+                    }
+                }
+
+                // Note judgment
+                if (lowestNote != null)
+                {
+                    float dist = Mathf.Abs(floatMusicBeat - lowestNote.time);
                     if (dist < floatDistAccuracyTapMiss[chartJudgeDifficulty])
                     {
-                        JudgeNote(x, objectCatcher[x.type], true);
+                        JudgeNote(lowestNote, objectCatcher[lowestNote.type % 4], true);
                     }
                 }
             }
@@ -1018,17 +1053,17 @@ public class Game_Control : MonoBehaviour
         // Update texts
         if (playerAccuracyFine == 0 && playerAccuracyGreat == 0 && playerAccuracyMiss == 0)
         {
-            textResultHeader.text = "PERFECT RHYTHM";
+            textResultHeader.text = Translator.GetStringTranslation("GAME_RESULTPLAYPERFECT", "PERFECT RHYTHM");
             textResultHeader.color = colorResultHeaderPerfect;
         }
         else if (1f * finalAccuracy / chartTotalNotes >= 0.01f * PlayerSetting.setting.intAccuracyTolerance)
         {
-            textResultHeader.text = "COMPLETE RHYTHM";
+            textResultHeader.text = Translator.GetStringTranslation("GAME_RESULTPLAYCLEAR", "COMPLETE RHYTHM");
             textResultHeader.color = colorResultHeaderPass;
         }
         else
         {
-            textResultHeader.text = "UNDESIRED RHYTHM";
+            textResultHeader.text = Translator.GetStringTranslation("GAME_RESULTPLAYFAIL", "UNDESIRED RHYTHM");
             textResultHeader.color = colorResultHeaderFail;
         }
         if (isScoringDisabled)
@@ -1062,7 +1097,7 @@ public class Game_Control : MonoBehaviour
         }
         if (!isScoringDisabled)
         {
-            textResultOther.text = "Score: " + finalScore.ToString();
+            textResultOther.text = Translator.GetStringTranslation("GAME_RESULTSCOREADD", "Score:") + " " + finalScore.ToString();
         }
     }
     IEnumerator AnimatorResultsSpeedUp()

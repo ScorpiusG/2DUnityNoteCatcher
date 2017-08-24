@@ -197,7 +197,7 @@ public class SongMenu_Control : MonoBehaviour
     public void RefreshTexts()
     {
         isHighscoreDisabledByMods = false;
-        textDisplayScrollSpeed.text = Translator.GetStringTranslation("SONGMENU_SCROLLSPEED", "Game Scroll Speed:") + " x" + (0.1f * PlayerSetting.setting.intScrollSpeed).ToString("f1");
+        textDisplayScrollSpeed.text = Translator.GetStringTranslation("SONGMENU_SCROLLSPEED", "Note Scroll Speed:") + " x" + (0.1f * PlayerSetting.setting.intScrollSpeed).ToString("f1");
         textDisplayAccuracy.text = Translator.GetStringTranslation("SONGMENU_ACCURACYTOLERANCE", "Accuracy Tolerance:") + " " + PlayerSetting.setting.intAccuracyTolerance.ToString() + "%";
         if (PlayerSetting.setting.intGameOffset != 0)
         {
@@ -474,9 +474,9 @@ public class SongMenu_Control : MonoBehaviour
         textDetailsHeader.text = chartData.songName;
         textDetailsBody.text =
             chartData.songArtist + "\n\n" +
-            Translator.GetStringTranslation("SONGMENU_CHARTDEV", "Chart Producer:") + " " + chartData.chartDeveloper + "\n" +
-            Translator.GetStringTranslation("SONGMENU_CHARTGAMETYPEBODY", "Mode:") + " " + stringMode + "\n" +
-            Translator.GetStringTranslation("SONGMENU_CHARTLEVEL", "Level:") + " " + chartData.chartLevel.ToString() + "\n" +
+            Translator.GetStringTranslation("SONGMENU_CHARTDEV", "Mapchart Producer:") + " " + chartData.chartDeveloper + "\n" +
+            Translator.GetStringTranslation("SONGMENU_CHARTGAMETYPEBODY", "Mapchart Mode:") + " " + stringMode + "\n" +
+            Translator.GetStringTranslation("SONGMENU_CHARTLEVEL", "Mapchart Level:") + " " + chartData.chartLevel.ToString() + "\n" +
             Translator.GetStringTranslation("SONGMENU_CHARTLENGTH", "Length:") + " " + Mathf.Floor(actualLength / 60f).ToString() + ":" + (actualLength % 60f).ToString("f2") + "\n" +
             Translator.GetStringTranslation("SONGMENU_CHARTBPM", "BPM:") + " " + chartData.songTempo.ToString("f0") + "\n" +
             Translator.GetStringTranslation("SONGMENU_CHARTJUDGELEVEL", "Judge Level:") + " " + (chartData.chartJudge + 1).ToString();
