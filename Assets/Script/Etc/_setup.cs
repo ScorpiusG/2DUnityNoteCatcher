@@ -15,6 +15,7 @@ public class _setup : MonoBehaviour
     IEnumerator RunMe ()
     {
         yield return new WaitForSeconds(0.5f);
-        SceneManager.LoadScene(stringNextScene);
+        SceneTransition.LoadScene(stringNextScene);
+        //SceneManager.LoadScene(stringNextScene);
     }
 }

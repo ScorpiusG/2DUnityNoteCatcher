@@ -1049,7 +1049,8 @@ public class Creator_Control : MonoBehaviour
     private IEnumerator _SceneTransferToTitle()
     {
         yield return null;
-        SceneManager.LoadScene(stringSceneNameTitle);
+        //SceneManager.LoadScene(stringSceneNameTitle);
+        SceneTransition.LoadScene(stringSceneNameTitle);
     }
 
     private void FixedUpdate()

@@ -33,4 +33,14 @@ public class TestCheck : MonoBehaviour
             Debug.Log("Chart level " + i.ToString() + ", Score " + finalScore.ToString());
         }
     }
+
+    public void CheckAvailableTranslations()
+    {
+        List<string> listTranslations = Translator.GetListStringAvailableLanguages();
+
+        foreach (string x in listTranslations)
+        {
+            Debug.Log("Got the " + x + " file in the Translation folder.");
+        }
+    }
 }

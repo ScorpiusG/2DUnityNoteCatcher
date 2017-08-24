@@ -62,7 +62,7 @@ public class Translator : MonoBehaviour
             return null;
         }
 
-        return mTranslator.fontLanguageCode[int.Parse(GetStringTranslation("TRANSLATION_FONT", "0"))];
+        return mTranslator.fontLanguageCode[int.Parse(GetStringTranslation("TRANSLATION_FONT", "0")) - 1];
     }
 
     /// <summary>
@@ -77,6 +77,26 @@ public class Translator : MonoBehaviour
         mTranslator.LoadTranslationDocument();
     }
 
+    /// <summary>
+    /// Returns a string list of available languages in the Translation folder.
+    /// </summary>
+    /// <returns></returns>
+    public static List<string> GetListStringAvailableLanguages()
+    {
+        List<string> listLanguage = new List<string>();
+
+        string path = Directory.GetCurrentDirectory() + "/Translation";
+        DirectoryInfo main = new DirectoryInfo(path);
+        FileInfo[] sub = main.GetFiles("*.txt", SearchOption.TopDirectoryOnly);
+        
+        foreach (FileInfo x in sub)
+        {
+            listLanguage.Add(x.Name);
+        }
+
+        return listLanguage;
+    }
+
     private void LoadTranslationDocument()
     {
         if (stringLanguageCode.Length <= 0)
@@ -84,7 +104,7 @@ public class Translator : MonoBehaviour
             return;
         }
 
-        string nameFile = "Translation/" + stringLanguageCode + ".txt";
+        string nameFile = "Translation/" + stringLanguageCode;
 
         // Read the text file
         if (!File.Exists(nameFile))
@@ -104,7 +124,7 @@ public class Translator : MonoBehaviour
         reader.Close();
     }
 
-    void Awake()
+    private void Awake()
     {
         if (mTranslator != null)
         {

@@ -132,7 +132,8 @@ public class Game_Control : MonoBehaviour
     }
     public void LoadScene(string sceneName)
     {
-        SceneManager.LoadScene(sceneName);
+        //SceneManager.LoadScene(sceneName);
+        SceneTransition.LoadScene(sceneName);
     }
 
     private Game_Note SpawnNoteCatch()

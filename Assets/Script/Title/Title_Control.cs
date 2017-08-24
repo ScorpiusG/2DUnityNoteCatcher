@@ -31,7 +31,8 @@ public class Title_Control : MonoBehaviour
     private IEnumerator _ButtonSceneTransferSongMenuOfficial()
     {
         yield return null;
-        SceneManager.LoadScene(stringSceneNameSongMenuOfficial);
+        //SceneManager.LoadScene(stringSceneNameSongMenuOfficial);
+        SceneTransition.LoadScene(stringSceneNameSongMenuOfficial);
     }
 
     public void ButtonSceneTransferSongMenuCustom()
@@ -41,7 +42,8 @@ public class Title_Control : MonoBehaviour
     private IEnumerator _ButtonSceneTransferSongMenuCustom()
     {
         yield return null;
-        SceneManager.LoadScene(stringSceneNameSongMenuCustom);
+        //SceneManager.LoadScene(stringSceneNameSongMenuCustom);
+        SceneTransition.LoadScene(stringSceneNameSongMenuCustom);
     }
 
     public void ButtonSceneTransferChartEditor()
@@ -51,7 +53,8 @@ public class Title_Control : MonoBehaviour
     private IEnumerator _ButtonSceneTransferChartEditor()
     {
         yield return null;
-        SceneManager.LoadScene(stringSceneNameChartEditor);
+        //SceneManager.LoadScene(stringSceneNameChartEditor);
+        SceneTransition.LoadScene(stringSceneNameChartEditor);
     }
 
     public void ButtonGameExit()

@@ -55,6 +55,10 @@ public class SongMenu_Control : MonoBehaviour
     public Slider sliderOptionsMouseSensitivity;
     public Text textOptionsMouseSensitivity;
     public Text textOptionsGameOffset;
+    public Slider sliderOptionsVolumeMusic;
+    public Text textOptionsVolumeMusic;
+    public Slider sliderOptionsVolumeEffect;
+    public Text textOptionsVolumeEffect;
     public Toggle toggleOptionsVerticalSync;
     public Toggle toggleOptionsInterfaceSongDetails;
     public Toggle toggleOptionsInterfaceAccuracy;
@@ -104,6 +108,8 @@ public class SongMenu_Control : MonoBehaviour
         sliderScrollSpeed.value = PlayerSetting.setting.intScrollSpeed;
         sliderOptionsAccuracyTolerance.value = PlayerSetting.setting.intAccuracyTolerance;
         sliderOptionsMouseSensitivity.value = PlayerSetting.setting.floatMouseSensitivity;
+        sliderOptionsVolumeMusic.value = PlayerSetting.setting.floatVolumeMusic;
+        sliderOptionsVolumeEffect.value = PlayerSetting.setting.floatVolumeEffect;
         toggleOptionsVerticalSync.isOn = PlayerSetting.setting.enableVSync;
         toggleOptionsInterfaceSongDetails.isOn = PlayerSetting.setting.enableInterfaceSongDetails;
         toggleOptionsInterfaceAccuracy.isOn = PlayerSetting.setting.enableInterfaceAccuracy;
@@ -274,6 +280,8 @@ public class SongMenu_Control : MonoBehaviour
         textOptionsAccuracyTolerance.text = PlayerSetting.setting.intAccuracyTolerance.ToString() + "%";
         textOptionsMouseSensitivity.text = (PlayerSetting.setting.floatMouseSensitivity * 100f).ToString("f2") + "%";
         textOptionsGameOffset.text = PlayerSetting.setting.intGameOffset.ToString() + " ms";
+        textOptionsVolumeMusic.text = (PlayerSetting.setting.floatVolumeMusic * 100f).ToString("f2") + "%";
+        textOptionsVolumeEffect.text = (PlayerSetting.setting.floatVolumeEffect * 100f).ToString("f2") + "%";
 
         textDetailsRecord.gameObject.SetActive(!isHighscoreDisabledByMods && !isHighscoreDisabledByChart);
         textDetailsWarning.gameObject.SetActive(isHighscoreDisabledByMods || isHighscoreDisabledByChart);
@@ -290,7 +298,8 @@ public class SongMenu_Control : MonoBehaviour
 
         Game_Control.boolAutoplay = isAutoplay;
 
-        SceneManager.LoadScene(stringSceneNameGame);
+        //SceneManager.LoadScene(stringSceneNameGame);
+        LoadGameScene();
     }
 
     public void UseSongFolder(Button folder)
@@ -489,17 +498,20 @@ public class SongMenu_Control : MonoBehaviour
 
     public void RestartScene()
     {
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        //SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        SceneTransition.LoadScene(SceneManager.GetActiveScene().name);
     }
 
     public void LoadTitleScene()
     {
-        SceneManager.LoadScene(stringSceneNameTitle);
+        //SceneManager.LoadScene(stringSceneNameTitle);
+        SceneTransition.LoadScene(stringSceneNameTitle);
     }
 
     public void LoadGameScene()
     {
-        SceneManager.LoadScene(stringSceneNameGame);
+        //SceneManager.LoadScene(stringSceneNameGame);
+        SceneTransition.LoadScene(stringSceneNameGame);
     }
 
     public void ToggleMenuOptions()
@@ -543,6 +555,14 @@ public class SongMenu_Control : MonoBehaviour
     public void AdjustGameOffset(int mod)
     {
         PlayerSetting.setting.intGameOffset = Mathf.Clamp(PlayerSetting.setting.intGameOffset + mod, -100, 100);
+    }
+    public void AdjustVolumeMusic()
+    {
+        sliderOptionsVolumeMusic.value = sliderOptionsVolumeMusic.value;
+    }
+    public void AdjustVolumeEffect()
+    {
+        sliderOptionsVolumeEffect.value = sliderOptionsVolumeEffect.value;
     }
     public void AdjustVerticalSync()
     {
