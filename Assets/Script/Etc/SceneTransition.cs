@@ -9,6 +9,9 @@ public class SceneTransition : MonoBehaviour
     public Animator animatorTransition;
     private string stringSceneName = "";
 
+    public AudioSource mAudioSource;
+    public AudioClip clipSceneTransition;
+
     /// <summary>
     /// Plays an animation that transitions to the next scene.
     /// </summary>
@@ -48,6 +51,18 @@ public class SceneTransition : MonoBehaviour
         if (animatorTransition == null)
         {
             animatorTransition = GetComponent<Animator>();
+        }
+        if (mAudioSource == null)
+        {
+            mAudioSource = GetComponent<AudioSource>();
+        }
+    }
+
+    private void PlaySound(AudioClip clip)
+    {
+        if (mAudioSource != null && clip != null)
+        {
+            mAudioSource.PlayOneShot(clip, PlayerSetting.setting.floatVolumeEffect);
         }
     }
 }

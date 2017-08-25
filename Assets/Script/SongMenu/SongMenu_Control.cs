@@ -558,11 +558,11 @@ public class SongMenu_Control : MonoBehaviour
     }
     public void AdjustVolumeMusic()
     {
-        sliderOptionsVolumeMusic.value = sliderOptionsVolumeMusic.value;
+        PlayerSetting.setting.floatVolumeMusic = sliderOptionsVolumeMusic.value;
     }
     public void AdjustVolumeEffect()
     {
-        sliderOptionsVolumeEffect.value = sliderOptionsVolumeEffect.value;
+        PlayerSetting.setting.floatVolumeEffect = sliderOptionsVolumeEffect.value;
     }
     public void AdjustVerticalSync()
     {

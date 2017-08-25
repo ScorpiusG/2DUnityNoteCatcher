@@ -37,8 +37,6 @@ public class Game_Control : MonoBehaviour
     public Color[] noteColor = { Color.blue, Color.red, Color.green, Color.yellow };
     public float floatNoteDistanceSpawn = 3f;
 
-    public AudioSource audioSourceMusic;
-
     public TextMeshPro textMeshComboCurrent;
     public int floatTextComboAppearComboMinimum = 4;
     public float floatTextComboScaleOnChange = 3f;
@@ -99,6 +97,15 @@ public class Game_Control : MonoBehaviour
     public float floatHighlightAlpha = 0.5f;
     private float movementHoriAlpha = 0f;
     private float movementVertAlpha = 0f;
+
+    public AudioSource audioSourceMusic;
+    public AudioSource audioSourceEffect;
+    public List<AudioClip> clipGameHitsound = new List<AudioClip>();
+    public AudioClip clipGameEndFullCombo;
+    public AudioClip clipGameEndPerfect;
+    public AudioClip clipGameEndPass;
+    public AudioClip clipGameEndFail;
+    public AudioClip clipGameForceEnd;
 
     public float floatNoteScrollMultiplier = 0.05f;
     public float[] floatDistAccuracyCatchBest = { 0.12f, 0.11f, 0.1f, 0.09f, 0.81f };
@@ -174,6 +181,8 @@ public class Game_Control : MonoBehaviour
 
     private void JudgeNote(Game_Note note, GameObject catcher, bool isTapNote)
     {
+        bool playSoundEffect = false;
+
         // Catch note
         if (!isTapNote)
         {
@@ -190,6 +199,7 @@ public class Game_Control : MonoBehaviour
                         playerComboCurrent++;
                         animJudgeID = 0;
                         animSortingLayerID = playerComboCurrent;
+                        playSoundEffect = true;
 #if UNITY_EDITOR
                         Debug.Log("Catch note judgment - distance: " + dist + " (BEST)");
 #endif
@@ -201,6 +211,7 @@ public class Game_Control : MonoBehaviour
                         playerComboCurrent++;
                         animJudgeID = 1;
                         animSortingLayerID = playerComboCurrent;
+                        playSoundEffect = true;
 #if UNITY_EDITOR
                         Debug.Log("Catch note judgment - distance: " + dist + " (GREAT)");
 #endif
@@ -212,6 +223,7 @@ public class Game_Control : MonoBehaviour
                         playerComboCurrent++;
                         animJudgeID = 2;
                         animSortingLayerID = playerComboCurrent;
+                        playSoundEffect = true;
 #if UNITY_EDITOR
                         Debug.Log("Catch note judgment - distance: " + dist + " (FINE)");
 #endif
@@ -264,6 +276,7 @@ public class Game_Control : MonoBehaviour
                         playerComboCurrent++;
                         animJudgeID = 0;
                         animSortingLayerID = playerComboCurrent;
+                        playSoundEffect = true;
 #if UNITY_EDITOR
                         Debug.Log("Tap note judgment - distance: " + dist + " (BEST)");
 #endif
@@ -275,6 +288,7 @@ public class Game_Control : MonoBehaviour
                         playerComboCurrent++;
                         animJudgeID = 1;
                         animSortingLayerID = playerComboCurrent;
+                        playSoundEffect = true;
 #if UNITY_EDITOR
                         Debug.Log("Tap note judgment - distance: " + dist + " (GREAT)");
 #endif
@@ -286,6 +300,7 @@ public class Game_Control : MonoBehaviour
                         playerComboCurrent++;
                         animJudgeID = 2;
                         animSortingLayerID = playerComboCurrent;
+                        playSoundEffect = true;
 #if UNITY_EDITOR
                         Debug.Log("Tap note judgment - distance: " + dist + " (FINE)");
 #endif
@@ -339,6 +354,26 @@ public class Game_Control : MonoBehaviour
             }
         }
 
+        // Play sound effect
+        //  FORMAT:  sound:x
+        //  where x is a number of the sound effect
+        if (playSoundEffect)
+        {
+            foreach (string x in note.other)
+            {
+                if (x.StartsWith("sound"))
+                {
+                    string[] y = x.Split(':');
+                    int soundID = int.Parse(y[1]);
+                    if (clipGameHitsound.Count > soundID)
+                    {
+                        PlaySoundEffect(clipGameHitsound[soundID]);
+                    }
+                    break;
+                }
+            }
+        }
+
         // Animate full combo (combo = number of notes)
         if (playerAccuracyBest + playerAccuracyGreat + playerAccuracyFine == chartTotalNotes && animatorFullCombo != null)
         {
@@ -352,6 +387,7 @@ public class Game_Control : MonoBehaviour
             {
                 animatorFullCombo.Play("normal");
             }
+            PlaySoundEffect(clipGameEndFullCombo);
         }
 
         DespawnNote(note);
@@ -370,6 +406,14 @@ public class Game_Control : MonoBehaviour
         Game_AnimationJudgment newAnim = Instantiate(objectAnimationJudgmentPrefab);
         listAnimationJudgment.Add(newAnim);
         return newAnim;
+    }
+
+    public void PlaySoundEffect(AudioClip clip)
+    {
+        if (audioSourceEffect != null && clip != null)
+        {
+            audioSourceEffect.PlayOneShot(clip, PlayerSetting.setting.floatVolumeEffect);
+        }
     }
 
     void Start ()
@@ -425,6 +469,8 @@ public class Game_Control : MonoBehaviour
         {
             textMeshRecordGhost.transform.position = Vector3.zero;
         }
+        audioSourceMusic.volume = PlayerSetting.setting.floatVolumeMusic;
+        //audioSourceEffect.volume = PlayerSetting.setting.floatVolumeEffect;
 
         // Read chart from the text file
         string input = "";
@@ -519,7 +565,7 @@ public class Game_Control : MonoBehaviour
 	
 	private IEnumerator GameLoop ()
     {
-        // Load audio file
+        // Load audio music file
         if (boolCustomSong)
         {
             WWW www = new WWW("file://" + Directory.GetCurrentDirectory() + "/Songs/" + stringSongFileName + "/" + stringSongFileName + ".ogg");
@@ -539,6 +585,51 @@ public class Game_Control : MonoBehaviour
         {
             string path = "Songs/" + stringSongFileName + "/" + stringSongFileName + ".ogg";
             audioSourceMusic.clip = Resources.Load(path) as AudioClip;
+        }
+
+        yield return null;
+
+        // Load hitsound files
+        for (int i = 0; true; i++)
+        {
+            if (boolCustomSong)
+            {
+                WWW www = new WWW("file://" + Directory.GetCurrentDirectory() + "/Songs/" + stringSongFileName + "/sound" + i.ToString() + ".ogg");
+                while (!www.isDone)
+                {
+                    yield return null;
+                }
+#if UNITY_EDITOR
+                if (www.error != "")
+                {
+                    Debug.Log("Error message from reading audio file: " + www.error);
+                }
+#endif
+
+                AudioClip newSound = www.GetAudioClip(false, false, AudioType.OGGVORBIS);
+                if (newSound != null)
+                {
+                    clipGameHitsound.Add(newSound);
+                }
+                else
+                {
+                    break;
+                }
+            }
+            else
+            {
+                string path = "Songs/" + stringSongFileName + "/sound" + i.ToString() + ".ogg";
+                AudioClip newSound = Resources.Load(path) as AudioClip;
+                if (newSound != null)
+                {
+                    clipGameHitsound.Add(newSound);
+                }
+                else
+                {
+                    break;
+                }
+            }
+            yield return null;
         }
 
         yield return new WaitForSeconds(0.5f);
@@ -1006,7 +1097,11 @@ public class Game_Control : MonoBehaviour
             {
                 case 0: gameModeScoreMultiplier = 1f; break;
                 case 1: gameModeScoreMultiplier = 1.4f; break;
-                case 2: case 3: case 4: gameModeScoreMultiplier = 1.8f; break;
+                case 2: case 3: gameModeScoreMultiplier = 1.8f; break;
+                case 4: gameModeScoreMultiplier = 2.2f; break;
+                case 5: gameModeScoreMultiplier = 3.0f; break;
+                case 6: gameModeScoreMultiplier = 5.0f; break;
+                case 7: gameModeScoreMultiplier = 0.0f; break;
             }
             // Score based on accuracy, best combo, chart level, and game mode.
             finalScore = Mathf.FloorToInt(
@@ -1055,16 +1150,27 @@ public class Game_Control : MonoBehaviour
         {
             textResultHeader.text = Translator.GetStringTranslation("GAME_RESULTPLAYPERFECT", "PERFECT RHYTHM");
             textResultHeader.color = colorResultHeaderPerfect;
+            PlaySoundEffect(clipGameEndPerfect);
         }
         else if (1f * finalAccuracy / chartTotalNotes >= 0.01f * PlayerSetting.setting.intAccuracyTolerance)
         {
             textResultHeader.text = Translator.GetStringTranslation("GAME_RESULTPLAYCLEAR", "COMPLETE RHYTHM");
             textResultHeader.color = colorResultHeaderPass;
+            PlaySoundEffect(clipGameEndPass);
         }
         else
         {
             textResultHeader.text = Translator.GetStringTranslation("GAME_RESULTPLAYFAIL", "UNDESIRED RHYTHM");
             textResultHeader.color = colorResultHeaderFail;
+
+            if (isForcedEnd)
+            {
+                PlaySoundEffect(clipGameForceEnd);
+            }
+            else
+            {
+                PlaySoundEffect(clipGameEndFail);
+            }
         }
         if (isScoringDisabled)
         {
@@ -1078,19 +1184,19 @@ public class Game_Control : MonoBehaviour
         // Click a mouse button or hold space to speed up animation
         StartCoroutine(AnimatorResultsSpeedUp());
 
-        yield return new WaitForSeconds(0.5f);
+        for (float f = 0; f < 0.5f; f += Time.deltaTime * animatorResults.speed) yield return null;
         StartCoroutine(TextFloatGradualIncrease(textResultAccuracy, finalAccuracy, 0.8f));
         StartCoroutine(TextIntGradualIncrease(textResultBestCombo, playerComboBest, 0.8f));
-        yield return new WaitForSeconds(0.5f);
+        for (float f = 0; f < 0.5f; f += Time.deltaTime * animatorResults.speed) yield return null;
         StartCoroutine(TextIntGradualIncrease(textResultJudgeBest, playerAccuracyBest, 0.6f));
-        yield return new WaitForSeconds(0.2f);
+        for (float f = 0; f < 0.2f; f += Time.deltaTime * animatorResults.speed) yield return null;
         StartCoroutine(TextIntGradualIncrease(textResultJudgeGreat, playerAccuracyGreat, 0.6f));
-        yield return new WaitForSeconds(0.2f);
+        for (float f = 0; f < 0.2f; f += Time.deltaTime * animatorResults.speed) yield return null;
         StartCoroutine(TextIntGradualIncrease(textResultJudgeFine, playerAccuracyFine, 0.6f));
-        yield return new WaitForSeconds(0.2f);
+        for (float f = 0; f < 0.2f; f += Time.deltaTime * animatorResults.speed) yield return null;
         StartCoroutine(TextIntGradualIncrease(textResultJudgeMiss, playerAccuracyMiss, 0.6f));
 
-        yield return new WaitForSeconds(1.5f);
+        for (float f = 0; f < 1.5f; f += Time.deltaTime * animatorResults.speed) yield return null;
         if (finalAccuracy > oldRecordAccuracy && !isScoringDisabled)
         {
             animatorNewRecord.Play("clip");

@@ -1014,10 +1014,13 @@ public class Creator_Control : MonoBehaviour
         }
 
         float notesPerBeat = 1f * (listNotePosHori.Count + listNotePosVert.Count) / (floatNotePositionLastNote - floatNotePositionFirstNote);
-        float finalChartLevel = (Mathf.Sqrt(notesPerBeat) + floatTotalMovement - 1f) * 0.4f;
+        int intChartJudge = 0;
+        int.TryParse(textChartJudge.text, out intChartJudge);
+        float finalChartLevel = (Mathf.Sqrt(notesPerBeat) + floatTotalMovement - 1f) * (0.4f + (0.05f + intChartJudge));
 
         intChartLevel = 1 + Mathf.FloorToInt(finalChartLevel);
         if (intChartLevel < 1) intChartLevel = 1;
+        if (intChartLevel > 200) intChartLevel = 200;
 
 #if UNITY_EDITOR
         textChartLevel.text = Translator.GetStringTranslation("CREATOR_CHARTLEVEL", "CHART LEVEL") + " " + intChartLevel.ToString() + " (" + (1 + finalChartLevel).ToString("f3") + ")";

@@ -62,7 +62,15 @@ public class Translator : MonoBehaviour
             return null;
         }
 
-        return mTranslator.fontLanguageCode[int.Parse(GetStringTranslation("TRANSLATION_FONT", "0")) - 1];
+        int fontID = int.Parse(GetStringTranslation("TRANSLATION_FONT", "0"));
+        if (fontID > 0)
+        {
+            return mTranslator.fontLanguageCode[fontID - 1];
+        }
+        else
+        {
+            return null;
+        }
     }
 
     /// <summary>
@@ -104,7 +112,7 @@ public class Translator : MonoBehaviour
             return;
         }
 
-        string nameFile = "Translation/" + stringLanguageCode;
+        string nameFile = "Translation/" + stringLanguageCode + ".txt";
 
         // Read the text file
         if (!File.Exists(nameFile))
