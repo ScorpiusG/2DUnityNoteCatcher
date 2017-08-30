@@ -120,6 +120,7 @@ public class Creator_Control : MonoBehaviour
     {
         PlaySound(clipSelect);
         CalculateChartLevel();
+        SaveCreatorSettings();
 
         Creator_Note[] listNoteC = FindObjectsOfType<Creator_Note>();
         if (listNoteC.Length < 1)
@@ -182,10 +183,10 @@ public class Creator_Control : MonoBehaviour
             }
             chartData.listNoteCatchInfo.Add(stringNote);
 
-            if (newNote.position > chartData.songLength - 4f)
+            if (newNote.time + x.length > chartData.songLength + 4f)
             {
-                chartData.songLength = newNote.position + 4f;
-                textSongLength.text = (newNote.position + 4f).ToString();
+                chartData.songLength = newNote.time + 4f + x.length;
+                textSongLength.text = (newNote.time + 4f + x.length).ToString();
             }
         }
         foreach (Creator_Note x in listNoteTapPool)
@@ -221,10 +222,10 @@ public class Creator_Control : MonoBehaviour
             }
             chartData.listNoteTapInfo.Add(stringNote);
 
-            if (newNote.position > chartData.songLength - 4f)
+            if (newNote.time + x.length > chartData.songLength + 4f)
             {
-                chartData.songLength = newNote.position + 4f;
-                textSongLength.text = (newNote.position + 4f).ToString();
+                chartData.songLength = newNote.time + 4f + x.length;
+                textSongLength.text = (newNote.time + 4f + x.length).ToString();
             }
         }
 
@@ -234,6 +235,10 @@ public class Creator_Control : MonoBehaviour
 #endif
 
         // Output to file
+        if (!Directory.Exists("MyCharts"))
+        {
+            Directory.CreateDirectory("MyCharts");
+        }
         string path = "MyCharts/" + textFileName.text + "-" + intChartGameType.ToString() + "-" + textFileChart.text + ".txt";
         if (File.Exists(path))
         {
@@ -1087,7 +1092,9 @@ public class Creator_Control : MonoBehaviour
 
         // Display cursor position
         float songTempo = 0;
-        textTimeCurrentMeasure.text = Translator.GetStringTranslation("CREATOR_CURRENTMEASURE", "Measure") + " " + ((intCursorPosition / 4) + 1).ToString() + " " + Translator.GetStringTranslation("CREATOR_CURRENTBEAT", "Beat") + " " + ((intCursorPosition % 4) + 1).ToString();
+        textTimeCurrentMeasure.text =
+            Translator.GetStringTranslation("CREATOR_CURRENTMEASURE", "Measure") + " " + ((intCursorPosition / 4) + 1).ToString() + " " +
+            Translator.GetStringTranslation("CREATOR_CURRENTBEAT", "Beat") + " " + ((intCursorPosition % 4) + 1).ToString() + "(" + (intCursorPosition + 1).ToString() + ")";
         if (float.TryParse(textSongTempo.text, out songTempo))
         {
             textTimeCurrentLength.text = Translator.GetStringTranslation("CREATOR_CURRENTSONGPOSITION", "Song Pos") + " " + (Mathf.FloorToInt(60f / songTempo * intCursorPosition / 60f)).ToString("0") + ":" + (60f / songTempo * intCursorPosition % 60f).ToString("00.00");

@@ -54,7 +54,7 @@ public class Game_Control : MonoBehaviour
     public List<string> listPopupText = new List<string>();
 
     public Game_AnimationJudgment objectAnimationJudgmentPrefab;
-    private List<Game_AnimationJudgment> listAnimationJudgment;
+    private List<Game_AnimationJudgment> listAnimationJudgment = new List<Game_AnimationJudgment>();
     public Sprite[] spriteJudgment;
     public Color[] colorJudgmentParticle = { Color.blue, Color.green, Color.yellow };
 
@@ -93,6 +93,7 @@ public class Game_Control : MonoBehaviour
     private int chartTotalNotes = 0;
     private int chartJudgeDifficulty = 0;
     private float floatMusicPosition = 0f;
+    private float floatMusicPositionEnd = 0f;
     private float floatMusicBeat = 0f;
     public float floatHighlightAlpha = 0.5f;
     private float movementHoriAlpha = 0f;
@@ -149,7 +150,7 @@ public class Game_Control : MonoBehaviour
     {
         foreach (Game_Note x in listNoteCatch)
         {
-            if (x.gameObject.activeSelf)
+            if (!x.gameObject.activeSelf)
             {
                 return x;
             }
@@ -163,7 +164,7 @@ public class Game_Control : MonoBehaviour
     {
         foreach (Game_Note x in listNoteTap)
         {
-            if (x.gameObject.activeSelf)
+            if (!x.gameObject.activeSelf)
             {
                 return x;
             }
@@ -248,7 +249,7 @@ public class Game_Control : MonoBehaviour
                         anim.transform.position = Vector3.right * note.position;
                         anim.gameObject.layer = 9 + note.type;
                         anim.spriteRendererJudgment.sprite = spriteJudgment[animJudgeID];
-                        anim.spriteRendererJudgment.sortingLayerID = animSortingLayerID;
+                        //anim.spriteRendererJudgment.sortingLayerID = animSortingLayerID;
                         anim.animatorJudgment.Play("anim");
                         if (animJudgeID < 3)
                         {
@@ -461,9 +462,10 @@ public class Game_Control : MonoBehaviour
             x.transform.localPosition = Vector3.zero;
         }
         textNoteJudgeCount.gameObject.SetActive(PlayerSetting.setting.enableDisplayNoteHitCounterSmall);
+        textNoteJudgeCount.text = "B 0\nG 0\nF 0\nM 0";
         animatorResults.gameObject.SetActive(false);
         animatorNewRecord.gameObject.SetActive(false);
-        textMeshComboCurrent.gameObject.SetActive(PlayerSetting.setting.enableDisplayCombo);
+        textMeshComboCurrent.gameObject.SetActive(false);
         textMeshRecordGhost.gameObject.SetActive(PlayerSetting.setting.enableDisplayRecordGhost && floatPreviousRecord > Mathf.Epsilon && !boolAutoplay);
         if (PlayerSetting.setting.enableDisplayRecordGhost && !PlayerSetting.setting.enableDisplayCombo)
         {
@@ -528,8 +530,11 @@ public class Game_Control : MonoBehaviour
             textSongDetails.gameObject.SetActive(true);
             textSongProgressTime.gameObject.SetActive(true);
             imageSongProgressGauge.gameObject.SetActive(true);
+
             textSongAndArtistName.text = chartData.songArtist + " - " + chartData.songName;
             textSongDetails.text = Translator.GetStringTranslation("GAME_CHARTDEV", "Mapchart by") + " " + chartData.chartDeveloper + " [" + gameTypeAbbr + " #" + (intChartGameChart + 1).ToString() + "] (" + Translator.GetStringTranslation("GAME_CHARTLEVEL", "Level") + " " + chartData.chartLevel + ")";
+            textSongProgressTime.text = "--:-- / --:--";
+            imageSongProgressGauge.fillAmount = 0f;
         }
         else
         {
@@ -539,6 +544,9 @@ public class Game_Control : MonoBehaviour
             imageSongProgressGauge.gameObject.SetActive(false);
         }
         objectGroupInterfaceAccuracy.SetActive(PlayerSetting.setting.enableInterfaceAccuracy);
+        imageAccuracyGauge.fillAmount = 0f;
+        imageAccuracyNegativeGauge.fillAmount = 0f;
+        textAccuracy.text = "0.00%";
         chartTotalNotes = chartData.listNoteCatchInfo.Count;
         chartJudgeDifficulty = chartData.chartJudge;
         if (chartJudgeDifficulty >= floatDistAccuracyCatchBest.Length) chartJudgeDifficulty = floatDistAccuracyCatchBest.Length - 1;
@@ -565,21 +573,29 @@ public class Game_Control : MonoBehaviour
 	
 	private IEnumerator GameLoop ()
     {
+        yield return new WaitForSeconds(0.5f);
+
         // Load audio music file
         if (boolCustomSong)
         {
-            WWW www = new WWW("file://" + Directory.GetCurrentDirectory() + "/Songs/" + stringSongFileName + "/" + stringSongFileName + ".ogg");
+            string file = "/Songs/" + stringSongFileName + "/" + stringSongFileName + ".ogg";
+            WWW www = new WWW("file://" + Application.dataPath.Substring(0, Application.dataPath.LastIndexOf("/")) + file);
             while (!www.isDone)
             {
                 yield return null;
             }
 #if UNITY_EDITOR
+            Debug.Log(www.url);
             if (www.error != "")
             {
                 Debug.Log("Error message from reading audio file: " + www.error);
             }
 #endif
             audioSourceMusic.clip = www.GetAudioClip(false, false, AudioType.OGGVORBIS);
+            while (audioSourceMusic.clip == null)
+            {
+                yield return null;
+            }
         }
         else
         {
@@ -594,19 +610,25 @@ public class Game_Control : MonoBehaviour
         {
             if (boolCustomSong)
             {
-                WWW www = new WWW("file://" + Directory.GetCurrentDirectory() + "/Songs/" + stringSongFileName + "/sound" + i.ToString() + ".ogg");
+                string file = "/Songs/" + stringSongFileName + "/sound" + i.ToString() + ".ogg";
+                WWW www = new WWW("file://" + Application.dataPath.Substring(0, Application.dataPath.LastIndexOf("/")) + file);
                 while (!www.isDone)
                 {
                     yield return null;
                 }
-#if UNITY_EDITOR
                 if (www.error != "")
                 {
+#if UNITY_EDITOR
                     Debug.Log("Error message from reading audio file: " + www.error);
-                }
+                    break;
 #endif
+                }
 
                 AudioClip newSound = www.GetAudioClip(false, false, AudioType.OGGVORBIS);
+                while (!www.isDone && newSound == null)
+                {
+                    yield return null;
+                }
                 if (newSound != null)
                 {
                     clipGameHitsound.Add(newSound);
@@ -648,12 +670,15 @@ public class Game_Control : MonoBehaviour
 #endif
         }
 
+        floatMusicPositionEnd = chartData.songLength - ((chartData.chartOffset + PlayerSetting.setting.intGameOffset) * 0.001f);
+        floatMusicPositionEnd *= chartData.songTempo / 60f;
+
         // Actual game loop
-        while (floatMusicPosition < chartData.songLength)
+        while (floatMusicPosition < floatMusicPositionEnd && audioSourceMusic.isPlaying)
         {
             // Time update
             floatMusicPosition = audioSourceMusic.time - ((chartData.chartOffset + PlayerSetting.setting.intGameOffset) * 0.001f);
-            floatMusicBeat =  floatMusicPosition * chartData.songTempo / 60f;
+            floatMusicBeat = floatMusicPosition * chartData.songTempo / 60f;
 
             // Highlight flash on beat
             float floatHighlightAlphaCurrent = 0f;
@@ -787,10 +812,10 @@ public class Game_Control : MonoBehaviour
             if (PlayerSetting.setting.enableDisplayNoteHitCounterSmall)
             {
                 textNoteJudgeCount.text =
-                    "B" + playerAccuracyBest.ToString() + "\n" +
-                    "G" + playerAccuracyGreat.ToString() + "\n" +
-                    "F" + playerAccuracyFine.ToString() + "\n" +
-                    "M" + playerAccuracyMiss.ToString();
+                    "B " + playerAccuracyBest.ToString() + "\n" +
+                    "G " + playerAccuracyGreat.ToString() + "\n" +
+                    "F " + playerAccuracyFine.ToString() + "\n" +
+                    "M " + playerAccuracyMiss.ToString();
             }
             // Center - Combo and judgment
             if (textMeshComboCurrent.gameObject.activeSelf)
@@ -936,7 +961,7 @@ public class Game_Control : MonoBehaviour
             {
                 if (x.gameObject.activeSelf)
                 {
-                    x.transform.position = new Vector3(x.position, (floatMusicBeat - x.time) * (floatNoteScrollMultiplier * PlayerSetting.setting.intScrollSpeed));
+                    x.transform.position = new Vector3(x.position, (x.time - floatMusicBeat) * (floatNoteScrollMultiplier * PlayerSetting.setting.intScrollSpeed));
 
                     // Note flash
                     x.spriteRendererNoteHighlight.color = colorBeatFlash;
@@ -1025,7 +1050,7 @@ public class Game_Control : MonoBehaviour
             }
 
             // Alternate force end condition: Current negative accuracy is below tolerance
-            if (1f * currentAccuracyNegative / chartTotalNotes > 0.01f * PlayerSetting.setting.intAccuracyTolerance)
+            if (1f * currentAccuracyNegative / chartTotalNotes > 0.01f * (1f - PlayerSetting.setting.intAccuracyTolerance))
             {
                 isForcedEnd = true;
             }

@@ -28,7 +28,11 @@ public class Creator_SongPreview : MonoBehaviour
         }
         else
         {
-            StopCoroutine(coroutinePlaying);
+            if (coroutinePlaying != null)
+            {
+                StopCoroutine(coroutinePlaying);
+                coroutinePlaying = null;
+            }
             coroutinePlaying = StartCoroutine("PlaySection");
         }
     }
@@ -36,8 +40,8 @@ public class Creator_SongPreview : MonoBehaviour
     private IEnumerator PlaySection()
     {
         // Get current song positions depending on where the cursor is at
-        float currentSecond = float.Parse(Creator_Control.control.textSongTempo.text) / 60f * Creator_Control.control.intCursorPosition;
-        float endSecond = float.Parse(Creator_Control.control.textSongTempo.text) / 60f * (Creator_Control.control.sliderSongPreviewLength.value + Creator_Control.control.intCursorPosition);
+        float currentSecond = float.Parse(Creator_Control.control.textSongTempo.text) / 60f * Creator_Control.control.intCursorPosition * 0.25f;
+        float endSecond = currentSecond + Creator_Control.control.sliderSongPreviewLength.value;
         float fadeDuration = Creator_Control.control.sliderSongPreviewFade.value;
 
         yield return null;
@@ -63,18 +67,22 @@ public class Creator_SongPreview : MonoBehaviour
     }
     private IEnumerator LoadClip()
     {
-        string url = "file://" + Directory.GetCurrentDirectory() + "/MyCharts/" + Creator_Control.control.textFileName.text + ".ogg";
+        string url = "MyCharts/" + Creator_Control.control.textFileName.text + ".ogg";
         if (!File.Exists(url))
         {
-            url = "file://" + Directory.GetCurrentDirectory() + "/MyCharts/preview.ogg";
+            Debug.LogError("ERROR: " + url + " does not exist.");
+            url = "MyCharts/preview.ogg";
             if (!File.Exists(url))
             {
-                Debug.LogError("ERROR: Neither " + Creator_Control.control.textFileName.text + ".ogg nor preview.ogg exists in the MyCharts folder.");
+                Debug.LogError("ERROR: " + url + " does not exist either.");
                 yield break;
             }
         }
-
-        WWW www = new WWW(url);
+        
+        WWW www = new WWW("file://" + Application.dataPath.Substring(0, Application.dataPath.LastIndexOf("/")) + "/" + url);
+#if UNITY_EDITOR
+        Debug.Log("Load audio file path: " + www.url);
+#endif
         while (!www.isDone)
         {
             yield return null;

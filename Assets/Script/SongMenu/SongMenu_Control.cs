@@ -151,20 +151,19 @@ public class SongMenu_Control : MonoBehaviour
         for (int i = 0; i < listStringSongDirectory.Count; i++)
         {
             Button newBtn = Instantiate(buttonSongIndividual);
+            newBtn.name = listStringSongDirectory[i];
             // Use custom name via _customname.txt
             if (File.Exists(path + "/" + listStringSongDirectory[i] + "/_customname.txt"))
             {
                 StreamReader reader = new StreamReader(path + "/" + listStringSongDirectory[i] + "/_customname.txt");
                 string buttonName = reader.ReadLine();
                 reader.Close();
-
-                newBtn.name = buttonName;
+                
                 newBtn.GetComponentInChildren<Text>().text = buttonName;
             }
             // Use default name if _customname.txt doesn't exist
             else
             {
-                newBtn.name = listStringSongDirectory[i];
                 newBtn.GetComponentInChildren<Text>().text = listStringSongDirectory[i];
             }
             newBtn.transform.SetParent(rectSongListParent.transform);
@@ -481,7 +480,7 @@ public class SongMenu_Control : MonoBehaviour
             Translator.GetStringTranslation("SONGMENU_CHARTBPM", "BPM:") + " " + chartData.songTempo.ToString("f0") + "\n" +
             Translator.GetStringTranslation("SONGMENU_CHARTJUDGELEVEL", "Judge Level:") + " " + (chartData.chartJudge + 1).ToString();
         textDetailsRecord.text =
-            Translator.GetStringTranslation("SONGMENU_RECORDACCURACY", "Best Accuracy:") + " " + PlayerPrefs.GetFloat(stringSongSelectedCurrent + "-" + intGameType.ToString() + "-" + intGameChart.ToString() + "-recordaccuracy", 0f).ToString("f2") + "%\n" +
+            Translator.GetStringTranslation("SONGMENU_RECORDACCURACY", "Best Accuracy:") + " " + PlayerPrefs.GetFloat(stringSongSelectedCurrent + "-" + intGameType.ToString() + "-" + intGameChart.ToString() + "-recordaccuracy", 0f).ToString("f2") + "% | " +
             Translator.GetStringTranslation("SONGMENU_RECORDPLAYCOUNT", "Attempts:") + " " + PlayerPrefs.GetInt(stringSongSelectedCurrent + "-" + intGameType.ToString() + "-" + intGameChart.ToString() + "-playcount", 0).ToString("n0");
 
         isHighscoreDisabledByChart = !chartData.isHighScoreAllowed;

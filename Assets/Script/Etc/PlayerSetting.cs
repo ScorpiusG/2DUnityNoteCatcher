@@ -99,23 +99,25 @@ public class PlayerSetting : MonoBehaviour
     /// <returns></returns>
     public string GetScore()
     {
-        if (intPlayerTotalScore.Count == 0)
-        {
-            return "0";
-        }
-
         string s = "";
-        for (int i = intPlayerTotalScore.Count - 1; i >= 0; i++)
+        if (intPlayerTotalScore.Count > 0)
         {
-            if (i == intPlayerTotalScore.Count - 1)
+            for (int i = intPlayerTotalScore.Count - 1; i >= 0; i--)
             {
-                s += intPlayerTotalScore[i].ToString("0");
+                if (i == intPlayerTotalScore.Count - 1)
+                {
+                    s += intPlayerTotalScore[i].ToString("0");
+                }
+                else
+                {
+                    s += intPlayerTotalScore[i].ToString("000");
+                }
+                if (i > 0) s += ",";
             }
-            else
-            {
-                s += intPlayerTotalScore[i].ToString("000");
-            }
-            if (i > 0) s += ",";
+        }
+        else
+        {
+            s = "0";
         }
         return s;
     }

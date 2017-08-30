@@ -143,7 +143,7 @@ public class Translator : MonoBehaviour
         mTranslator = this;
         DontDestroyOnLoad(gameObject);
 
-        stringLanguageCode = PlayerPrefs.GetString("manual_translation_code", "joke");
+        stringLanguageCode = PlayerPrefs.GetString("manual_translation_code", "");
         LoadTranslationDocument();
     }
 }
