@@ -235,11 +235,11 @@ public class Creator_Control : MonoBehaviour
 #endif
 
         // Output to file
-        if (!Directory.Exists("MyCharts"))
+        if (!Directory.Exists("Songs"))
         {
-            Directory.CreateDirectory("MyCharts");
+            Directory.CreateDirectory("Songs");
         }
-        string path = "MyCharts/" + textFileName.text + "-" + intChartGameType.ToString() + "-" + textFileChart.text + ".txt";
+        string path = "Songs/" + textFileName.text + "/" + textFileName.text + "-" + intChartGameType.ToString() + "-" + textFileChart.text + ".txt";
         if (File.Exists(path))
         {
             File.Delete(path);
@@ -259,7 +259,7 @@ public class Creator_Control : MonoBehaviour
         ClearChart();
 
         // Load file
-        string path = "MyCharts/" + input + ".txt";
+        string path = "Songs/" + textFileName.text + "/" + input + ".txt";
         if (!File.Exists(path))
         {
 #if UNITY_EDITOR

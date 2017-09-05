@@ -8,6 +8,7 @@ using UnityEngine.SceneManagement;
 public class SongMenu_Control : MonoBehaviour
 {
     public bool isLoadCustomSongs = true;
+    public string[] listOfficialSongFolderName = { };
 
     public string stringSceneNameTitle = "Title";
     public string stringSceneNameGame = "Game";
@@ -122,27 +123,39 @@ public class SongMenu_Control : MonoBehaviour
         Debug.Log(path);
 #endif
 
-        // The "Songs" folder does not exist in the game directory
-        if (!Directory.Exists(path))
+        // If it's a custom song list, get all the folders present
+        if (isLoadCustomSongs)
         {
+            // The "Songs" folder does not exist in the game directory
+            if (!Directory.Exists(path))
+            {
 #if UNITY_EDITOR
-            Debug.LogWarning("WARNING: \"Songs\" folder does not exist!");
+                Debug.LogWarning("WARNING: \"Songs\" folder does not exist!");
 #endif
 
-            Destroy(buttonSongIndividual.gameObject);
-            buttonSongIndividual = null;
-            return;
+                Destroy(buttonSongIndividual.gameObject);
+                buttonSongIndividual = null;
+                return;
+            }
+
+            // Returns the full path of the directory
+            //arrayStringSongDirectory = Directory.GetDirectories(path);
+
+            // Gets the folder names only
+            DirectoryInfo main = new DirectoryInfo(path);
+            DirectoryInfo[] sub = main.GetDirectories();
+            foreach (DirectoryInfo x in sub)
+            {
+                listStringSongDirectory.Add(x.Name);
+            }
         }
-
-        // Returns the full path of the directory
-        //arrayStringSongDirectory = Directory.GetDirectories(path);
-
-        // Gets the folder names only
-        DirectoryInfo main = new DirectoryInfo(path);
-        DirectoryInfo[] sub = main.GetDirectories();
-        foreach (DirectoryInfo x in sub)
+        // Otherwise, use its own list
+        else
         {
-            listStringSongDirectory.Add(x.Name);
+            foreach (string x in listOfficialSongFolderName)
+            {
+                listStringSongDirectory.Add(x);
+            }
         }
         // Sort the names
         listStringSongDirectory.Sort();
@@ -153,13 +166,25 @@ public class SongMenu_Control : MonoBehaviour
             Button newBtn = Instantiate(buttonSongIndividual);
             newBtn.name = listStringSongDirectory[i];
             // Use custom name via _customname.txt
-            if (File.Exists(path + "/" + listStringSongDirectory[i] + "/_customname.txt"))
+            if (isLoadCustomSongs && File.Exists(path + "/" + listStringSongDirectory[i] + "/_customname.txt"))
             {
                 StreamReader reader = new StreamReader(path + "/" + listStringSongDirectory[i] + "/_customname.txt");
                 string buttonName = reader.ReadLine();
                 reader.Close();
-                
+
                 newBtn.GetComponentInChildren<Text>().text = buttonName;
+            }
+            else if (!isLoadCustomSongs)
+            {
+                TextAsset text = (TextAsset)Resources.Load(listStringSongDirectory[i] + "_customname.txt", typeof(TextAsset));
+                if (text != null)
+                {
+                    newBtn.GetComponentInChildren<Text>().text = text.text;
+                }
+                else
+                {
+                    newBtn.GetComponentInChildren<Text>().text = listStringSongDirectory[i];
+                }
             }
             // Use default name if _customname.txt doesn't exist
             else
@@ -342,19 +367,45 @@ public class SongMenu_Control : MonoBehaviour
             // Chart ID
             for (int chartID = 0; ; chartID++)
             {
-                string path = Directory.GetCurrentDirectory() + stringSongDirectoryPath + "/" + folder.name + "/" + folder.name + "-" + gameModeID.ToString() + "-" + chartID.ToString() + ".txt";
-                if (File.Exists(path))
+                string info = "";
+                if (isLoadCustomSongs)
                 {
-                    if (!gameModeExist)
+                    string path = Directory.GetCurrentDirectory() + stringSongDirectoryPath + "/" + folder.name + "/" + folder.name + "-" + gameModeID.ToString() + "-" + chartID.ToString() + ".txt";
+                    if (File.Exists(path))
                     {
-                        gameModeExist = true;
-                        gameModeExists++;
-                    }
+                        if (!gameModeExist)
+                        {
+                            gameModeExist = true;
+                            gameModeExists++;
+                        }
 
-                    reader = new StreamReader(path);
-                    string input = reader.ReadToEnd();
-                    reader.Close();
-                    JsonUtility.FromJsonOverwrite(input, chartData);
+                        reader = new StreamReader(path);
+                        info = reader.ReadToEnd();
+                        reader.Close();
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+                else
+                {
+                    string path = folder.name + "-" + gameModeID.ToString() + "-" + chartID.ToString() + ".txt";
+                    TextAsset text = (TextAsset)Resources.Load(path, typeof(TextAsset));
+                    if (text != null)
+                    {
+                        info = text.text;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+
+                // Create button from chart information
+                if (info.Length > 0)
+                {
+                    JsonUtility.FromJsonOverwrite(info, chartData);
 
                     // Button info and positioning
                     SongMenu_ButtonChart nb = Instantiate(buttonChartIndividual);
@@ -385,10 +436,6 @@ public class SongMenu_Control : MonoBehaviour
                     {
                         firstChart = nb;
                     }
-                }
-                else
-                {
-                    break;
                 }
             }
         }
@@ -445,14 +492,25 @@ public class SongMenu_Control : MonoBehaviour
 
         intGameType = button.intGameMode;
         intGameChart = button.intChart;
-        string path = Directory.GetCurrentDirectory() + stringSongDirectoryPath + "/" + stringSongSelectedCurrent + "/" +
-            stringSongSelectedCurrent + "-" + intGameType.ToString() + "-" + intGameChart.ToString() + ".txt";
-
+        string input = "";
         ChartData chartData = ScriptableObject.CreateInstance(typeof(ChartData)) as ChartData;
-        StreamReader reader = new StreamReader(path);
-        string input = reader.ReadToEnd();
-        reader.Close();
-        JsonUtility.FromJsonOverwrite(input, chartData);
+        if (isLoadCustomSongs)
+        {
+            string path = Directory.GetCurrentDirectory() + stringSongDirectoryPath + "/" + stringSongSelectedCurrent + "/" +
+                stringSongSelectedCurrent + "-" + intGameType.ToString() + "-" + intGameChart.ToString() + ".txt";
+            
+            StreamReader reader = new StreamReader(path);
+
+            input = reader.ReadToEnd();
+            reader.Close();
+            JsonUtility.FromJsonOverwrite(input, chartData);
+        }
+        else
+        {
+            string path = stringSongSelectedCurrent + "-" + intGameType.ToString() + "-" + intGameChart.ToString() + ".txt";
+            TextAsset text = (TextAsset)Resources.Load(path, typeof(TextAsset));
+            input = text.text;
+        }
 
         string stringMode = "";
         switch (chartData.chartGameType)

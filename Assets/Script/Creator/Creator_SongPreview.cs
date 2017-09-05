@@ -17,6 +17,11 @@ public class Creator_SongPreview : MonoBehaviour
         mAudioSource = GetComponent<AudioSource>();
     }
 
+    void Start()
+    {
+        //StartCoroutine("LoadClip");
+    }
+
     /// <summary>
     /// Previews a specific part of the song on the .ogg if it exists. If it doesn't exist, it will use preview.ogg instead.
     /// </summary>
@@ -67,16 +72,13 @@ public class Creator_SongPreview : MonoBehaviour
     }
     private IEnumerator LoadClip()
     {
-        string url = "MyCharts/" + Creator_Control.control.textFileName.text + ".ogg";
+        yield return null;
+
+        string url = "Songs/" + Creator_Control.control.textFileName.text + "/" + Creator_Control.control.textFileName.text + ".ogg";
         if (!File.Exists(url))
         {
             Debug.LogError("ERROR: " + url + " does not exist.");
-            url = "MyCharts/preview.ogg";
-            if (!File.Exists(url))
-            {
-                Debug.LogError("ERROR: " + url + " does not exist either.");
-                yield break;
-            }
+            yield break;
         }
         
         WWW www = new WWW("file://" + Application.dataPath.Substring(0, Application.dataPath.LastIndexOf("/")) + "/" + url);

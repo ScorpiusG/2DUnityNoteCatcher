@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
+//using TMPro;
 
 public class Translator_UpdateTextComponent : MonoBehaviour
 {
@@ -62,6 +62,7 @@ public class Translator_UpdateTextComponent : MonoBehaviour
             }
         }
 
+        /*
         TextMeshPro mTMP = GetComponent<TextMeshPro>();
         if (mTMP != null && stringTranslateCode.Length > 0)
         {
@@ -73,6 +74,7 @@ public class Translator_UpdateTextComponent : MonoBehaviour
         {
             mTMPU.text = Translator.GetStringTranslation(stringTranslateCode, mTMPU.text);
         }
+        */
 
         // Destroy this component if it has no other purpose
         if (!boolTranslateOnUpdate)

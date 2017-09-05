@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
-using TMPro;
+//using TMPro;
 
 public class Game_Control : MonoBehaviour
 {
@@ -37,13 +37,13 @@ public class Game_Control : MonoBehaviour
     public Color[] noteColor = { Color.blue, Color.red, Color.green, Color.yellow };
     public float floatNoteDistanceSpawn = 3f;
 
-    public TextMeshPro textMeshComboCurrent;
+    public TextMesh textMeshComboCurrent;
     public int floatTextComboAppearComboMinimum = 4;
     public float floatTextComboScaleOnChange = 3f;
     public float floatTextComboScaleMinimum = 1f;
     public float floatTextComboScaleChangeRate = 12f;
     private float floatTextComboScaleCurrent = 1f;
-    public TextMeshPro textMeshRecordGhost;
+    public TextMesh textMeshRecordGhost;
     public float floatPreviousRecord = 0f;
     public Color colorRecordGhostNeutral = Color.white;
     public Color colorRecordGhostBetter = Color.green;
@@ -99,9 +99,10 @@ public class Game_Control : MonoBehaviour
     private float movementHoriAlpha = 0f;
     private float movementVertAlpha = 0f;
 
+    public Game_SongLoader mSongLoader;
     public AudioSource audioSourceMusic;
     public AudioSource audioSourceEffect;
-    public List<AudioClip> clipGameHitsound = new List<AudioClip>();
+    //public List<AudioClip> clipGameHitsound = new List<AudioClip>();
     public AudioClip clipGameEndFullCombo;
     public AudioClip clipGameEndPerfect;
     public AudioClip clipGameEndPass;
@@ -366,9 +367,11 @@ public class Game_Control : MonoBehaviour
                 {
                     string[] y = x.Split(':');
                     int soundID = int.Parse(y[1]);
-                    if (clipGameHitsound.Count > soundID)
+                    //if (clipGameHitsound.Count > soundID)
+                    if (mSongLoader.listClipEffect.Count > soundID)
                     {
-                        PlaySoundEffect(clipGameHitsound[soundID]);
+                        //PlaySoundEffect(clipGameHitsound[soundID]);
+                        PlaySoundEffect(mSongLoader.listClipEffect[soundID]);
                     }
                     break;
                 }
@@ -573,8 +576,9 @@ public class Game_Control : MonoBehaviour
 	
 	private IEnumerator GameLoop ()
     {
-        yield return new WaitForSeconds(0.5f);
+        //yield return new WaitForSeconds(0.1f);
 
+        /*
         // Load audio music file
         if (boolCustomSong)
         {
@@ -653,22 +657,18 @@ public class Game_Control : MonoBehaviour
             }
             yield return null;
         }
+        */
 
-        yield return new WaitForSeconds(0.5f);
+        yield return new WaitForSeconds(1.0f);
+
+        do
+        {
+            yield return null;
+        } while (mSongLoader.clipSong == null);
+
         // Play music and begin the game
-        if (audioSourceMusic.clip == null)
-        {
-#if UNITY_EDITOR
-            Debug.LogWarning("WARNING: " + stringSongFileName + ".ogg is not present or is corrupted.");
-#endif
-        }
-        else
-        {
-            audioSourceMusic.Play();
-#if UNITY_EDITOR
-            Debug.Log("Playing song. The game begins.");
-#endif
-        }
+        audioSourceMusic.clip = mSongLoader.clipSong;
+        audioSourceMusic.Play();
 
         floatMusicPositionEnd = chartData.songLength - ((chartData.chartOffset + PlayerSetting.setting.intGameOffset) * 0.001f);
         floatMusicPositionEnd *= chartData.songTempo / 60f;
