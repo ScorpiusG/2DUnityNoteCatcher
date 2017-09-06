@@ -462,12 +462,17 @@ public class Game_Control : MonoBehaviour
         // Variable initialization
         floatPreviousRecord = PlayerPrefs.GetFloat(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-recordaccuracy", 0f);
 
+        float textAlpha = textMeshRecordGhost.color.a;
+        colorRecordGhostBetter.a = textAlpha;
+        colorRecordGhostNeutral.a = textAlpha;
+        colorRecordGhostWorse.a = textAlpha;
+
         // Object initialization
         objectAutoplayIndicator.SetActive(boolAutoplay);
         imageSongProgressGauge.fillAmount = 0f;
         if (PlayerSetting.setting.intAccuracyTolerance > 0)
         {
-            imageAccuracyTolerance.transform.localPosition = Vector3.right * floatAccuracyGaugeWidth * 0.01f * PlayerSetting.setting.intAccuracyTolerance;
+            imageAccuracyTolerance.transform.localPosition += Vector3.right * floatAccuracyGaugeWidth * 0.01f * PlayerSetting.setting.intAccuracyTolerance;
         }
         else
         {
@@ -865,20 +870,22 @@ public class Game_Control : MonoBehaviour
             if (textMeshRecordGhost.gameObject.activeSelf)
             {
                 float currentAccuracyPercentage = 1f * currentAccuracy / (chartTotalNotes * 4);
-                float ghostAccuracy = 1f * floatPreviousRecord * (playerAccuracyBest + playerAccuracyGreat + playerAccuracyFine) / chartTotalNotes;
-                textMeshRecordGhost.text = (100f * (currentAccuracyPercentage - ghostAccuracy)).ToString("f2") + "%";
+                float ghostAccuracy = 1f * floatPreviousRecord * (playerAccuracyBest + playerAccuracyGreat + playerAccuracyFine + playerAccuracyMiss) / chartTotalNotes;
 
                 if (currentAccuracyPercentage > ghostAccuracy + Mathf.Epsilon)
                 {
                     textMeshRecordGhost.color = colorRecordGhostBetter;
+                    textMeshRecordGhost.text = "+" + (100f * (currentAccuracyPercentage - ghostAccuracy)).ToString("f2") + "%";
                 }
-                else if (currentAccuracyPercentage > ghostAccuracy + Mathf.Epsilon)
+                else if (currentAccuracyPercentage < ghostAccuracy - Mathf.Epsilon)
                 {
                     textMeshRecordGhost.color = colorRecordGhostWorse;
+                    textMeshRecordGhost.text = (100f * (currentAccuracyPercentage - ghostAccuracy)).ToString("f2") + "%";
                 }
                 else
                 {
                     textMeshRecordGhost.color = colorRecordGhostNeutral;
+                    textMeshRecordGhost.text = "+" + (100f * (currentAccuracyPercentage - ghostAccuracy)).ToString("f2") + "%";
                 }
             }
 
@@ -1131,9 +1138,9 @@ public class Game_Control : MonoBehaviour
         Cursor.lockState = CursorLockMode.Locked;
         yield return null;
 
-        float finalAccuracy = 100f * ((playerAccuracyBest * 4) + (playerAccuracyGreat * 3) + (playerAccuracyFine * 2)) / (chartTotalNotes * 4);
+        float finalAccuracy = 1f * ((playerAccuracyBest * 4) + (playerAccuracyGreat * 3) + (playerAccuracyFine * 2)) / (chartTotalNotes * 4);
 #if UNITY_EDITOR
-        Debug.Log("Song finished. Accuracy: " + finalAccuracy.ToString("f2") + "%");
+        Debug.Log("Song finished. Accuracy: " + (finalAccuracy * 100f).ToString("f2") + "%");
 #endif
         // Revert settings (cursor, v-sync, etc.)
         Cursor.visible = true;
@@ -1174,15 +1181,15 @@ public class Game_Control : MonoBehaviour
                 Mathf.Pow(4 + chartData.chartLevel, 2f) *
                 10 * gameModeScoreMultiplier
                 );
-            // Additional score gained by achieving full combo and perfect accuracy.
+            // Additional score gained by achieving full combo and perfect accuracy respectively.
             int additionalScore = 0;
-            if (playerComboBest == chartTotalNotes)
+            if (playerAccuracyBest + playerAccuracyGreat + playerAccuracyFine == chartTotalNotes)
             {
                 additionalScore += finalScore / 10;
             }
             if (playerAccuracyBest == chartTotalNotes)
             {
-                additionalScore += finalScore / 10;
+                additionalScore += finalScore / 15;
             }
             finalScore += additionalScore;
             PlayerSetting.setting.ScoreAdd(finalScore);
@@ -1250,7 +1257,7 @@ public class Game_Control : MonoBehaviour
         StartCoroutine(AnimatorResultsSpeedUp());
 
         for (float f = 0; f < 0.5f; f += Time.deltaTime * animatorResults.speed) yield return null;
-        StartCoroutine(TextFloatGradualIncrease(textResultAccuracy, finalAccuracy, 0.8f));
+        StartCoroutine(TextFloatGradualIncrease(textResultAccuracy, finalAccuracy * 100f, 0.8f));
         StartCoroutine(TextIntGradualIncrease(textResultBestCombo, playerComboBest, 0.8f));
         for (float f = 0; f < 0.5f; f += Time.deltaTime * animatorResults.speed) yield return null;
         StartCoroutine(TextIntGradualIncrease(textResultJudgeBest, playerAccuracyBest, 0.6f));
@@ -1264,6 +1271,7 @@ public class Game_Control : MonoBehaviour
         for (float f = 0; f < 1.5f; f += Time.deltaTime * animatorResults.speed) yield return null;
         if (finalAccuracy > oldRecordAccuracy && !isScoringDisabled)
         {
+            animatorNewRecord.gameObject.SetActive(true);
             animatorNewRecord.Play("clip");
         }
         if (!isScoringDisabled)

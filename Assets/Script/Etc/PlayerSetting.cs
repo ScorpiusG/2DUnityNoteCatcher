@@ -71,18 +71,24 @@ public class PlayerSetting : MonoBehaviour
     /// <param name="score"></param>
     public void ScoreAdd(int score)
     {
+        // Add a number into the score list if it's empty
         if (intPlayerTotalScore.Count < 1) intPlayerTotalScore.Add(0);
 
+        // Add the value into the first item in the list
         intPlayerTotalScore[0] += score;
         
+        // Check if the value is over 1,000
         for (int i = 0;; i++)
         {
+            // False = Stop
             if (intPlayerTotalScore[i] < 1000)
             {
                 break;
             }
+            // True = Transfer 1,000s to the next item
             else
             {
+                // If the next item doesn't exist, add it
                 if (intPlayerTotalScore.Count >= i + 1)
                 {
                     intPlayerTotalScore.Add(0);
@@ -99,6 +105,9 @@ public class PlayerSetting : MonoBehaviour
     /// <returns></returns>
     public string GetScore()
     {
+        // How it works: Score starts from last value in the list and ends at the first.
+        // Example list: { 789, 456, 123, 1 }   Will appear as: "1,123,456,789"
+
         string s = "";
         if (intPlayerTotalScore.Count > 0)
         {
@@ -106,10 +115,19 @@ public class PlayerSetting : MonoBehaviour
             {
                 if (i == intPlayerTotalScore.Count - 1)
                 {
+                    // Remove any zero values at the end of the list.
+                    if (intPlayerTotalScore[i] == 0)
+                    {
+                        intPlayerTotalScore.RemoveAt(i);
+                        continue;
+                    }
+
+                    // The highest triple-digits are displayed normally.
                     s += intPlayerTotalScore[i].ToString("0");
                 }
                 else
                 {
+                    // The non-highest triple-digits must have three numbers.
                     s += intPlayerTotalScore[i].ToString("000");
                 }
                 if (i > 0) s += ",";

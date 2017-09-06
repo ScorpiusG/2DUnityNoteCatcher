@@ -15,4 +15,10 @@ public class Game_Note : MonoBehaviour
     public SpriteRenderer spriteRendererNoteHighlight;
     public SpriteRenderer spriteRendererLength;
     public SpriteRenderer spriteRendererLengthHighlight;
+
+    private void LateUpdate()
+    {
+        spriteRendererNoteHighlight.gameObject.layer = gameObject.layer;
+        spriteRendererLengthHighlight.gameObject.layer = gameObject.layer;
+    }
 }
