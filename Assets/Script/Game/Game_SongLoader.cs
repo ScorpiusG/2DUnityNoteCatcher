@@ -5,7 +5,8 @@ using UnityEngine;
 
 public class Game_SongLoader : MonoBehaviour
 {
-    public AudioSource mAudioSource;
+    public AudioSource audioSourceMusic;
+    public AudioSource audioSourceEffect;
 
     public float floatSongLoadDelay = 2f;
 
@@ -14,6 +15,8 @@ public class Game_SongLoader : MonoBehaviour
 
     private void Start()
     {
+        audioSourceMusic.volume = PlayerSetting.setting.floatVolumeMusic;
+
         StartCoroutine("LoadClipMusic", true);
         StartCoroutine("LoadClipEffect", true);
     }
@@ -70,6 +73,8 @@ public class Game_SongLoader : MonoBehaviour
         }
 
         yield return null;
+
+        audioSourceMusic.clip = clipSong;
     }
     
     private IEnumerator LoadClipEffect(bool isDelayed = false)
@@ -136,5 +141,13 @@ public class Game_SongLoader : MonoBehaviour
         }
 
         yield return null;
+    }
+
+    public void PlaySoundEffect(AudioClip clip)
+    {
+        if (audioSourceEffect != null && clip != null)
+        {
+            audioSourceEffect.PlayOneShot(clip, PlayerSetting.setting.floatVolumeEffect);
+        }
     }
 }

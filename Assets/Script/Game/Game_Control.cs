@@ -2,9 +2,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Networking;
+//using UnityEngine.Networking;
 using UnityEngine.UI;
-using UnityEngine.SceneManagement;
 //using TMPro;
 
 public class Game_Control : MonoBehaviour
@@ -153,6 +152,7 @@ public class Game_Control : MonoBehaviour
         {
             if (!x.gameObject.activeSelf)
             {
+                x.transform.position = new Vector3(0f, 100f, 0f);
                 return x;
             }
         }
@@ -167,6 +167,7 @@ public class Game_Control : MonoBehaviour
         {
             if (!x.gameObject.activeSelf)
             {
+                x.transform.position = new Vector3(0f, 100f, 0f);
                 return x;
             }
         }
@@ -326,13 +327,19 @@ public class Game_Control : MonoBehaviour
                         anim.gameObject.SetActive(true);
                         anim.transform.position = Vector3.right * note.position;
                         anim.gameObject.layer = 9 + note.type;
+                        foreach (GameObject x in anim.GetComponentsInChildren<GameObject>())
+                        {
+                            x.layer = 9 + note.type;
+                        }
                         anim.spriteRendererJudgment.sprite = spriteJudgment[animJudgeID];
                         anim.spriteRendererJudgment.sortingLayerID = animSortingLayerID;
+                        anim.spriteRendererJudgment.gameObject.layer = anim.gameObject.layer;
                         anim.animatorJudgment.Play("anim");
                         if (animJudgeID < 3)
                         {
                             ParticleSystem.MainModule animParticleModule = anim.particleSystemJudgment.main;
                             animParticleModule.startColor = colorJudgmentParticle[animJudgeID];
+                            anim.particleSystemJudgment.gameObject.layer = anim.gameObject.layer;
                             anim.particleSystemJudgment.Play();
                         }
                     }
@@ -349,6 +356,7 @@ public class Game_Control : MonoBehaviour
         if (PlayerSetting.setting.enableDisplayCombo)
         {
             textMeshComboCurrent.gameObject.SetActive(playerComboCurrent >= floatTextComboAppearComboMinimum);
+            textMeshComboCurrent.text = playerComboCurrent.ToString();
             if (textMeshComboCurrent.gameObject.activeSelf)
             {
                 floatTextComboScaleCurrent = floatTextComboScaleOnChange;
@@ -371,7 +379,8 @@ public class Game_Control : MonoBehaviour
                     if (mSongLoader.listClipEffect.Count > soundID)
                     {
                         //PlaySoundEffect(clipGameHitsound[soundID]);
-                        PlaySoundEffect(mSongLoader.listClipEffect[soundID]);
+                        //PlaySoundEffect(mSongLoader.listClipEffect[soundID]);
+                        mSongLoader.PlaySoundEffect(mSongLoader.listClipEffect[soundID]);
                     }
                     break;
                 }
@@ -381,6 +390,10 @@ public class Game_Control : MonoBehaviour
         // Animate full combo (combo = number of notes)
         if (playerAccuracyBest + playerAccuracyGreat + playerAccuracyFine == chartTotalNotes && animatorFullCombo != null)
         {
+#if UNITY_EDITOR
+            Debug.Log(playerAccuracyBest.ToString() + " + " + playerAccuracyGreat.ToString() + " + " + playerAccuracyFine.ToString() + " = " + chartTotalNotes.ToString());
+#endif
+
             // Perfect accuracy
             if (playerAccuracyBest == chartTotalNotes)
             {
@@ -401,7 +414,7 @@ public class Game_Control : MonoBehaviour
     {
         foreach (Game_AnimationJudgment x in listAnimationJudgment)
         {
-            if (x.gameObject.activeSelf)
+            if (!x.gameObject.activeSelf)
             {
                 return x;
             }
@@ -469,6 +482,7 @@ public class Game_Control : MonoBehaviour
         animatorResults.gameObject.SetActive(false);
         animatorNewRecord.gameObject.SetActive(false);
         textMeshComboCurrent.gameObject.SetActive(false);
+        textMeshComboCurrent.text = "";
         textMeshRecordGhost.gameObject.SetActive(PlayerSetting.setting.enableDisplayRecordGhost && floatPreviousRecord > Mathf.Epsilon && !boolAutoplay);
         if (PlayerSetting.setting.enableDisplayRecordGhost && !PlayerSetting.setting.enableDisplayCombo)
         {
@@ -550,7 +564,25 @@ public class Game_Control : MonoBehaviour
         imageAccuracyGauge.fillAmount = 0f;
         imageAccuracyNegativeGauge.fillAmount = 0f;
         textAccuracy.text = "0.00%";
-        chartTotalNotes = chartData.listNoteCatchInfo.Count;
+        chartTotalNotes = chartData.listNoteCatchInfo.Count + chartData.listNoteTapInfo.Count;
+        for (int i = 0; i < chartData.listNoteCatchInfo.Count; i++)
+        {
+            string[] noteInfo = chartData.listNoteCatchInfo[i].Split('|');
+            float longNoteLength = float.Parse(noteInfo[4]);
+            if (longNoteLength > 0.01f)
+            {
+                chartTotalNotes++;
+            }
+        }
+        for (int i = 0; i < chartData.listNoteTapInfo.Count; i++)
+        {
+            string[] noteInfo = chartData.listNoteTapInfo[i].Split('|');
+            float longNoteLength = float.Parse(noteInfo[4]);
+            if (longNoteLength > 0.01f)
+            {
+                chartTotalNotes++;
+            }
+        }
         chartJudgeDifficulty = chartData.chartJudge;
         if (chartJudgeDifficulty >= floatDistAccuracyCatchBest.Length) chartJudgeDifficulty = floatDistAccuracyCatchBest.Length - 1;
 
@@ -661,30 +693,37 @@ public class Game_Control : MonoBehaviour
 
         yield return new WaitForSeconds(1.0f);
 
-        do
-        {
-            yield return null;
-        } while (mSongLoader.clipSong == null);
+        //do
+        //{
+        //    yield return null;
+        //} while (mSongLoader.clipSong == null);
 
         // Play music and begin the game
-        audioSourceMusic.clip = mSongLoader.clipSong;
-        audioSourceMusic.Play();
+        //audioSourceMusic.clip = clipSong;
+        //audioSourceMusic.clip = mSongLoader.clipSong;
+        //audioSourceMusic.Play();
+        mSongLoader.audioSourceMusic.Play();
 
-        floatMusicPositionEnd = chartData.songLength - ((chartData.chartOffset + PlayerSetting.setting.intGameOffset) * 0.001f);
-        floatMusicPositionEnd *= chartData.songTempo / 60f;
+        floatMusicPositionEnd = chartData.songLength / chartData.songTempo * 60f;
+        floatMusicPositionEnd -= (chartData.chartOffset + PlayerSetting.setting.intGameOffset) * 0.001f;
+
+        yield return null;
+        yield return new WaitUntil(() => mSongLoader.audioSourceMusic.isPlaying);
 
         // Actual game loop
-        while (floatMusicPosition < floatMusicPositionEnd && audioSourceMusic.isPlaying)
+        while (floatMusicPosition < floatMusicPositionEnd && mSongLoader.audioSourceMusic.isPlaying)
+        //while (floatMusicPosition < floatMusicPositionEnd && audioSourceMusic.isPlaying)
         {
             // Time update
-            floatMusicPosition = audioSourceMusic.time - ((chartData.chartOffset + PlayerSetting.setting.intGameOffset) * 0.001f);
+            floatMusicPosition = mSongLoader.audioSourceMusic.time - ((chartData.chartOffset + PlayerSetting.setting.intGameOffset) * 0.001f);
+            //floatMusicPosition = audioSourceMusic.time - ((chartData.chartOffset + PlayerSetting.setting.intGameOffset) * 0.001f);
             floatMusicBeat = floatMusicPosition * chartData.songTempo / 60f;
 
             // Highlight flash on beat
             float floatHighlightAlphaCurrent = 0f;
             if (PlayerSetting.setting.enableNoteAndCatcherHighlightBeatPulse)
             {
-                floatHighlightAlphaCurrent = (floatMusicBeat - Mathf.Floor(floatMusicBeat)) * floatHighlightAlpha;
+                floatHighlightAlphaCurrent = (1f - (floatMusicBeat - Mathf.Floor(floatMusicBeat))) * floatHighlightAlpha;
             }
             Color colorBeatFlash = Color.white;
             colorBeatFlash.a = floatHighlightAlphaCurrent;
@@ -723,14 +762,14 @@ public class Game_Control : MonoBehaviour
                         {
                             case 0:
                             case 1:
-                                if (nextNoteCatcherHori == null || x.transform.position.y > nextNoteCatcherHori.transform.position.y)
+                                if (nextNoteCatcherHori == null || x.transform.position.y < nextNoteCatcherHori.transform.position.y)
                                 {
                                     nextNoteCatcherHori = x;
                                 }
                                 break;
                             case 2:
                             case 3:
-                                if (nextNoteCatcherVert == null || x.transform.position.y > nextNoteCatcherVert.transform.position.y)
+                                if (nextNoteCatcherVert == null || x.transform.position.y < nextNoteCatcherVert.transform.position.y)
                                 {
                                     nextNoteCatcherVert = x;
                                 }
@@ -793,11 +832,11 @@ public class Game_Control : MonoBehaviour
             {
                 textSongProgressTime.text =
                     Mathf.Floor(floatMusicPosition / 60f).ToString() + ":" + Mathf.Floor(floatMusicPosition % 60f).ToString("00") + " / " +
-                    Mathf.Floor(chartData.songLength / 60f).ToString() + ":" + Mathf.Floor(chartData.songLength % 60f).ToString("00");
+                    Mathf.Floor(floatMusicPositionEnd / 60f).ToString() + ":" + Mathf.Floor(floatMusicPositionEnd % 60f).ToString("00");
             }
             if (imageSongProgressGauge.gameObject.activeSelf)
             {
-                imageSongProgressGauge.fillAmount = floatMusicPosition / chartData.songLength;
+                imageSongProgressGauge.fillAmount = floatMusicPosition / floatMusicPositionEnd;
             }
             // Bottom - Accuracy
             currentAccuracy = (playerAccuracyBest * 4) + (playerAccuracyGreat * 3) + (playerAccuracyFine * 2);
@@ -821,7 +860,6 @@ public class Game_Control : MonoBehaviour
             if (textMeshComboCurrent.gameObject.activeSelf)
             {
                 floatTextComboScaleCurrent = Mathf.Clamp(floatTextComboScaleCurrent - Time.deltaTime * floatTextComboScaleChangeRate, floatTextComboScaleMinimum, floatTextComboScaleOnChange);
-                textMeshComboCurrent.text = playerComboCurrent.ToString();
                 textMeshComboCurrent.transform.localScale = Vector3.one * floatTextComboScaleCurrent;
             }
             if (textMeshRecordGhost.gameObject.activeSelf)
@@ -858,6 +896,7 @@ public class Game_Control : MonoBehaviour
                     note.size = int.Parse(noteInfo[1]);
                     note.time = time;
                     note.position = Mathf.Clamp(float.Parse(noteInfo[3]), -1f, 1f);
+                    note.length = 0f;
                     note.other = new List<string>();
                     if (noteInfo.Length > 5)
                     {
@@ -869,6 +908,7 @@ public class Game_Control : MonoBehaviour
                     note.gameObject.layer = 9 + note.type;
                     note.spriteRendererNote.color = noteColor[note.type];
                     note.gameObject.SetActive(true);
+                    note.spriteRendererLength.gameObject.SetActive(false);
 
                     // If note has length, create a second note with a line below it
                     float longNoteLength = float.Parse(noteInfo[4]);
@@ -877,12 +917,13 @@ public class Game_Control : MonoBehaviour
                         note = SpawnNoteCatch();
                         note.type = int.Parse(noteInfo[0]);
                         note.size = int.Parse(noteInfo[1]);
-                        note.time = time;
+                        note.time = time + longNoteLength;
                         note.position = Mathf.Clamp(float.Parse(noteInfo[3]), -1f, 1f);
                         note.length = longNoteLength;
                         note.other = new List<string>();
                         note.gameObject.layer = 9 + note.type;
                         note.spriteRendererNote.color = noteColor[note.type];
+                        note.gameObject.SetActive(true);
 
                         note.spriteRendererLength.gameObject.SetActive(true);
                         note.spriteRendererLength.transform.localPosition = Vector3.down * longNoteLength * (floatNoteScrollMultiplier * PlayerSetting.setting.intScrollSpeed) / 2f;
@@ -892,12 +933,9 @@ public class Game_Control : MonoBehaviour
                             1f);
                         note.spriteRendererLength.color = noteColor[note.type];
                     }
-                    else
-                    {
-                        note.spriteRendererLength.gameObject.SetActive(false);
-                    }
 
                     chartData.listNoteCatchInfo.RemoveAt(j);
+                    break;
                 }
             }
             // Tap note
@@ -912,6 +950,7 @@ public class Game_Control : MonoBehaviour
                     note.size = int.Parse(noteInfo[1]);
                     note.time = time;
                     note.position = Mathf.Clamp(float.Parse(noteInfo[3]), -1f, 1f);
+                    note.length = 0f;
                     note.other = new List<string>();
                     if (noteInfo.Length > 5)
                     {
@@ -937,6 +976,7 @@ public class Game_Control : MonoBehaviour
                         note.other = new List<string>();
                         note.gameObject.layer = 9 + note.type;
                         note.spriteRendererNote.color = noteColor[note.type];
+                        note.gameObject.SetActive(true);
 
                         note.spriteRendererLength.gameObject.SetActive(true);
                         note.spriteRendererLength.transform.localPosition = Vector3.down * longNoteLength * (floatNoteScrollMultiplier * PlayerSetting.setting.intScrollSpeed) / 2f;
@@ -1050,7 +1090,7 @@ public class Game_Control : MonoBehaviour
             }
 
             // Alternate force end condition: Current negative accuracy is below tolerance
-            if (1f * currentAccuracyNegative / chartTotalNotes > 0.01f * (1f - PlayerSetting.setting.intAccuracyTolerance))
+            if (1f * currentAccuracyNegative / (4f * chartTotalNotes) > 1f - (0.01f * PlayerSetting.setting.intAccuracyTolerance))
             {
                 isForcedEnd = true;
             }
@@ -1091,9 +1131,9 @@ public class Game_Control : MonoBehaviour
         Cursor.lockState = CursorLockMode.Locked;
         yield return null;
 
-        float finalAccuracy = ((playerAccuracyBest * 4) + (playerAccuracyGreat * 3) + (playerAccuracyFine * 2)) / (chartTotalNotes * 4);
+        float finalAccuracy = 100f * ((playerAccuracyBest * 4) + (playerAccuracyGreat * 3) + (playerAccuracyFine * 2)) / (chartTotalNotes * 4);
 #if UNITY_EDITOR
-        Debug.Log("Song finished. Accuracy: " + (finalAccuracy * 100f).ToString("f2") + "%");
+        Debug.Log("Song finished. Accuracy: " + finalAccuracy.ToString("f2") + "%");
 #endif
         // Revert settings (cursor, v-sync, etc.)
         Cursor.visible = true;

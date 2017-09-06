@@ -115,6 +115,7 @@ public class SongMenu_Control : MonoBehaviour
         toggleOptionsInterfaceSongDetails.isOn = PlayerSetting.setting.enableInterfaceSongDetails;
         toggleOptionsInterfaceAccuracy.isOn = PlayerSetting.setting.enableInterfaceAccuracy;
         toggleOptionsDisplayCombo.isOn = PlayerSetting.setting.enableDisplayCombo;
+        toggleOptionsDisplayRecordGhost.isOn = PlayerSetting.setting.enableDisplayRecordGhost;
         toggleOptionsDisplayJudgmentPerHit.isOn = PlayerSetting.setting.enableDisplayNoteJudgment;
         toggleOptionsDisplayJudgmentCounter.isOn = PlayerSetting.setting.enableDisplayNoteHitCounterSmall;
 
@@ -479,6 +480,46 @@ public class SongMenu_Control : MonoBehaviour
             iTween.ColorTo(x.gameObject, Color.white, tweenDuration);
         }
         */
+
+        // Play button enable and animate
+        objectButtonPlay.SetActive(true);
+        objectButtonPlay.GetComponent<Animator>().Play("clip");
+
+        // Load the song file (.ogg) in the folder
+        //StartCoroutine("LoadClip", folder.name);
+    }
+    private IEnumerator LoadClip(string name)
+    {
+        yield return null;
+        AudioClip newClip = null;
+
+        // Custom song
+        if (isLoadCustomSongs)
+        {
+            string url = "Songs/" + name + "/preview.ogg";
+            if (!File.Exists(url))
+            {
+                Debug.LogError("ERROR: " + url + " does not exist.");
+                yield break;
+            }
+
+            WWW www = new WWW("file://" + Application.dataPath.Substring(0, Application.dataPath.LastIndexOf("/")) + "/" + url);
+#if UNITY_EDITOR
+            Debug.Log("Load audio file path: " + www.url);
+#endif
+            while (!www.isDone)
+            {
+                yield return null;
+            }
+            newClip = www.GetAudioClip(false, false, AudioType.OGGVORBIS);
+        }
+        // Official song
+        else
+        {
+
+        }
+
+        // TODO: play preview song in a loop
     }
 
     public void UseChartInfo(SongMenu_ButtonChart button)
@@ -538,15 +579,11 @@ public class SongMenu_Control : MonoBehaviour
             Translator.GetStringTranslation("SONGMENU_CHARTBPM", "BPM:") + " " + chartData.songTempo.ToString("f0") + "\n" +
             Translator.GetStringTranslation("SONGMENU_CHARTJUDGELEVEL", "Judge Level:") + " " + (chartData.chartJudge + 1).ToString();
         textDetailsRecord.text =
-            Translator.GetStringTranslation("SONGMENU_RECORDACCURACY", "Best Accuracy:") + " " + PlayerPrefs.GetFloat(stringSongSelectedCurrent + "-" + intGameType.ToString() + "-" + intGameChart.ToString() + "-recordaccuracy", 0f).ToString("f2") + "% | " +
+            Translator.GetStringTranslation("SONGMENU_RECORDACCURACY", "Best Accuracy:") + " " + (100f * PlayerPrefs.GetFloat(stringSongSelectedCurrent + "-" + intGameType.ToString() + "-" + intGameChart.ToString() + "-recordaccuracy", 0f)).ToString("f2") + "% | " +
             Translator.GetStringTranslation("SONGMENU_RECORDPLAYCOUNT", "Attempts:") + " " + PlayerPrefs.GetInt(stringSongSelectedCurrent + "-" + intGameType.ToString() + "-" + intGameChart.ToString() + "-playcount", 0).ToString("n0");
 
         isHighscoreDisabledByChart = !chartData.isHighScoreAllowed;
         RefreshTexts();
-
-        // Play button enable and animate
-        objectButtonPlay.SetActive(true);
-        objectButtonPlay.GetComponent<Animator>().Play("clip");
         /*
         objectButtonPlay.transform.rotation = Quaternion.Euler(0f, 0f, -90f);
         iTween.RotateTo(objectButtonPlay, iTween.Hash("rotation", Vector3.zero, "time", 0.31f, "isLocal", true, "easetype", iTween.EaseType.easeOutBack));
