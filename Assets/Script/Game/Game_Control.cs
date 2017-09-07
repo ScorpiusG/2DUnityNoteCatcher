@@ -107,6 +107,7 @@ public class Game_Control : MonoBehaviour
     public AudioClip clipGameEndPass;
     public AudioClip clipGameEndFail;
     public AudioClip clipGameForceEnd;
+    public AudioClip clipGameButtonPress;
 
     public float floatNoteScrollMultiplier = 0.05f;
     public float[] floatDistAccuracyCatchBest = { 0.12f, 0.11f, 0.1f, 0.09f, 0.81f };
@@ -142,6 +143,8 @@ public class Game_Control : MonoBehaviour
     }
     public void LoadScene(string sceneName)
     {
+        PlaySoundEffect(clipGameButtonPress);
+
         //SceneManager.LoadScene(sceneName);
         SceneTransition.LoadScene(sceneName);
     }
@@ -801,10 +804,10 @@ public class Game_Control : MonoBehaviour
                     switch (nextNoteCatcherVert.type)
                     {
                         case 2:
-                            mouseCursorPos.x = Mathf.Lerp(mouseCursorPos.x, nextNoteCatcherVert.position, Time.deltaTime * posLerpRate / nextNoteCatcherVert.transform.position.y);
+                            mouseCursorPos.y = Mathf.Lerp(mouseCursorPos.y, -nextNoteCatcherVert.position, Time.deltaTime * posLerpRate / nextNoteCatcherVert.transform.position.y);
                             break;
                         case 3:
-                            mouseCursorPos.x = Mathf.Lerp(mouseCursorPos.x, -nextNoteCatcherVert.position, Time.deltaTime * posLerpRate / nextNoteCatcherVert.transform.position.y);
+                            mouseCursorPos.y = Mathf.Lerp(mouseCursorPos.y, nextNoteCatcherVert.position, Time.deltaTime * posLerpRate / nextNoteCatcherVert.transform.position.y);
                             break;
                     }
                 }
@@ -933,6 +936,7 @@ public class Game_Control : MonoBehaviour
                         note.gameObject.SetActive(true);
 
                         note.spriteRendererLength.gameObject.SetActive(true);
+                        note.spriteRendererLength.gameObject.layer = 9 + note.type;
                         note.spriteRendererLength.transform.localPosition = Vector3.down * longNoteLength * (floatNoteScrollMultiplier * PlayerSetting.setting.intScrollSpeed) / 2f;
                         note.spriteRendererLength.transform.localScale = new Vector3(
                             note.spriteRendererLength.transform.localScale.x,
@@ -1196,7 +1200,7 @@ public class Game_Control : MonoBehaviour
 
             oldRecordAccuracy = PlayerPrefs.GetFloat(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-recordaccuracy", 0f);
             textRecordAccuracy.gameObject.SetActive(true);
-            textRecordAccuracy.text = (oldRecordAccuracy * 100f).ToString("f2");
+            textRecordAccuracy.text = (oldRecordAccuracy * 100f).ToString("f2") + "%";
 
             // Accuracy record
             if (finalAccuracy > oldRecordAccuracy)
@@ -1284,7 +1288,7 @@ public class Game_Control : MonoBehaviour
         yield return null;
         while (true)
         {
-            if (Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(0) ||
+            if (Input.GetMouseButton(0) || Input.GetMouseButton(1) ||
                 Input.GetKey(KeyCode.Space))
             {
                 animatorResults.speed = 4f;

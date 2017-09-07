@@ -18,6 +18,7 @@ public class Game_Note : MonoBehaviour
 
     private void LateUpdate()
     {
+        spriteRendererNote.gameObject.layer = gameObject.layer;
         spriteRendererNoteHighlight.gameObject.layer = gameObject.layer;
         spriteRendererLengthHighlight.gameObject.layer = gameObject.layer;
     }

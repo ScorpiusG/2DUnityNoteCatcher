@@ -413,7 +413,7 @@ public class SongMenu_Control : MonoBehaviour
                     nb.gameObject.SetActive(true);
                     nb.transform.SetParent(rectChartListParent);
                     nb.transform.localScale = Vector3.one;
-                    nb.transform.localPosition = (Vector3.right * sizePositionPerButton.x * chartID) + (Vector3.down * sizePositionPerButton.y * gameModeExists);
+                    nb.transform.localPosition = (Vector3.right * ((sizePositionPerButton.x + 4f) * chartID)) + (Vector3.down * ((sizePositionPerButton.y + 4f) * gameModeExists));
                     nb.intGameMode = gameModeID;
                     nb.intChart = chartID;
 

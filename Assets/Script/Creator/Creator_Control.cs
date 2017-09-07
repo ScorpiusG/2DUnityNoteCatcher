@@ -86,6 +86,7 @@ public class Creator_Control : MonoBehaviour
     public int[] intHoriPosSnapDivisorValue = { 2, 3, 4, 6, 8 };
     [HideInInspector] public int intCursorPosition = 0;
     private int intChartLevel = 0;
+    private float floatGameplayLength = 0f;
 
     private bool fixedUpdateCheckOtherFrame = false;
 
@@ -141,6 +142,7 @@ public class Creator_Control : MonoBehaviour
         chartData.chartDescription = textChartDescription.text;
         chartData.chartLevel = intChartLevel;
         chartData.songLength = 0;
+        chartData.gameplayLength = floatGameplayLength;
         float.TryParse(textSongLength.text, out chartData.songLength);
         chartData.songTempo = 60f;
         float.TryParse(textSongTempo.text, out chartData.songTempo);
@@ -183,11 +185,11 @@ public class Creator_Control : MonoBehaviour
             }
             chartData.listNoteCatchInfo.Add(stringNote);
 
-            if (newNote.time + x.length > chartData.songLength + 4f)
-            {
-                chartData.songLength = newNote.time + 4f + x.length;
-                textSongLength.text = (newNote.time + 4f + x.length).ToString();
-            }
+            //if (newNote.time + x.length > chartData.songLength + 4f)
+            //{
+            //    chartData.songLength = newNote.time + 4f + x.length;
+            //    textSongLength.text = (newNote.time + 4f + x.length).ToString();
+            //}
         }
         foreach (Creator_Note x in listNoteTapPool)
         {
@@ -222,11 +224,11 @@ public class Creator_Control : MonoBehaviour
             }
             chartData.listNoteTapInfo.Add(stringNote);
 
-            if (newNote.time + x.length > chartData.songLength + 4f)
-            {
-                chartData.songLength = newNote.time + 4f + x.length;
-                textSongLength.text = (newNote.time + 4f + x.length).ToString();
-            }
+            //if (newNote.time + x.length > chartData.songLength + 4f)
+            //{
+            //    chartData.songLength = newNote.time + 4f + x.length;
+            //    textSongLength.text = (newNote.time + 4f + x.length).ToString();
+            //}
         }
 
         string output = JsonUtility.ToJson(chartData);
@@ -911,6 +913,8 @@ public class Creator_Control : MonoBehaviour
     {
         List<Vector2> listNotePosHori = new List<Vector2>();
         List<Vector2> listNotePosVert = new List<Vector2>();
+        List<float> listNoteTap = new List<float>();
+        //int intNoteTapCount = 0;
 
         // Get all the catcher points in the chart
         foreach (Creator_Note x in listNoteCatchPool)
@@ -989,14 +993,26 @@ public class Creator_Control : MonoBehaviour
             } while (keepSorting);
         }
 
+        // Tap notes quantity
+        foreach (Creator_Note x in listNoteTapPool)
+        {
+            if (x.gameObject.activeSelf)
+            {
+                listNoteTap.Add(x.transform.position.y);
+            }
+        }
+        listNoteTap.Sort();
+
         // Now calculate distance between points
         float floatTotalMovement = 0f;
         float floatNotePositionFirstNote = 0f;
         if (listNotePosHori.Count > 0) floatNotePositionFirstNote = listNotePosHori[0].y;
         if (listNotePosVert.Count > 0 && listNotePosVert[0].y < floatNotePositionFirstNote) floatNotePositionFirstNote = listNotePosVert[0].y;
+        if (listNoteTap.Count > 0 && listNoteTap[0] < floatNotePositionFirstNote) floatNotePositionFirstNote = listNoteTap[0];
         float floatNotePositionLastNote = floatNotePositionFirstNote;
         if (listNotePosHori.Count > 0) floatNotePositionLastNote = listNotePosHori[listNotePosHori.Count - 1].y;
         if (listNotePosVert.Count > 0 && listNotePosVert[listNotePosVert.Count - 1].y > floatNotePositionLastNote) floatNotePositionLastNote = listNotePosVert[listNotePosVert.Count - 1].y;
+        if (listNoteTap.Count > 0 && listNoteTap[listNoteTap.Count - 1] > floatNotePositionLastNote) floatNotePositionLastNote = listNoteTap[listNoteTap.Count - 1];
 
         if (listNotePosHori.Count > 1)
         {
@@ -1019,14 +1035,25 @@ public class Creator_Control : MonoBehaviour
             }
         }
 
-        float notesPerBeat = 1f * (listNotePosHori.Count + listNotePosVert.Count) / (floatNotePositionLastNote - floatNotePositionFirstNote);
+        // Final value calculation
+        float notesPerBeat = 1f * (listNotePosHori.Count + listNotePosVert.Count + listNoteTapPool.Count) / (floatNotePositionLastNote - floatNotePositionFirstNote);
         int intChartJudge = 0;
         int.TryParse(textChartJudge.text, out intChartJudge);
-        float finalChartLevel = (Mathf.Sqrt(notesPerBeat) + floatTotalMovement - 1f) * (0.4f + (0.05f + intChartJudge));
+        float finalChartLevel = Mathf.Pow(Mathf.Sqrt(notesPerBeat) + floatTotalMovement - 1f, 1.6f) * (0.08f + (0.02f + intChartJudge));
 
         intChartLevel = 1 + Mathf.FloorToInt(finalChartLevel);
         if (intChartLevel < 1) intChartLevel = 1;
         if (intChartLevel > 200) intChartLevel = 200;
+        
+        floatGameplayLength = floatNotePositionLastNote - floatNotePositionFirstNote;
+
+        float floatTextSongLength = 0f;
+        float.TryParse(textSongLength.text, out floatTextSongLength);
+        if (floatNotePositionLastNote + 8f > floatTextSongLength)
+        {
+            floatTextSongLength = floatNotePositionLastNote + 8f;
+        }
+        textSongLength.text = floatTextSongLength.ToString("f0");
 
 #if UNITY_EDITOR
         textChartLevel.text = Translator.GetStringTranslation("CREATOR_CHARTLEVEL", "CHART LEVEL") + " " + intChartLevel.ToString() + " (" + (1 + finalChartLevel).ToString("f3") + ")";
