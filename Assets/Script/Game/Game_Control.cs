@@ -269,14 +269,14 @@ public class Game_Control : MonoBehaviour
         // Tap note
         else
         {
-            float dist = Mathf.Abs(floatMusicBeat - note.time);
+            float dist = Mathf.Abs(floatMusicBeat - note.time) / chartData.songTempo * 60f;
             switch (chartData.chartGameType)
             {
                 default:
                     int animJudgeID = 0;
                     int animSortingLayerID = 0;
                     // BEST
-                    if (dist < floatDistAccuracyCatchBest[chartJudgeDifficulty] || boolAutoplay)
+                    if (dist < floatDistAccuracyTapBest[chartJudgeDifficulty] || boolAutoplay)
                     {
                         playerAccuracyBest++;
                         playerComboCurrent++;
@@ -288,7 +288,7 @@ public class Game_Control : MonoBehaviour
 #endif
                     }
                     // GREAT
-                    else if (dist < floatDistAccuracyCatchGreat[chartJudgeDifficulty])
+                    else if (dist < floatDistAccuracyTapGreat[chartJudgeDifficulty])
                     {
                         playerAccuracyGreat++;
                         playerComboCurrent++;
@@ -300,7 +300,7 @@ public class Game_Control : MonoBehaviour
 #endif
                     }
                     // FINE
-                    else if (dist < floatDistAccuracyCatchFine[chartJudgeDifficulty])
+                    else if (dist < floatDistAccuracyTapFine[chartJudgeDifficulty])
                     {
                         playerAccuracyFine++;
                         playerComboCurrent++;
@@ -330,12 +330,8 @@ public class Game_Control : MonoBehaviour
                         anim.gameObject.SetActive(true);
                         anim.transform.position = Vector3.right * note.position;
                         anim.gameObject.layer = 9 + note.type;
-                        foreach (GameObject x in anim.GetComponentsInChildren<GameObject>())
-                        {
-                            x.layer = 9 + note.type;
-                        }
                         anim.spriteRendererJudgment.sprite = spriteJudgment[animJudgeID];
-                        anim.spriteRendererJudgment.sortingLayerID = animSortingLayerID;
+                        //anim.spriteRendererJudgment.sortingLayerID = animSortingLayerID;
                         anim.spriteRendererJudgment.gameObject.layer = anim.gameObject.layer;
                         anim.animatorJudgment.Play("anim");
                         if (animJudgeID < 3)
@@ -975,7 +971,8 @@ public class Game_Control : MonoBehaviour
                     note.gameObject.layer = 9 + note.type;
                     note.spriteRendererNote.color = noteColor[note.type];
                     note.gameObject.SetActive(true);
-                    
+                    note.spriteRendererLength.gameObject.SetActive(false);
+
                     float longNoteLength = float.Parse(noteInfo[4]);
                     if (longNoteLength > 0.01f)
                     {
@@ -983,8 +980,7 @@ public class Game_Control : MonoBehaviour
                         note.type = int.Parse(noteInfo[0]);
                         note.size = int.Parse(noteInfo[1]);
                         note.time = time;
-                        note.position = 0f;
-                        //note.position = Mathf.Clamp(float.Parse(noteInfo[3]), -1f, 1f);
+                        note.position = Mathf.Clamp(float.Parse(noteInfo[3]), -1f, 1f);
                         note.length = longNoteLength;
                         note.other = new List<string>();
                         note.gameObject.layer = 9 + note.type;
@@ -998,10 +994,6 @@ public class Game_Control : MonoBehaviour
                             longNoteLength * (floatNoteScrollMultiplier * PlayerSetting.setting.intScrollSpeed),
                             1f);
                         note.spriteRendererLength.color = noteColor[note.type];
-                    }
-                    else
-                    {
-                        note.spriteRendererLength.gameObject.SetActive(false);
                     }
 
                     chartData.listNoteTapInfo.RemoveAt(j);
@@ -1041,7 +1033,8 @@ public class Game_Control : MonoBehaviour
             {
                 if (x.gameObject.activeSelf)
                 {
-                    x.transform.position = new Vector3(x.position, (floatMusicBeat - x.time) * (floatNoteScrollMultiplier * PlayerSetting.setting.intScrollSpeed));
+                    x.transform.position = new Vector3(x.position, (x.time - floatMusicBeat) * (floatNoteScrollMultiplier * PlayerSetting.setting.intScrollSpeed));
+                    float dist = Mathf.Abs(floatMusicBeat - x.time) * 60f / chartData.songTempo;
 
                     // Note flash
                     x.spriteRendererNoteHighlight.color = colorBeatFlash;
@@ -1052,12 +1045,12 @@ public class Game_Control : MonoBehaviour
 
                     // Note judgment
                     // Judge if below "fine" for "miss"
-                    if (floatMusicBeat > x.time + floatDistAccuracyTapFine[chartJudgeDifficulty])
+                    if (x.transform.position.y < 0f && dist > floatDistAccuracyTapFine[chartJudgeDifficulty])
                     {
                         JudgeNote(x, objectCatcher[x.type], true);
                     }
                     // Autoplay
-                    if (boolAutoplay && floatMusicBeat > x.time)
+                    if (boolAutoplay && floatMusicBeat >= x.time)
                     {
                         JudgeNote(x, objectCatcher[x.type], true);
                     }
@@ -1071,16 +1064,19 @@ public class Game_Control : MonoBehaviour
                 Game_Note lowestNote = null;
                 foreach (Game_Note x in listNoteTap)
                 {
-                    if (lowestNote == null || x.position < lowestNote.position)
+                    if (x.gameObject.activeSelf)
                     {
-                        lowestNote = x;
+                        if (lowestNote == null || x.transform.position.y < lowestNote.transform.position.y)
+                        {
+                            lowestNote = x;
+                        }
                     }
                 }
 
                 // Note judgment
                 if (lowestNote != null)
                 {
-                    float dist = Mathf.Abs(floatMusicBeat - lowestNote.time);
+                    float dist = Mathf.Abs(floatMusicBeat - lowestNote.time) * chartData.songTempo / 60f;
                     if (dist < floatDistAccuracyTapMiss[chartJudgeDifficulty])
                     {
                         JudgeNote(lowestNote, objectCatcher[lowestNote.type % 4], true);

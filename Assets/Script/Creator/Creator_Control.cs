@@ -38,6 +38,7 @@ public class Creator_Control : MonoBehaviour
 
     public Text textChartGameType;
     public Text textNotePlacementType;
+    public Image[] imageNotePlacementHighlight;
     public Text textNoteLength;
     public Toggle toggleNoteLengthEnable;
     public Text textNoteOther;
@@ -740,6 +741,13 @@ public class Creator_Control : MonoBehaviour
             intNotePlacementType = 0;
         }
     }
+    public void ChartNotePlacementTypeChangeTo(int modifier)
+    {
+        if (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.LeftCommand)) return;
+
+        PlaySound(clipTick);
+        intNotePlacementType = modifier;
+    }
 
     public void MouseScrollSettingChange(int modifier)
     {
@@ -1162,6 +1170,15 @@ public class Creator_Control : MonoBehaviour
         textMouseScrollSetting.text = Translator.GetStringTranslation("CREATOR_OPTIONSMOUSESCROLLFUNCBODY" + intMouseScrollSetting.ToString(), stringMouseScrollSetting[intMouseScrollSetting]);
         textSongPreviewLength.text = sliderSongPreviewLength.value.ToString("f2");
         textSongPreviewFade.text = sliderSongPreviewFade.value.ToString("f2");
+
+        // Note selection sprite highlight
+        if (imageNotePlacementHighlight.Length > 0)
+        {
+            for (int i = 0; i < imageNotePlacementHighlight.Length; i++)
+            {
+                imageNotePlacementHighlight[i].gameObject.SetActive(i == intNotePlacementType);
+            }
+        }
     }
 
     private void Update()
@@ -1444,6 +1461,7 @@ public class Creator_Control : MonoBehaviour
                     float time = hit.point.y;
                     int type = draggedNote.type;
                     float length = draggedNote.length;
+                    if (draggedNote.isNoteTap) type += 4;
 
                     float oldPosY = draggedNote.transform.position.y;
                     draggedNote.transform.position += Vector3.down * (oldPosY + 1f);
