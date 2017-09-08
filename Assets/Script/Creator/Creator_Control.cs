@@ -39,6 +39,7 @@ public class Creator_Control : MonoBehaviour
     public Text textChartGameType;
     public Text textNotePlacementType;
     public Text textNoteLength;
+    public Toggle toggleNoteLengthEnable;
     public Text textNoteOther;
     private List<string> listStringNoteOther = new List<string>();
 
@@ -50,6 +51,7 @@ public class Creator_Control : MonoBehaviour
 
     public ChartData chartData;
 
+    public GameObject objectSelectedNoteHighlight;
     private List<Creator_Note> listNoteCatchPool = new List<Creator_Note>();
     public Creator_Note objectNoteCatchPrefab;
     private List<Creator_Note> listNoteTapPool = new List<Creator_Note>();
@@ -87,6 +89,7 @@ public class Creator_Control : MonoBehaviour
     [HideInInspector] public int intCursorPosition = 0;
     private int intChartLevel = 0;
     private float floatGameplayLength = 0f;
+    private Creator_Note objectNoteSelected = null;
 
     private bool fixedUpdateCheckOtherFrame = false;
 
@@ -99,7 +102,8 @@ public class Creator_Control : MonoBehaviour
     {
         chartData = ScriptableObject.CreateInstance(typeof(ChartData)) as ChartData;
         canvasCreatorSetting.gameObject.SetActive(false);
-        
+        objectSelectedNoteHighlight.SetActive(false);
+
         textFileName.text = PlayerPrefs.GetString("creator_textFileName", "");
         intChartGameType = PlayerPrefs.GetInt("creator_intChartGameType", 0);
         textFileChart.text = PlayerPrefs.GetString("creator_textFileChart", "0");
@@ -149,7 +153,9 @@ public class Creator_Control : MonoBehaviour
         chartData.chartGameType = intChartGameType;
         chartData.chartJudge = int.Parse(textChartJudge.text);
         int.TryParse(textChartJudge.text, out chartData.chartJudge);
-        
+
+        chartData.gameplayLength *= chartData.songTempo / 60f;
+
         //ChartData.NoteInfo newNote = new ChartData.NoteInfo();
         ChartData.NoteInfo newNote = ScriptableObject.CreateInstance(typeof(ChartData.NoteInfo)) as ChartData.NoteInfo;
         foreach (Creator_Note x in listNoteCatchPool)
@@ -381,6 +387,7 @@ public class Creator_Control : MonoBehaviour
         }
 
         // Modify note to use information given
+        newNote.isNoteTap = false;
         newNote.transform.position = new Vector3(note.position, note.time);
         newNote.type = note.type % 4;
         newNote.size = note.size;
@@ -504,7 +511,8 @@ public class Creator_Control : MonoBehaviour
             newNote = Instantiate(objectNoteTapPrefab);
             listNoteTapPool.Add(newNote);
         }
-        
+
+        newNote.isNoteTap = true;
         newNote.transform.position = new Vector3(0f, note.time);
         newNote.type = note.type % 4;
         newNote.size = note.size;
@@ -1285,151 +1293,177 @@ public class Creator_Control : MonoBehaviour
 
             if (Physics.Raycast(ray, out hit, 15f))
             {
-                // Possible to create note only if note is at or above song start
+                if (hit.collider.tag == "Creator_ChartBack")
+                {
+                    objectNoteSelected = null;
+
+                    // Possible to create note only if note is at or above song start
+                    if (hit.point.y > -Mathf.Epsilon)
+                    {
+                        float pos = hit.point.x;
+                        float time = hit.point.y;
+                        int type = intNotePlacementType;
+                        float length = 0f;
+                        if (toggleNoteLengthEnable.isOn)
+                        {
+                            float.TryParse(textNoteLength.text, out length);
+                        }
+
+                        // Left shift ignores horizontal position grid snap
+                        if (!Input.GetKey(KeyCode.LeftShift))
+                        {
+                            pos = Mathf.Round(intHoriPosSnapDivisorValue[intHoriPosSnapDivisor] * pos) / intHoriPosSnapDivisorValue[intHoriPosSnapDivisor];
+                        }
+                        // If there is a beat snap divisor, it will be applied
+                        if (intBeatSnapDivisor >= 0)
+                        {
+                            time = Mathf.Round(intBeatSnapDivisorValue[intBeatSnapDivisor] * time) / intBeatSnapDivisorValue[intBeatSnapDivisor];
+                            /*
+                            float beat = Mathf.Floor(time);
+                            float partial = time - beat;
+                            for (int divisor = intBeatSnapDivisorValue[intBeatSnapDivisor] - 1; divisor >= 0 ; divisor--)
+                            {
+                                if (partial > 1f * divisor / intBeatSnapDivisorValue[intBeatSnapDivisor])
+                                {
+                                    time = beat + 1f * divisor / intBeatSnapDivisorValue[intBeatSnapDivisor];
+                                    break;
+                                }
+                            }
+                            */
+                        }
+
+                        if (CheckNotePlacementValidity(pos, time, type, length))
+                        {
+                            // If there is a note of a type from the opposite catcher, place on the opposite horizontal position
+                            foreach (Creator_Note x in listNoteCatchPool)
+                            {
+                                // Note main position
+                                Creator_Note sameNote = null;
+                                Creator_Note oppositeNote = null;
+                                float dist = Mathf.Abs(time - x.transform.position.y);
+                                if (dist < 0.01f)
+                                {
+                                    switch (type)
+                                    {
+                                        case 0: if (x.type == 1) oppositeNote = x; break;
+                                        case 1: if (x.type == 0) oppositeNote = x; break;
+                                        case 2: if (x.type == 3) oppositeNote = x; break;
+                                        case 3: if (x.type == 2) oppositeNote = x; break;
+                                    }
+                                }
+                                if (x.length > 0.01f)
+                                {
+                                    // Long note end
+                                    dist = Mathf.Abs(time - (x.transform.position.y + x.length));
+                                    if (dist < 0.01f)
+                                    {
+                                        switch (type)
+                                        {
+                                            case 0: if (x.type == 1) oppositeNote = x; break;
+                                            case 1: if (x.type == 0) oppositeNote = x; break;
+                                            case 2: if (x.type == 3) oppositeNote = x; break;
+                                            case 3: if (x.type == 2) oppositeNote = x; break;
+                                        }
+                                    }
+
+                                    // Long note length
+                                    if (time < x.transform.position.y + x.length - Mathf.Epsilon && time > x.transform.position.y + Mathf.Epsilon)
+                                    {
+                                        if ((type == 0 || type == 1) && (x.type == 0 || x.type == 1))
+                                        {
+                                            if (type == x.type) sameNote = x;
+                                            else oppositeNote = x;
+                                        }
+                                        if ((type == 2 || type == 3) && (x.type == 2 || x.type == 3))
+                                        {
+                                            if (type == x.type) sameNote = x;
+                                            else oppositeNote = x;
+                                        }
+                                    }
+                                }
+
+                                if (sameNote != null)
+                                {
+                                    pos = x.transform.position.x;
+                                    break;
+                                }
+                                if (oppositeNote != null)
+                                {
+                                    pos = -x.transform.position.x;
+                                    break;
+                                }
+                            }
+#if UNITY_EDITOR
+                            Debug.Log("Note creation: pos " + pos.ToString("f3") + ", time " + time.ToString("f3") + ", type " + type.ToString() + ", length " + length.ToString("f3"));
+#endif
+                            if (type < 4)
+                            {
+                                CreateNoteCatch(pos, time, type, 0, length, listStringNoteOther);
+                            }
+                            else
+                            {
+                                CreateNoteTap(time, type, 0, length, listStringNoteOther);
+                            }
+                            PlaySound(clipNoteCreate);
+                            CalculateChartLevel();
+                        }
+                        else
+                        {
+                            PlaySound(clipCancel);
+                        }
+                    }
+                }
+                else if (hit.collider.tag == "Creator_Note")
+                {
+                    // Drag start - keep the on-clicked note in memory
+                    objectNoteSelected = hit.collider.GetComponent<Creator_Note>();
+                    PlaySound(clipTick);
+
+                    objectSelectedNoteHighlight.SetActive(true);
+                    objectSelectedNoteHighlight.transform.position = objectNoteSelected.transform.position;
+                }
+            }
+        }
+
+        if (Input.GetMouseButtonUp(0) && objectNoteSelected != null)
+        {
+            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            RaycastHit hit;
+
+            // Drag end - move the note
+            Creator_Note draggedNote = objectNoteSelected;
+            objectNoteSelected = null;
+            objectSelectedNoteHighlight.SetActive(false);
+
+            if (Physics.Raycast(ray, out hit, 15f))
+            {
+                // More or less the same check as creating the note
                 if (hit.point.y > -Mathf.Epsilon)
                 {
-                    bool createNote = true;
                     float pos = hit.point.x;
                     float time = hit.point.y;
-                    int type = intNotePlacementType;
-                    float length = 0f;
-                    float.TryParse(textNoteLength.text, out length);
+                    int type = draggedNote.type;
+                    float length = draggedNote.length;
 
-                    // Left shift ignores horizontal position grid snap
+                    float oldPosY = draggedNote.transform.position.y;
+                    draggedNote.transform.position += Vector3.down * (oldPosY + 1f);
+                    
                     if (!Input.GetKey(KeyCode.LeftShift))
                     {
                         pos = Mathf.Round(intHoriPosSnapDivisorValue[intHoriPosSnapDivisor] * pos) / intHoriPosSnapDivisorValue[intHoriPosSnapDivisor];
                     }
-                    // If there is a beat snap divisor, it will be applied
                     if (intBeatSnapDivisor >= 0)
                     {
                         time = Mathf.Round(intBeatSnapDivisorValue[intBeatSnapDivisor] * time) / intBeatSnapDivisorValue[intBeatSnapDivisor];
-                        /*
-                        float beat = Mathf.Floor(time);
-                        float partial = time - beat;
-                        for (int divisor = intBeatSnapDivisorValue[intBeatSnapDivisor] - 1; divisor >= 0 ; divisor--)
-                        {
-                            if (partial > 1f * divisor / intBeatSnapDivisorValue[intBeatSnapDivisor])
-                            {
-                                time = beat + 1f * divisor / intBeatSnapDivisorValue[intBeatSnapDivisor];
-                                break;
-                            }
-                        }
-                        */
                     }
 
-                    // If the new note is too close to another note of the same type, don't create
-                    if (type < 4)
+                    if (CheckNotePlacementValidity(pos, time, type, length))
                     {
-                        // Catch note
                         foreach (Creator_Note x in listNoteCatchPool)
                         {
-                            if (x.gameObject.activeSelf && type == x.type)
-                            {
-                                float dist = Mathf.Abs(time - x.transform.position.y);
-                                if (dist < 0.01f)
-                                {
-                                    createNote = false;
-                                    break;
-                                }
-                                if (x.length > 0.01f)
-                                {
-                                    dist = Mathf.Abs(time - (x.transform.position.y + x.length));
-                                    if (dist < 0.01f)
-                                    {
-                                        createNote = false;
-                                        break;
-                                    }
-                                }
-
-                                // Same for long note ends
-                                if (length > 0.01f)
-                                {
-                                    dist = Mathf.Abs(time + length - x.transform.position.y);
-                                    if (dist < 0.01f)
-                                    {
-                                        createNote = false;
-                                        break;
-                                    }
-                                    if (x.length > 0.01f)
-                                    {
-                                        dist = Mathf.Abs(time + length - (x.transform.position.y + x.length));
-                                        if (dist < 0.01f)
-                                        {
-                                            createNote = false;
-                                            break;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    else
-                    {
-                        // Tap note
-                        foreach (Creator_Note x in listNoteTapPool)
-                        {
-                            if (x.gameObject.activeSelf)
-                            {
-                                float dist = Mathf.Abs(time - x.transform.position.y);
-                                if (dist < 0.01f)
-                                {
-                                    createNote = false;
-                                    break;
-                                }
-                                if (x.length > 0.01f)
-                                {
-                                    dist = Mathf.Abs(time - (x.transform.position.y + x.length));
-                                    if (dist < 0.01f)
-                                    {
-                                        createNote = false;
-                                        break;
-                                    }
-                                }
-                                
-                                if (length > 0.01f)
-                                {
-                                    dist = Mathf.Abs(time + length - x.transform.position.y);
-                                    if (dist < 0.01f)
-                                    {
-                                        createNote = false;
-                                        break;
-                                    }
-                                    if (x.length > 0.01f)
-                                    {
-                                        dist = Mathf.Abs(time + length - (x.transform.position.y + x.length));
-                                        if (dist < 0.01f)
-                                        {
-                                            createNote = false;
-                                            break;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    // If there is a note of a type from the opposite catcher, place on the opposite horizontal position
-                    foreach (Creator_Note x in listNoteCatchPool)
-                    {
-                        // Note main position
-                        Creator_Note sameNote = null;
-                        Creator_Note oppositeNote = null;
-                        float dist = Mathf.Abs(time - x.transform.position.y);
-                        if (dist < 0.01f)
-                        {
-                            switch (type)
-                            {
-                                case 0: if (x.type == 1) oppositeNote = x; break;
-                                case 1: if (x.type == 0) oppositeNote = x; break;
-                                case 2: if (x.type == 3) oppositeNote = x; break;
-                                case 3: if (x.type == 2) oppositeNote = x; break;
-                            }
-                        }
-                        if (x.length > 0.01f)
-                        {
-                            // Long note end
-                            dist = Mathf.Abs(time - (x.transform.position.y + x.length));
+                            Creator_Note sameNote = null;
+                            Creator_Note oppositeNote = null;
+                            float dist = Mathf.Abs(time - x.transform.position.y);
                             if (dist < 0.01f)
                             {
                                 switch (type)
@@ -1440,53 +1474,63 @@ public class Creator_Control : MonoBehaviour
                                     case 3: if (x.type == 2) oppositeNote = x; break;
                                 }
                             }
-
-                            // Long note length
-                            if (time < x.transform.position.y + x.length - Mathf.Epsilon && time > x.transform.position.y + Mathf.Epsilon)
+                            if (x.length > 0.01f)
                             {
-                                if ((type == 0 || type == 1) && (x.type == 0 || x.type == 1))
+                                dist = Mathf.Abs(time - (x.transform.position.y + x.length));
+                                if (dist < 0.01f)
                                 {
-                                    if (type == x.type) sameNote = x;
-                                    else oppositeNote = x;
+                                    switch (type)
+                                    {
+                                        case 0: if (x.type == 1) oppositeNote = x; break;
+                                        case 1: if (x.type == 0) oppositeNote = x; break;
+                                        case 2: if (x.type == 3) oppositeNote = x; break;
+                                        case 3: if (x.type == 2) oppositeNote = x; break;
+                                    }
                                 }
-                                if ((type == 2 || type == 3) && (x.type == 2 || x.type == 3))
+                                if (time < x.transform.position.y + x.length - Mathf.Epsilon && time > x.transform.position.y + Mathf.Epsilon)
                                 {
-                                    if (type == x.type) sameNote = x;
-                                    else oppositeNote = x;
+                                    if ((type == 0 || type == 1) && (x.type == 0 || x.type == 1))
+                                    {
+                                        if (type == x.type) sameNote = x;
+                                        else oppositeNote = x;
+                                    }
+                                    if ((type == 2 || type == 3) && (x.type == 2 || x.type == 3))
+                                    {
+                                        if (type == x.type) sameNote = x;
+                                        else oppositeNote = x;
+                                    }
                                 }
                             }
-                        }
 
-                        if (sameNote != null)
-                        {
-                            pos = x.transform.position.x;
-                            break;
+                            if (sameNote != null)
+                            {
+                                pos = x.transform.position.x;
+                                break;
+                            }
+                            if (oppositeNote != null)
+                            {
+                                pos = -x.transform.position.x;
+                                break;
+                            }
                         }
-                        if (oppositeNote != null)
-                        {
-                            pos = -x.transform.position.x;
-                            break;
-                        }
-                    }
-
-                    if (createNote)
-                    {
 #if UNITY_EDITOR
-                        Debug.Log("Note creation: pos " + pos.ToString("f3") + ", time " + time.ToString("f3") + ", type " + type.ToString() + ", length " + length.ToString("f3"));
+                        Debug.Log("Note move: pos " + pos.ToString("f3") + ", time " + time.ToString("f3") + ", type " + type.ToString() + ", length " + length.ToString("f3"));
 #endif
-                        if (type < 4)
+                        if (!draggedNote.isNoteTap)
                         {
-                            CreateNoteCatch(pos, time, type, 0, length, listStringNoteOther);
+                            CreateNoteCatch(pos, time, type, 0, length, draggedNote.other);
                         }
                         else
                         {
-                            CreateNoteTap(time, type, 0, length, listStringNoteOther);
+                            CreateNoteTap(time, type, 0, length, draggedNote.other);
                         }
-                        PlaySound(clipNoteCreate);
+                        PlaySound(clipTick);
                         CalculateChartLevel();
+                        DeleteNote(draggedNote);
                     }
                     else
                     {
+                        draggedNote.transform.position += Vector3.up * (oldPosY + 1f);
                         PlaySound(clipCancel);
                     }
                 }
@@ -1503,11 +1547,14 @@ public class Creator_Control : MonoBehaviour
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             RaycastHit hit;
 
-            if (Physics.Raycast(ray, out hit, 15f) && hit.collider.tag == "Creator_Note")
+            if (Physics.Raycast(ray, out hit, 15f))
             {
-                DeleteNote(hit.collider.GetComponent<Creator_Note>());
-                PlaySound(clipNoteDelete);
-                CalculateChartLevel();
+                if (hit.collider.tag == "Creator_Note")
+                {
+                    DeleteNote(hit.collider.GetComponent<Creator_Note>());
+                    PlaySound(clipNoteDelete);
+                    CalculateChartLevel();
+                }
             }
         }
 
@@ -1517,5 +1564,93 @@ public class Creator_Control : MonoBehaviour
         // Camera manipulation
         cameraMain.transform.position = Vector3.Lerp(cameraMain.transform.position, Vector3.up * intCursorPosition, Time.deltaTime * 16f);
         cameraMain.orthographicSize = Mathf.Lerp(cameraMain.orthographicSize, cameraSizeMin + ((cameraSizeMax - cameraSizeMin) * sliderZoom.value), Time.deltaTime * 8f);
+    }
+
+    private bool CheckNotePlacementValidity(float pos, float time, int type, float length)
+    {
+        // If the new note is too close to another note of the same type, don't create
+        if (type < 4)
+        {
+            // Catch note
+            foreach (Creator_Note x in listNoteCatchPool)
+            {
+                if (x.gameObject.activeSelf && type == x.type)
+                {
+                    float dist = Mathf.Abs(time - x.transform.position.y);
+                    if (dist < 0.01f)
+                    {
+                        return false;
+                    }
+                    if (x.length > 0.01f)
+                    {
+                        dist = Mathf.Abs(time - (x.transform.position.y + x.length));
+                        if (dist < 0.01f)
+                        {
+                            return false;
+                        }
+                    }
+
+                    // Same for long note ends
+                    if (length > 0.01f)
+                    {
+                        dist = Mathf.Abs(time + length - x.transform.position.y);
+                        if (dist < 0.01f)
+                        {
+                            return false;
+                        }
+                        if (x.length > 0.01f)
+                        {
+                            dist = Mathf.Abs(time + length - (x.transform.position.y + x.length));
+                            if (dist < 0.01f)
+                            {
+                                return false;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        else
+        {
+            // Tap note
+            foreach (Creator_Note x in listNoteTapPool)
+            {
+                if (x.gameObject.activeSelf)
+                {
+                    float dist = Mathf.Abs(time - x.transform.position.y);
+                    if (dist < 0.01f)
+                    {
+                        return false;
+                    }
+                    if (x.length > 0.01f)
+                    {
+                        dist = Mathf.Abs(time - (x.transform.position.y + x.length));
+                        if (dist < 0.01f)
+                        {
+                            return false;
+                        }
+                    }
+
+                    if (length > 0.01f)
+                    {
+                        dist = Mathf.Abs(time + length - x.transform.position.y);
+                        if (dist < 0.01f)
+                        {
+                            return false;
+                        }
+                        if (x.length > 0.01f)
+                        {
+                            dist = Mathf.Abs(time + length - (x.transform.position.y + x.length));
+                            if (dist < 0.01f)
+                            {
+                                return false;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return true;
     }
 }

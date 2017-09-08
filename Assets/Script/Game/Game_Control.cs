@@ -582,6 +582,7 @@ public class Game_Control : MonoBehaviour
                 chartTotalNotes++;
             }
         }
+        /*
         for (int i = 0; i < chartData.listNoteTapInfo.Count; i++)
         {
             string[] noteInfo = chartData.listNoteTapInfo[i].Split('|');
@@ -591,6 +592,7 @@ public class Game_Control : MonoBehaviour
                 chartTotalNotes++;
             }
         }
+        */
         chartJudgeDifficulty = chartData.chartJudge;
         if (chartJudgeDifficulty >= floatDistAccuracyCatchBest.Length) chartJudgeDifficulty = floatDistAccuracyCatchBest.Length - 1;
 
@@ -1161,6 +1163,24 @@ public class Game_Control : MonoBehaviour
             ExitGameScene();
             yield break;
         }
+
+        // Check score validity
+        // Conditions:
+        //  - No mods enabled
+        //  - Actual gameplay length is over a minute (from first to last note)
+        //  - 25 or more notes present in chart
+        isScoringDisabled =
+            PlayerSetting.setting.modChartBerserk ||
+            PlayerSetting.setting.modChartCluster ||
+            PlayerSetting.setting.modChartFlip ||
+            PlayerSetting.setting.modChartHell ||
+            PlayerSetting.setting.modChartMirror ||
+            PlayerSetting.setting.modChartRandom ||
+            PlayerSetting.setting.modDisableScore ||
+            PlayerSetting.setting.modScreenFlip ||
+            PlayerSetting.setting.modScreenMirror ||
+            chartData.gameplayLength < 60f ||
+            chartTotalNotes < 25;
 
         // Add and record score
         textScoreDisabled.gameObject.SetActive(isScoringDisabled);
