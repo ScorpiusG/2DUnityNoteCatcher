@@ -968,7 +968,7 @@ public class Game_Control : MonoBehaviour
                             note.other.Add(noteInfo[i]);
                         }
                     }
-                    note.gameObject.layer = 9 + note.type;
+                    note.gameObject.layer = 13 + note.type;
                     note.spriteRendererNote.color = noteColor[note.type];
                     note.gameObject.SetActive(true);
                     note.spriteRendererLength.gameObject.SetActive(false);
@@ -983,7 +983,7 @@ public class Game_Control : MonoBehaviour
                         note.position = Mathf.Clamp(float.Parse(noteInfo[3]), -1f, 1f);
                         note.length = longNoteLength;
                         note.other = new List<string>();
-                        note.gameObject.layer = 9 + note.type;
+                        note.gameObject.layer = 13 + note.type;
                         note.spriteRendererNote.color = noteColor[note.type];
                         note.gameObject.SetActive(true);
 
@@ -1107,20 +1107,29 @@ public class Game_Control : MonoBehaviour
             // Force end consequences: Miss all remaining notes
             if (isForcedEnd)
             {
-                if (floatTimeEscapeHeld > 2f)
+                foreach (string s in chartData.listNoteCatchInfo)
                 {
-                    foreach (string s in chartData.listNoteCatchInfo)
+                    string[] noteInfo = s.Split('|');
+                    playerAccuracyMiss++;
+                    float longNoteLength = float.Parse(noteInfo[4]);
+                    if (longNoteLength > 0.01f)
                     {
-                        string[] noteInfo = s.Split('|');
                         playerAccuracyMiss++;
-                        float longNoteLength = float.Parse(noteInfo[4]);
-                        if (longNoteLength > 0.01f)
-                        {
-                            playerAccuracyMiss++;
-                        }
                     }
                 }
+                foreach (string s in chartData.listNoteTapInfo)
+                {
+                    playerAccuracyMiss++;
+                }
                 foreach (Game_Note x in listNoteCatch)
+                {
+                    if (x.gameObject.activeSelf)
+                    {
+                        playerAccuracyMiss++;
+                        DespawnNote(x);
+                    }
+                }
+                foreach (Game_Note x in listNoteTap)
                 {
                     if (x.gameObject.activeSelf)
                     {

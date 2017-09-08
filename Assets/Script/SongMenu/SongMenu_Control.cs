@@ -445,6 +445,10 @@ public class SongMenu_Control : MonoBehaviour
         if (firstChart != null)
         {
             UseChartInfo(firstChart);
+
+            // Play button enable and animate
+            objectButtonPlay.SetActive(true);
+            objectButtonPlay.GetComponent<Animator>().Play("clip");
         }
         else
         {
@@ -480,10 +484,6 @@ public class SongMenu_Control : MonoBehaviour
             iTween.ColorTo(x.gameObject, Color.white, tweenDuration);
         }
         */
-
-        // Play button enable and animate
-        objectButtonPlay.SetActive(true);
-        objectButtonPlay.GetComponent<Animator>().Play("clip");
 
         // Load the song file (.ogg) in the folder
         //StartCoroutine("LoadClip", folder.name);
