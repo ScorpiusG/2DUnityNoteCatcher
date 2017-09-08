@@ -845,8 +845,8 @@ public class Game_Control : MonoBehaviour
                 imageSongProgressGauge.fillAmount = floatMusicPosition / floatMusicPositionEnd;
             }
             // Bottom - Accuracy
-            currentAccuracy = (playerAccuracyBest * 4) + (playerAccuracyGreat * 3) + (playerAccuracyFine * 2);
-            currentAccuracyNegative = playerAccuracyGreat + (playerAccuracyFine * 2) + (playerAccuracyMiss * 4);
+            currentAccuracy = (playerAccuracyBest * 4) + (playerAccuracyGreat * 2) + playerAccuracyFine;
+            currentAccuracyNegative = (playerAccuracyGreat * 2) + (playerAccuracyFine * 3) + (playerAccuracyMiss * 4);
             if (objectGroupInterfaceAccuracy.activeSelf)
             {
                 floatAccuracyDisplay = Mathf.Lerp(floatAccuracyDisplay, 1f * currentAccuracy / (chartTotalNotes * 4), Time.deltaTime * 8f);
@@ -1034,7 +1034,7 @@ public class Game_Control : MonoBehaviour
                 if (x.gameObject.activeSelf)
                 {
                     x.transform.position = new Vector3(x.position, (x.time - floatMusicBeat) * (floatNoteScrollMultiplier * PlayerSetting.setting.intScrollSpeed));
-                    float dist = Mathf.Abs(floatMusicBeat - x.time) * 60f / chartData.songTempo;
+                    float dist = Mathf.Abs(floatMusicBeat - x.time) / chartData.songTempo * 60f;
 
                     // Note flash
                     x.spriteRendererNoteHighlight.color = colorBeatFlash;
@@ -1076,7 +1076,7 @@ public class Game_Control : MonoBehaviour
                 // Note judgment
                 if (lowestNote != null)
                 {
-                    float dist = Mathf.Abs(floatMusicBeat - lowestNote.time) * chartData.songTempo / 60f;
+                    float dist = Mathf.Abs(floatMusicBeat - lowestNote.time) / chartData.songTempo * 60f;
                     if (dist < floatDistAccuracyTapMiss[chartJudgeDifficulty])
                     {
                         JudgeNote(lowestNote, objectCatcher[lowestNote.type % 4], true);
@@ -1149,7 +1149,7 @@ public class Game_Control : MonoBehaviour
         Cursor.lockState = CursorLockMode.Locked;
         yield return null;
 
-        float finalAccuracy = 1f * ((playerAccuracyBest * 4) + (playerAccuracyGreat * 3) + (playerAccuracyFine * 2)) / (chartTotalNotes * 4);
+        float finalAccuracy = 1f * ((playerAccuracyBest * 4) + (playerAccuracyGreat * 2) + playerAccuracyFine) / (chartTotalNotes * 4);
 #if UNITY_EDITOR
         Debug.Log("Song finished. Accuracy: " + (finalAccuracy * 100f).ToString("f2") + "%");
 #endif
