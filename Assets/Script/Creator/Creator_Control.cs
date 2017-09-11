@@ -26,9 +26,11 @@ public class Creator_Control : MonoBehaviour
     public InputField textSongArtist;
     public InputField textChartDeveloper;
     public InputField textChartDescription;
+    public InputField textChartOffset;
     public InputField textSongTempo;
     public InputField textSongLength;
-    public InputField textChartJudge;
+    public Text textChartJudge;
+    private int intChartJudge = 0;
 
     public Text textChartLevel;
     public Text textTimeCurrentMeasure;
@@ -115,6 +117,8 @@ public class Creator_Control : MonoBehaviour
         sliderSongPreviewLength.value = PlayerPrefs.GetFloat("creator_floatSongPreviewLength", 8f);
         sliderSongPreviewFade.value = PlayerPrefs.GetFloat("creator_floatSongPreviewFade", 3f);
 
+        textChartJudge.text = "0";
+
         RefreshGridSnapDivisorGuide();
         CalculateChartLevel();
     }
@@ -152,8 +156,11 @@ public class Creator_Control : MonoBehaviour
         chartData.songTempo = 60f;
         float.TryParse(textSongTempo.text, out chartData.songTempo);
         chartData.chartGameType = intChartGameType;
-        chartData.chartJudge = int.Parse(textChartJudge.text);
-        int.TryParse(textChartJudge.text, out chartData.chartJudge);
+        chartData.chartJudge = intChartJudge;
+        //chartData.chartJudge = int.Parse(textChartJudge.text);
+        //int.TryParse(textChartJudge.text, out chartData.chartJudge);
+        chartData.chartOffset = 0;
+        int.TryParse(textChartOffset.text, out chartData.chartOffset);
 
         chartData.gameplayLength *= chartData.songTempo / 60f;
 
@@ -292,8 +299,9 @@ public class Creator_Control : MonoBehaviour
         textChartDescription.text = chartData.chartDescription;
         textSongLength.text = chartData.songLength.ToString();
         textSongTempo.text = chartData.songTempo.ToString("f2");
-        textChartJudge.text = chartData.chartJudge.ToString();
+        intChartJudge = chartData.chartJudge;
         //intChartGameType = chartData.chartGameType;
+        textChartOffset.text = chartData.chartOffset.ToString();
 
         ChartData.NoteInfo newNote = ScriptableObject.CreateInstance(typeof(ChartData.NoteInfo)) as ChartData.NoteInfo;
         foreach (string x in chartData.listNoteCatchInfo)
@@ -352,6 +360,7 @@ public class Creator_Control : MonoBehaviour
         textSongTempo.text = "60.00";
         textSongLength.text = "10";
         textChartJudge.text = "0";
+        textChartOffset.text = "0";
 
         Creator_Note[] listNoteC = FindObjectsOfType<Creator_Note>();
         foreach (Creator_Note x in listNoteC)
@@ -878,6 +887,16 @@ public class Creator_Control : MonoBehaviour
         return newLine;
     }
 
+    public void ChartJudgeLevelChange(int modifier)
+    {
+        intChartJudge += modifier;
+
+        if (intChartJudge < 0) modifier = 0;
+        if (intChartJudge > 9) modifier = 9;
+
+        CalculateChartLevel();
+    }
+
     /// <summary>
     /// Despawns a note.
     /// </summary>
@@ -1053,8 +1072,8 @@ public class Creator_Control : MonoBehaviour
 
         // Final value calculation
         float notesPerBeat = 1f * (listNotePosHori.Count + listNotePosVert.Count + listNoteTapPool.Count) / (floatNotePositionLastNote - floatNotePositionFirstNote);
-        int intChartJudge = 0;
-        int.TryParse(textChartJudge.text, out intChartJudge);
+        //int intChartJudge = 0;
+        //int.TryParse(textChartJudge.text, out intChartJudge);
         float finalChartLevel = Mathf.Pow(Mathf.Sqrt(notesPerBeat) + floatTotalMovement - 1f, 1.6f) * (0.08f + (0.02f + intChartJudge));
 
         intChartLevel = 1 + Mathf.FloorToInt(finalChartLevel);
@@ -1070,6 +1089,8 @@ public class Creator_Control : MonoBehaviour
             floatTextSongLength = floatNotePositionLastNote + 8f;
         }
         textSongLength.text = floatTextSongLength.ToString("f0");
+
+        textChartJudge.text = intChartJudge.ToString();
 
 #if UNITY_EDITOR
         textChartLevel.text = Translator.GetStringTranslation("CREATOR_CHARTLEVEL", "CHART LEVEL") + " " + intChartLevel.ToString() + " (" + (1 + finalChartLevel).ToString("f3") + ")";
@@ -1582,6 +1603,12 @@ public class Creator_Control : MonoBehaviour
         // Camera manipulation
         cameraMain.transform.position = Vector3.Lerp(cameraMain.transform.position, Vector3.up * intCursorPosition, Time.deltaTime * 16f);
         cameraMain.orthographicSize = Mathf.Lerp(cameraMain.orthographicSize, cameraSizeMin + ((cameraSizeMax - cameraSizeMin) * sliderZoom.value), Time.deltaTime * 8f);
+
+        // Open online manual
+        if (Input.GetKeyDown(KeyCode.F1))
+        {
+            Application.OpenURL("https://docs.google.com/document/d/17A4IUbQejGyEl5mMLZwad12J05k_JhxREVYLD0zOjpk/edit?usp=sharing");
+        }
     }
 
     private bool CheckNotePlacementValidity(float pos, float time, int type, float length)

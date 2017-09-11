@@ -45,7 +45,9 @@ public class Creator_SongPreview : MonoBehaviour
     private IEnumerator PlaySection()
     {
         // Get current song positions depending on where the cursor is at
-        float currentSecond = float.Parse(Creator_Control.control.textSongTempo.text) / 60f * Creator_Control.control.intCursorPosition * 0.25f;
+        int chartOffset = 0;
+        int.TryParse(Creator_Control.control.textChartOffset.text, out chartOffset);
+        float currentSecond = (float.Parse(Creator_Control.control.textSongTempo.text) / 60f * Creator_Control.control.intCursorPosition * 0.25f) + (0.001f * chartOffset);
         float endSecond = currentSecond + Creator_Control.control.sliderSongPreviewLength.value;
         float fadeDuration = Creator_Control.control.sliderSongPreviewFade.value;
 
