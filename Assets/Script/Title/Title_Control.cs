@@ -1,7 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class Title_Control : MonoBehaviour
 {
@@ -9,6 +8,7 @@ public class Title_Control : MonoBehaviour
     public Color colorCameraMainBGColor = Color.black;
     public float floatDurationBetweenColor = 4f;
 
+    public string stringSceneNameTranslationMenu = "TranslationMenu";
     public string stringSceneNameSongMenuOfficial = "SongMenuOfficial";
     public string stringSceneNameSongMenuCustom = "SongMenuCustom";
     public string stringSceneNameChartEditor = "Creator";
@@ -24,6 +24,16 @@ public class Title_Control : MonoBehaviour
         cameraMain.backgroundColor = Color.Lerp(cameraMain.backgroundColor, colorCameraMainBGColor, Time.deltaTime * 2f / floatDurationBetweenColor);
     }
 
+    public void ButtonSceneTransferTranslationMenu()
+    {
+        StartCoroutine("_ButtonSceneTransferTranslationMenu");
+    }
+    private IEnumerator _ButtonSceneTransferTranslationMenu()
+    {
+        yield return null;
+        SceneTransition.LoadScene(stringSceneNameTranslationMenu);
+    }
+
     public void ButtonSceneTransferSongMenuOfficial()
     {
         StartCoroutine("_ButtonSceneTransferSongMenuOfficial");
@@ -31,7 +41,6 @@ public class Title_Control : MonoBehaviour
     private IEnumerator _ButtonSceneTransferSongMenuOfficial()
     {
         yield return null;
-        //SceneManager.LoadScene(stringSceneNameSongMenuOfficial);
         SceneTransition.LoadScene(stringSceneNameSongMenuOfficial);
     }
 
@@ -42,7 +51,6 @@ public class Title_Control : MonoBehaviour
     private IEnumerator _ButtonSceneTransferSongMenuCustom()
     {
         yield return null;
-        //SceneManager.LoadScene(stringSceneNameSongMenuCustom);
         SceneTransition.LoadScene(stringSceneNameSongMenuCustom);
     }
 
@@ -53,7 +61,6 @@ public class Title_Control : MonoBehaviour
     private IEnumerator _ButtonSceneTransferChartEditor()
     {
         yield return null;
-        //SceneManager.LoadScene(stringSceneNameChartEditor);
         SceneTransition.LoadScene(stringSceneNameChartEditor);
     }
 

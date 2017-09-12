@@ -19,8 +19,9 @@ public class SongMenu_Control : MonoBehaviour
 
     public RectTransform rectSongListParent;
     public Button buttonSongIndividual;
+    public Scrollbar scrollbarListSong;
     public float floatVertDistanceBetweenButtons = 80f;
-    private string stringSongSelectedCurrent = "";
+    private static string stringSongSelectedCurrent = "";
 
     public Image imagePlayerLevelMax;
     public Text textPlayerLevel;
@@ -32,8 +33,8 @@ public class SongMenu_Control : MonoBehaviour
     public RectTransform rectChartListParent;
     public SongMenu_ButtonChart buttonChartIndividual;
     public Vector2 sizePositionPerButton = Vector2.one;
-    private int intGameType = 0;
-    private int intGameChart = 0;
+    private static int intGameType = -1;
+    private static int intGameChart = -1;
 
     public GameObject objectGroupDetails;
     public Vector3 positionGroupDetailsInit;
@@ -67,6 +68,8 @@ public class SongMenu_Control : MonoBehaviour
     public Toggle toggleOptionsDisplayRecordGhost;
     public Toggle toggleOptionsDisplayJudgmentPerHit;
     public Toggle toggleOptionsDisplayJudgmentCounter;
+
+    public AudioSource audioSourcePreview;
 
     public bool isHighscoreDisabledByMods = false;
     public bool isHighscoreDisabledByChart = false;
@@ -110,6 +113,7 @@ public class SongMenu_Control : MonoBehaviour
         sliderOptionsAccuracyTolerance.value = PlayerSetting.setting.intAccuracyTolerance;
         sliderOptionsMouseSensitivity.value = PlayerSetting.setting.floatMouseSensitivity;
         sliderOptionsVolumeMusic.value = PlayerSetting.setting.floatVolumeMusic;
+        audioSourcePreview.volume = PlayerSetting.setting.floatVolumeMusic;
         sliderOptionsVolumeEffect.value = PlayerSetting.setting.floatVolumeEffect;
         toggleOptionsVerticalSync.isOn = PlayerSetting.setting.enableVSync;
         toggleOptionsInterfaceSongDetails.isOn = PlayerSetting.setting.enableInterfaceSongDetails;
@@ -161,6 +165,10 @@ public class SongMenu_Control : MonoBehaviour
         // Sort the names
         listStringSongDirectory.Sort();
 
+        // Last tapped button in same session
+        Button firstBtn = null;
+        Button prevBtn = null;
+        float scrollbarListSongValue = 0f;
         // Each name gets its own button
         for (int i = 0; i < listStringSongDirectory.Count; i++)
         {
@@ -175,6 +183,7 @@ public class SongMenu_Control : MonoBehaviour
 
                 newBtn.GetComponentInChildren<Text>().text = buttonName;
             }
+            // Official songs
             else if (!isLoadCustomSongs)
             {
                 TextAsset text = (TextAsset)Resources.Load(listStringSongDirectory[i] + "_customname.txt", typeof(TextAsset));
@@ -195,10 +204,32 @@ public class SongMenu_Control : MonoBehaviour
             newBtn.transform.SetParent(rectSongListParent.transform);
             newBtn.transform.localPosition = Vector3.down * i * floatVertDistanceBetweenButtons;
             newBtn.transform.localScale = Vector3.one;
+
+            if (firstBtn == null)
+            {
+                firstBtn = newBtn;
+            }
+            if (stringSongSelectedCurrent == listStringSongDirectory[i])
+            {
+                prevBtn = newBtn;
+                scrollbarListSongValue = 1f * i / listStringSongDirectory.Count;
+            }
         }
         // Destroy the template button
         Destroy(buttonSongIndividual.gameObject);
         buttonSongIndividual = null;
+
+        // Auto-press the last remembered button
+        if (prevBtn != null)
+        {
+            UseSongFolder(prevBtn);
+            scrollbarListSong.value = scrollbarListSongValue;
+        }
+        // Otherwise, auto-press the first button in the list
+        else
+        {
+            UseSongFolder(firstBtn);
+        }
 
         //PlayerSetting.setting.Load();
         RefreshTexts();
@@ -437,6 +468,11 @@ public class SongMenu_Control : MonoBehaviour
                     {
                         firstChart = nb;
                     }
+                    // If it was previously selected before, select this again
+                    if (intGameType >= 0 && intGameType == gameModeID && intGameChart >= 0 && intGameChart == chartID)
+                    {
+                        firstChart = nb;
+                    }
                 }
             }
         }
@@ -486,11 +522,13 @@ public class SongMenu_Control : MonoBehaviour
         */
 
         // Load the song file (.ogg) in the folder
-        //StartCoroutine("LoadClip", folder.name);
+        StopCoroutine("LoadClip");
+        audioSourcePreview.Stop();
+        StartCoroutine("LoadClip", folder.name);
     }
     private IEnumerator LoadClip(string name)
     {
-        yield return null;
+        yield return new WaitForSeconds(1f);
         AudioClip newClip = null;
 
         // Custom song
@@ -519,7 +557,9 @@ public class SongMenu_Control : MonoBehaviour
 
         }
 
-        // TODO: play preview song in a loop
+        // Play preview song
+        audioSourcePreview.clip = newClip;
+        audioSourcePreview.Play();
     }
 
     public void UseChartInfo(SongMenu_ButtonChart button)
@@ -653,6 +693,7 @@ public class SongMenu_Control : MonoBehaviour
     public void AdjustVolumeMusic()
     {
         PlayerSetting.setting.floatVolumeMusic = sliderOptionsVolumeMusic.value;
+        audioSourcePreview.volume = sliderOptionsVolumeMusic.value;
     }
     public void AdjustVolumeEffect()
     {

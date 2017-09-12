@@ -15,6 +15,7 @@ public class Translator : MonoBehaviour
     public Font[] fontLanguageCode;
 
     private List<string> stringTranslation = new List<string>();
+    private Font fontCurrent = null;
 
     /// <summary>
     /// Try to get the stored localized string from the text document. If it fails, the second argument will be used as the main text.
@@ -57,6 +58,7 @@ public class Translator : MonoBehaviour
     /// <returns></returns>
     public static Font GetLanguageFont()
     {
+        /*
         if (mTranslator.stringLanguageCode.Length <= 0)
         {
             return null;
@@ -71,6 +73,8 @@ public class Translator : MonoBehaviour
         {
             return null;
         }
+        */
+        return mTranslator.fontCurrent;
     }
 
     /// <summary>
@@ -109,6 +113,7 @@ public class Translator : MonoBehaviour
     {
         if (stringLanguageCode.Length <= 0)
         {
+            stringTranslation.Clear();
             return;
         }
 
@@ -130,6 +135,28 @@ public class Translator : MonoBehaviour
             stringTranslation.Add(reader.ReadLine());
         }
         reader.Close();
+
+
+        // Get font
+        fontCurrent = null;
+        /*
+        nameFile = GetStringTranslation("TRANSLATION_FONT", "");
+        if (nameFile.Length > 0)
+        {
+            nameFile = "Translation/" + nameFile;
+            if (File.Exists(nameFile))
+            {
+                WWW www = new WWW("file://" + Application.dataPath.Substring(0, Application.dataPath.LastIndexOf("/")) + "/" + nameFile);
+                // TODO: import font??? is it possible???
+            }
+            else
+            {
+#if UNITY_EDITOR
+                Debug.Log("Could not find font file: " + nameFile);
+#endif
+            }
+        }
+        */
     }
 
     private void Awake()
