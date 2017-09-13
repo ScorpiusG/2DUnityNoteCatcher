@@ -133,7 +133,19 @@ public class Creator_Control : MonoBehaviour
         SaveCreatorSettings();
 
         Creator_Note[] listNoteC = FindObjectsOfType<Creator_Note>();
-        if (listNoteC.Length < 1)
+        int noteCount = 0;
+        foreach (Creator_Note x in listNoteC)
+        {
+            if (x.gameObject.activeInHierarchy)
+            {
+                noteCount++;
+            }
+            if (noteCount > 1)
+            {
+                break;
+            }
+        }
+        if (noteCount < 1)
         {
 #if UNITY_EDITOR
             Debug.LogWarning("WARNING: There are no notes in this chart. Save cancelled.");

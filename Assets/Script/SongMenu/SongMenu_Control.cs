@@ -38,11 +38,16 @@ public class SongMenu_Control : MonoBehaviour
 
     public GameObject objectGroupDetails;
     public Vector3 positionGroupDetailsInit;
+    public RawImage rawImageDetailsBackground;
     public Text textDetailsHeader;
     public Text textDetailsBody;
     public Text textDetailsWarning;
     public Text textDetailsRecord;
     public GameObject objectButtonPlay;
+
+    public GameObject objectDetailsDescription;
+    private bool boolDetailsDescriptionEnable = false;
+    public Text textDetailsDescription;
 
     public Slider sliderScrollSpeed;
     public Text textDisplayScrollSpeed;
@@ -84,6 +89,8 @@ public class SongMenu_Control : MonoBehaviour
         objectOptionsMenu.SetActive(false);
         objectButtonPlay.SetActive(false);
         buttonChartIndividual.gameObject.SetActive(false);
+        objectDetailsDescription.SetActive(false);
+        rawImageDetailsBackground.gameObject.SetActive(false);
 
         textPlayerScore.text = PlayerSetting.setting.GetScore();
         // Has already reached maximum level (100), display score only.
@@ -248,6 +255,18 @@ public class SongMenu_Control : MonoBehaviour
                 ToggleMenuOptions();
             }
         }
+
+        // Show/Hide chart description by tapping F1.
+        if (Input.GetKeyDown(KeyCode.F1) && textDetailsDescription.text.Length > 0)
+        {
+            boolDetailsDescriptionEnable = !boolDetailsDescriptionEnable;
+        }
+        if (boolDetailsDescriptionEnable && textDetailsDescription.text.Length <= 0)
+        {
+            boolDetailsDescriptionEnable = false;
+        }
+        objectDetailsDescription.SetActive(boolDetailsDescriptionEnable);
+        //objectDetailsDescription.SetActive(Input.GetKey(KeyCode.F1) && textDetailsDescription.text.Length > 0);
     }
 
     public void RefreshTexts()
@@ -477,10 +496,45 @@ public class SongMenu_Control : MonoBehaviour
             }
         }
 
+        audioSourcePreview.Stop();
+
         // Automatically select the first chart in the list
         if (firstChart != null)
         {
             UseChartInfo(firstChart);
+
+            // Load the song file (.ogg) in the folder
+            StopCoroutine("LoadClip");
+            StartCoroutine("LoadClip", folder.name);
+
+            // Get background texture
+            Texture textureBackground = null;
+            if (isLoadCustomSongs)
+            {
+                string path = Directory.GetCurrentDirectory() + "/Songs/" + folder.name + "/background.jpg";
+                if (!File.Exists(path))
+                {
+#if UNITY_EDITOR
+                    Debug.LogWarning("WARNING: The chart file does not exist! Path: " + path);
+#endif
+                }
+                WWW www = new WWW("file://" + Application.dataPath.Substring(0, Application.dataPath.LastIndexOf("/")) + path);
+                textureBackground = www.texture;
+            }
+            else
+            {
+                string path = "Songs/" + folder.name + "_background.jpg";
+                textureBackground = Resources.Load(path) as Texture;
+            }
+            if (textureBackground != null)
+            {
+                rawImageDetailsBackground.gameObject.SetActive(true);
+                rawImageDetailsBackground.texture = textureBackground;
+            }
+            else
+            {
+                rawImageDetailsBackground.gameObject.SetActive(false);
+            }
 
             // Play button enable and animate
             objectButtonPlay.SetActive(true);
@@ -498,6 +552,7 @@ public class SongMenu_Control : MonoBehaviour
                 "Please make sure your map\n" +
                 "chart files are named in the\n" +
                 "correct format.");
+            textDetailsDescription.text = "";
             textDetailsRecord.text = "";
         }
         
@@ -520,11 +575,6 @@ public class SongMenu_Control : MonoBehaviour
             iTween.ColorTo(x.gameObject, Color.white, tweenDuration);
         }
         */
-
-        // Load the song file (.ogg) in the folder
-        StopCoroutine("LoadClip");
-        audioSourcePreview.Stop();
-        StartCoroutine("LoadClip", folder.name);
     }
     private IEnumerator LoadClip(string name)
     {
@@ -621,6 +671,7 @@ public class SongMenu_Control : MonoBehaviour
         textDetailsRecord.text =
             Translator.GetStringTranslation("SONGMENU_RECORDACCURACY", "Best Accuracy:") + " " + (100f * PlayerPrefs.GetFloat(stringSongSelectedCurrent + "-" + intGameType.ToString() + "-" + intGameChart.ToString() + "-recordaccuracy", 0f)).ToString("f2") + "% | " +
             Translator.GetStringTranslation("SONGMENU_RECORDPLAYCOUNT", "Attempts:") + " " + PlayerPrefs.GetInt(stringSongSelectedCurrent + "-" + intGameType.ToString() + "-" + intGameChart.ToString() + "-playcount", 0).ToString("n0");
+        textDetailsDescription.text = chartData.chartDescription;
 
         isHighscoreDisabledByChart = !chartData.isHighScoreAllowed;
         RefreshTexts();
