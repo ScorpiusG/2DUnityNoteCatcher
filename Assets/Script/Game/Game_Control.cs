@@ -36,6 +36,7 @@ public class Game_Control : MonoBehaviour
     public Color[] noteColor = { Color.blue, Color.red, Color.green, Color.yellow };
     public float floatNoteDistanceSpawn = 3f;
 
+    public Renderer rendererPlaneBackground;
     public TextMesh textMeshComboCurrent;
     public int floatTextComboAppearComboMinimum = 4;
     public float floatTextComboScaleOnChange = 3f;
@@ -467,6 +468,7 @@ public class Game_Control : MonoBehaviour
         colorRecordGhostWorse.a = textAlpha;
 
         // Object initialization
+        rendererPlaneBackground.gameObject.SetActive(false);
         objectAutoplayIndicator.SetActive(boolAutoplay);
         imageSongProgressGauge.fillAmount = 0f;
         if (PlayerSetting.setting.intAccuracyTolerance > 0)
@@ -480,6 +482,10 @@ public class Game_Control : MonoBehaviour
         foreach (GameObject x in objectCatcher)
         {
             x.transform.localPosition = Vector3.zero;
+        }
+        foreach (SpriteRenderer x in spriteRendererCatcherHighlight)
+        {
+            x.color = Color.clear;
         }
         textNoteJudgeCount.gameObject.SetActive(PlayerSetting.setting.enableDisplayNoteHitCounterSmall);
         textNoteJudgeCount.text = "B 0\nG 0\nF 0\nM 0";
@@ -520,7 +526,7 @@ public class Game_Control : MonoBehaviour
         else
         {
             string chartFileName = stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString();
-            string path = "Songs/" + stringSongFileName + "/" + chartFileName + ".txt";
+            string path = "Songs/" + chartFileName + ".txt";
             TextAsset info = Resources.Load(path) as TextAsset;
             input = info.text;
         }
@@ -530,6 +536,31 @@ public class Game_Control : MonoBehaviour
 
         //FileStream fileMusic = File.Open(Directory.GetCurrentDirectory() + "Songs/" + stringSongFileName + "/" + stringSongFileName + ".ogg", FileMode.Open);
         //audioSourceMusic.clip = (AudioClip)fileMusic as AudioClip;
+
+        // Get background texture
+        Texture textureBackground = null;
+        if (boolCustomSong)
+        {
+            string path = Directory.GetCurrentDirectory() + "/Songs/" + stringSongFileName + "/background.jpg";
+            if (!File.Exists(path))
+            {
+#if UNITY_EDITOR
+                Debug.LogWarning("WARNING: The chart file does not exist! Path: " + path);
+#endif
+            }
+            WWW www = new WWW("file://" + Application.dataPath.Substring(0, Application.dataPath.LastIndexOf("/")) + path);
+            textureBackground = www.texture;
+        }
+        else
+        {
+            string path = "Songs/" + stringSongFileName + "_background.jpg";
+            textureBackground = Resources.Load(path) as Texture;
+        }
+        if (textureBackground != null)
+        {
+            rendererPlaneBackground.gameObject.SetActive(true);
+            rendererPlaneBackground.material.mainTexture = textureBackground;
+        }
 
         string gameTypeAbbr = "";
         //switch (chartData.chartGameType)
@@ -1156,8 +1187,10 @@ public class Game_Control : MonoBehaviour
         // Revert settings (cursor, v-sync, etc.)
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
+        /*
         QualitySettings.vSyncCount = 1;
         Application.targetFrameRate = 60;
+        */
         objectAutoplayIndicator.SetActive(false);
         textMeshComboCurrent.gameObject.SetActive(false);
         yield return null;
@@ -1196,9 +1229,10 @@ public class Game_Control : MonoBehaviour
             float gameModeScoreMultiplier = 1f;
             switch(chartData.chartGameType)
             {
-                case 0: gameModeScoreMultiplier = 1f; break;
+                case 0: gameModeScoreMultiplier = 1.0f; break;
                 case 1: gameModeScoreMultiplier = 1.4f; break;
-                case 2: case 3: gameModeScoreMultiplier = 1.8f; break;
+                case 2: gameModeScoreMultiplier = 1.8f; break;
+                case 3: gameModeScoreMultiplier = 0.0f; break;
                 case 4: gameModeScoreMultiplier = 2.2f; break;
                 case 5: gameModeScoreMultiplier = 3.0f; break;
                 case 6: gameModeScoreMultiplier = 5.0f; break;
@@ -1290,14 +1324,14 @@ public class Game_Control : MonoBehaviour
         StartCoroutine(TextIntGradualIncrease(textResultBestCombo, playerComboBest, 0.8f));
         for (float f = 0; f < 0.5f; f += Time.deltaTime * animatorResults.speed) yield return null;
         StartCoroutine(TextIntGradualIncrease(textResultJudgeBest, playerAccuracyBest, 0.6f));
-        for (float f = 0; f < 0.2f; f += Time.deltaTime * animatorResults.speed) yield return null;
-        StartCoroutine(TextIntGradualIncrease(textResultJudgeGreat, playerAccuracyGreat, 0.6f));
-        for (float f = 0; f < 0.2f; f += Time.deltaTime * animatorResults.speed) yield return null;
-        StartCoroutine(TextIntGradualIncrease(textResultJudgeFine, playerAccuracyFine, 0.6f));
-        for (float f = 0; f < 0.2f; f += Time.deltaTime * animatorResults.speed) yield return null;
-        StartCoroutine(TextIntGradualIncrease(textResultJudgeMiss, playerAccuracyMiss, 0.6f));
+        for (float f = 0; f < 0.3f; f += Time.deltaTime * animatorResults.speed) yield return null;
+        StartCoroutine(TextIntGradualIncrease(textResultJudgeGreat, playerAccuracyGreat, 0.5f));
+        for (float f = 0; f < 0.3f; f += Time.deltaTime * animatorResults.speed) yield return null;
+        StartCoroutine(TextIntGradualIncrease(textResultJudgeFine, playerAccuracyFine, 0.4f));
+        for (float f = 0; f < 0.3f; f += Time.deltaTime * animatorResults.speed) yield return null;
+        StartCoroutine(TextIntGradualIncrease(textResultJudgeMiss, playerAccuracyMiss, 0.3f));
 
-        for (float f = 0; f < 1.5f; f += Time.deltaTime * animatorResults.speed) yield return null;
+        for (float f = 0; f < 1.2f; f += Time.deltaTime * animatorResults.speed) yield return null;
         if (finalAccuracy > oldRecordAccuracy && !isScoringDisabled)
         {
             animatorNewRecord.gameObject.SetActive(true);
