@@ -1326,11 +1326,11 @@ public class Creator_Control : MonoBehaviour
         }
 
         // Left-click to place a note
-#if UNITY_EDITOR
+//#if UNITY_EDITOR
         if (Input.GetMouseButtonDown(0))
-#else
-        if ((Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.LeftCommand)) && Input.GetMouseButtonDown(0))
-#endif
+//#else
+        //if ((Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.LeftCommand)) && Input.GetMouseButtonDown(0))
+//#endif
         {
             // Do nothing if settings window is on
             if (canvasCreatorSetting.gameObject.activeSelf)
@@ -1343,7 +1343,13 @@ public class Creator_Control : MonoBehaviour
 
             if (Physics.Raycast(ray, out hit, 15f))
             {
-                if (hit.collider.tag == "Creator_ChartBack")
+#if UNITY_EDITOR
+                if ((hit.collider.tag == "Creator_ChartBack" || hit.collider.tag == "Creator_Note") &&
+                    Input.GetKey(KeyCode.LeftAlt))
+#else
+                if ((hit.collider.tag == "Creator_ChartBack" || hit.collider.tag == "Creator_Note") &&
+                    (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.LeftCommand)))
+#endif
                 {
                     objectNoteSelected = null;
 
@@ -1463,7 +1469,9 @@ public class Creator_Control : MonoBehaviour
                         }
                     }
                 }
-                else if (hit.collider.tag == "Creator_Note")
+                else if (hit.collider.tag == "Creator_Note" &&
+                    !Input.GetKey(KeyCode.LeftControl) && !Input.GetKey(KeyCode.LeftCommand) &&
+                    !Input.GetKey(KeyCode.LeftShift) && !Input.GetKey(KeyCode.LeftAlt))
                 {
                     // Drag start - keep the on-clicked note in memory
                     objectNoteSelected = hit.collider.GetComponent<Creator_Note>();
