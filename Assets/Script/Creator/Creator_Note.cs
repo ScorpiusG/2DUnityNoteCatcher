@@ -12,6 +12,7 @@ public class Creator_Note : MonoBehaviour
     public int type = 0;
     public int size = 0;
     public float length = 0f;
+    public float speed = 0f;
     public List<string> other = new List<string>();
 
     public bool isNoteTap = false;

@@ -31,6 +31,7 @@ public class ChartData : ScriptableObject
         public float time = 0f;
         public float position = 0f;
         public float length = 0f;
+        public float speed = 0f;
         public List<string> other;
     }
     

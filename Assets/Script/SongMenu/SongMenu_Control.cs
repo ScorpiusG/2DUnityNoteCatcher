@@ -515,11 +515,14 @@ public class SongMenu_Control : MonoBehaviour
                 if (!File.Exists(path))
                 {
 #if UNITY_EDITOR
-                    Debug.LogWarning("WARNING: The chart file does not exist! Path: " + path);
+                    Debug.LogWarning("WARNING: The image file does not exist! Path: " + path);
 #endif
                 }
-                WWW www = new WWW("file://" + Application.dataPath.Substring(0, Application.dataPath.LastIndexOf("/")) + path);
-                textureBackground = www.texture;
+                else
+                {
+                    WWW www = new WWW("file://" + Application.dataPath.Substring(0, Application.dataPath.LastIndexOf("/")) + path);
+                    textureBackground = www.texture;
+                }
             }
             else
             {
@@ -543,6 +546,7 @@ public class SongMenu_Control : MonoBehaviour
         else
         {
             objectButtonPlay.SetActive(false);
+            rawImageDetailsBackground.gameObject.SetActive(false);
             textDetailsHeader.text = "";
             textDetailsBody.text =
                 Translator.GetStringTranslation("SONGMENU_CHARTNONEXISTS",

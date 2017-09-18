@@ -82,6 +82,7 @@ GAME_RESULTRECORDDISABLE|oh noes ur scors not gunna be recorded cuz it no wurkx
 GAME_RESULTNEWRECORD|u r|da best
 GAME_RESULTBUTTONRETRY|keep tryin
 GAME_RESULTBUTTONEXIT|lemme out
+GAME_RESULTLEVELUP|omg yezzzzzzz|u levul upppp to numbah
 CREATOR_INPUTFIELDFILENAME|UR CHART FILE
 CREATOR_INPUTFIELDOPTIONAL|U KNO U DON AKSUALLY NID 2 PUT STUF HRE
 CREATOR_INPUTFIELDENTERTEXT|U CNA TYPE HERE
@@ -153,8 +154,10 @@ CREATOR_CLEARCONFIRMHEADER|delete ur chart?
 CREATOR_CLEARCONFIRMBODY|u gona start frm scrtch?||were not responsible for ur sory ass if ur currnt work is not saved|cuz u cannot rewind time to save ur work||r u sure???????
 CREATOR_SAVECONFIRMHEADER|write ur chart on a txt fle?
 CREATOR_SAVECONFIRMBODY|u gona save ur chart onto a text file||were not responsible for ur sory ass if ur old chart exists and is saved over|cuz u cannot rewind time to save ur old chart||r u sure???????
+CREATOR_SAVESUCCESS|cungratz ur chart is savd here
 CREATOR_LOADCONFIRMHEADER|read ur chart frm a txt fle?
 CREATOR_LOADCONFIRMBODY|u gona load ur chart onto a text file||were not responsible for ur sory ass if ur currnt work is not saved|cuz u cannot rewind time to save ur work||r u sure???????
 CREATOR_EXITCONFIRMHEADER|exit da editur?
 CREATOR_EXITCONFIRMBODY|u gona exit 2 da titl scrin||were not responsible for ur sory ass if ur currnt work is not saved|cuz u cannot rewind time to save ur work||r u sure???????
-ERROR|If you're reading this, I messed up.
+CREATOR_ERRORLOADCHARTNONEXISTENT|oH M@n u mssed up cuz it aint here
+CREATOR_ERRORSAVECHARTEMPTY|wat. ur chrt haz no notez 2 saev

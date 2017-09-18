@@ -43,6 +43,7 @@ public class Creator_Control : MonoBehaviour
     public Image[] imageNotePlacementHighlight;
     public Text textNoteLength;
     public Toggle toggleNoteLengthEnable;
+    public Text textNoteSpeed;
     public Text textNoteOther;
     private List<string> listStringNoteOther = new List<string>();
 
@@ -150,6 +151,7 @@ public class Creator_Control : MonoBehaviour
 #if UNITY_EDITOR
             Debug.LogWarning("WARNING: There are no notes in this chart. Save cancelled.");
 #endif
+            Notification.Display(Translator.GetStringTranslation("CREATOR_ERRORSAVECHARTEMPTY", "Save cancelled, the chart does not have at least one note."), Color.yellow);
             return;
         }
 
@@ -204,7 +206,8 @@ public class Creator_Control : MonoBehaviour
                 newNote.size.ToString() + "|" +
                 newNote.time.ToString() + "|" +
                 newNote.position.ToString() + "|" +
-                newNote.length.ToString();
+                newNote.length.ToString() + "|" +
+                newNote.speed.ToString();
             foreach (string s in newNote.other)
             {
                 stringNote += "|" + s;
@@ -243,7 +246,8 @@ public class Creator_Control : MonoBehaviour
                 newNote.size.ToString() + "|" +
                 newNote.time.ToString() + "|" +
                 newNote.position.ToString() + "|" +
-                newNote.length.ToString();
+                newNote.length.ToString() + "|" +
+                newNote.speed.ToString();
             foreach (string s in newNote.other)
             {
                 stringNote += "|" + s;
@@ -275,6 +279,7 @@ public class Creator_Control : MonoBehaviour
         StreamWriter writer = new StreamWriter(path, true);
         writer.WriteLine(output);
         writer.Close();
+        Notification.Display(Translator.GetStringTranslation("CREATOR_SAVESUCCESS", "Save successful. Your chart is saved here:") + "\n" + path, Color.yellow);
     }
 
     /// <summary>
@@ -293,6 +298,7 @@ public class Creator_Control : MonoBehaviour
 #if UNITY_EDITOR
             Debug.LogWarning("WARNING: The chart file does not exist! Path: " + path);
 #endif
+            Notification.Display(Translator.GetStringTranslation("CREATOR_ERRORLOADCHARTNONEXISTENT", "The following chart file does not exist:") + "\n" + path, Color.yellow);
             return;
         }
         StreamReader reader = new StreamReader(path);
@@ -327,7 +333,11 @@ public class Creator_Control : MonoBehaviour
             newNote.length = float.Parse(y[4]);
             if (y.Length > 5)
             {
-                for (int i = 5; i < y.Length; i++)
+                newNote.speed = float.Parse(y[5]);
+            }
+            if (y.Length > 6)
+            {
+                for (int i = 6; i < y.Length; i++)
                 {
                     newNote.other.Add(y[i]);
                 }
@@ -345,7 +355,11 @@ public class Creator_Control : MonoBehaviour
             newNote.length = float.Parse(y[4]);
             if (y.Length > 5)
             {
-                for (int i = 5; i < y.Length; i++)
+                newNote.speed = float.Parse(y[5]);
+            }
+            if (y.Length > 6)
+            {
+                for (int i = 6; i < y.Length; i++)
                 {
                     newNote.other.Add(y[i]);
                 }
@@ -413,6 +427,14 @@ public class Creator_Control : MonoBehaviour
         newNote.transform.position = new Vector3(note.position, note.time);
         newNote.type = note.type % 4;
         newNote.size = note.size;
+        if (note.speed > 0.01f)
+        {
+            newNote.speed = note.speed;
+        }
+        else
+        {
+            newNote.speed = 1f;
+        }
         // Long note visualization
         if (note.length > 0.01f)
         {
@@ -490,7 +512,7 @@ public class Creator_Control : MonoBehaviour
     /// <param name="type">Note's type. Determines which catcher it will appear for.</param>
     /// <param name="size">Note's size. Larger sizes make note judgment easier. Also affects note's appearance. The default value is 0 and cannot be lower than that.</param>
     /// <param name="other">Note's additional attributes.</param>
-    public void CreateNoteCatch(float position, float time, int type = 0, int size = 0, float length = 0f, List<string> other = null)
+    public void CreateNoteCatch(float position, float time, int type = 0, int size = 0, float length = 0f, float speed = 1f, List<string> other = null)
     {
         //ChartData.NoteInfo newNote = new ChartData.NoteInfo();
         ChartData.NoteInfo newNote = ScriptableObject.CreateInstance(typeof(ChartData.NoteInfo)) as ChartData.NoteInfo;
@@ -499,6 +521,7 @@ public class Creator_Control : MonoBehaviour
         newNote.type = type;
         newNote.size = size;
         newNote.length = length;
+        newNote.speed = speed;
         if (other == null)
         {
             newNote.other = new List<string>();
@@ -538,6 +561,14 @@ public class Creator_Control : MonoBehaviour
         newNote.transform.position = new Vector3(0f, note.time);
         newNote.type = note.type % 4;
         newNote.size = note.size;
+        if (note.speed > 0.01f)
+        {
+            newNote.speed = note.speed;
+        }
+        else
+        {
+            newNote.speed = 1f;
+        }
         if (note.length > 0.01f)
         {
             newNote.length = note.length;
@@ -611,13 +642,14 @@ public class Creator_Control : MonoBehaviour
     /// <param name="type">Note's type. Determines which catcher it will appear for.</param>
     /// <param name="size">Note's size. Larger sizes make note judgment easier. Also affects note's appearance. The default value is 0 and cannot be lower than that.</param>
     /// <param name="other">Note's additional attributes.</param>
-    public void CreateNoteTap(float time, int type = 0, int size = 0, float length = 0f, List<string> other = null)
+    public void CreateNoteTap(float time, int type = 0, int size = 0, float length = 0f, float speed = 1f, List<string> other = null)
     {
         //ChartData.NoteInfo newNote = new ChartData.NoteInfo();
         ChartData.NoteInfo newNote = ScriptableObject.CreateInstance(typeof(ChartData.NoteInfo)) as ChartData.NoteInfo;
         newNote.time = time;
         newNote.type = type;
         newNote.size = size;
+        newNote.speed = speed;
         newNote.length = length;
         if (other == null)
         {
@@ -1360,10 +1392,12 @@ public class Creator_Control : MonoBehaviour
                         float time = hit.point.y;
                         int type = intNotePlacementType;
                         float length = 0f;
+                        float speed = 1f;
                         if (toggleNoteLengthEnable.isOn)
                         {
                             float.TryParse(textNoteLength.text, out length);
                         }
+                        float.TryParse(textNoteSpeed.text, out speed);
 
                         // Left shift ignores horizontal position grid snap
                         if (!Input.GetKey(KeyCode.LeftShift))
@@ -1454,11 +1488,11 @@ public class Creator_Control : MonoBehaviour
 #endif
                             if (type < 4)
                             {
-                                CreateNoteCatch(pos, time, type, 0, length, listStringNoteOther);
+                                CreateNoteCatch(pos, time, type, 0, length, speed, listStringNoteOther);
                             }
                             else
                             {
-                                CreateNoteTap(time, type, 0, length, listStringNoteOther);
+                                CreateNoteTap(time, type, 0, length, speed, listStringNoteOther);
                             }
                             PlaySound(clipNoteCreate);
                             CalculateChartLevel();
@@ -1502,6 +1536,7 @@ public class Creator_Control : MonoBehaviour
                     float time = hit.point.y;
                     int type = draggedNote.type;
                     float length = draggedNote.length;
+                    float speed = draggedNote.speed;
                     if (draggedNote.isNoteTap) type += 4;
 
                     float oldPosY = draggedNote.transform.position.y;
@@ -1577,11 +1612,11 @@ public class Creator_Control : MonoBehaviour
 #endif
                         if (!draggedNote.isNoteTap)
                         {
-                            CreateNoteCatch(pos, time, type, 0, length, draggedNote.other);
+                            CreateNoteCatch(pos, time, type, 0, length, speed, draggedNote.other);
                         }
                         else
                         {
-                            CreateNoteTap(time, type, 0, length, draggedNote.other);
+                            CreateNoteTap(time, type, 0, length, speed, draggedNote.other);
                         }
                         PlaySound(clipTick);
                         CalculateChartLevel();

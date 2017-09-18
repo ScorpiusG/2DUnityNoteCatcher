@@ -9,6 +9,7 @@ public class Game_Note : MonoBehaviour
     public float position = 0f;
     public float time = 0f;
     public float length = 0f;
+    public float speed = 0f;
     public List<string> other;
 
     public SpriteRenderer spriteRendererNote;
