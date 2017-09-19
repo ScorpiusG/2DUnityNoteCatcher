@@ -496,6 +496,8 @@ public class SongMenu_Control : MonoBehaviour
             }
         }
 
+        // Stop the song preview
+        StopCoroutine("LoadClip");
         audioSourcePreview.Stop();
 
         // Automatically select the first chart in the list
@@ -504,7 +506,6 @@ public class SongMenu_Control : MonoBehaviour
             UseChartInfo(firstChart);
 
             // Load the song file (.ogg) in the folder
-            StopCoroutine("LoadClip");
             StartCoroutine("LoadClip", folder.name);
 
             // Get background texture

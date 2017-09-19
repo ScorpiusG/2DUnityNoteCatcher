@@ -13,6 +13,8 @@ public class Game_Control : MonoBehaviour
     public static int intChartGameType = 0;
     public static int intChartGameChart = 0;
     public static string stringModList = "";
+    public static MarathonMenu_Item marathonItem = null;
+    public static int intMarathonItem = 0;
 
     public static bool boolAutoplay = false;
 
@@ -257,10 +259,11 @@ public class Game_Control : MonoBehaviour
                         anim.spriteRendererJudgment.sprite = spriteJudgment[animJudgeID];
                         //anim.spriteRendererJudgment.sortingLayerID = animSortingLayerID;
                         anim.animatorJudgment.Play("anim");
-                        if (animJudgeID < 3)
+                        if (animJudgeID < colorJudgmentParticle.Length)
                         {
                             ParticleSystem.MainModule animParticleModule = anim.particleSystemJudgment.main;
                             animParticleModule.startColor = colorJudgmentParticle[animJudgeID];
+                            anim.particleSystemJudgment.gameObject.layer = anim.gameObject.layer;
                             anim.particleSystemJudgment.Play();
                         }
                     }
@@ -335,7 +338,7 @@ public class Game_Control : MonoBehaviour
                         //anim.spriteRendererJudgment.sortingLayerID = animSortingLayerID;
                         anim.spriteRendererJudgment.gameObject.layer = anim.gameObject.layer;
                         anim.animatorJudgment.Play("anim");
-                        if (animJudgeID < 3)
+                        if (animJudgeID < colorJudgmentParticle.Length)
                         {
                             ParticleSystem.MainModule animParticleModule = anim.particleSystemJudgment.main;
                             animParticleModule.startColor = colorJudgmentParticle[animJudgeID];
@@ -824,10 +827,10 @@ public class Game_Control : MonoBehaviour
                     switch(nextNoteCatcherHori.type)
                     {
                         case 0:
-                            mouseCursorPos.x = Mathf.Lerp(mouseCursorPos.x, nextNoteCatcherHori.position, Time.deltaTime * posLerpRate / nextNoteCatcherHori.transform.position.y);
+                            mouseCursorPos.x = Mathf.Lerp(mouseCursorPos.x, nextNoteCatcherHori.position, Time.deltaTime * posLerpRate / (nextNoteCatcherHori.time - floatMusicBeat));
                             break;
                         case 1:
-                            mouseCursorPos.x = Mathf.Lerp(mouseCursorPos.x, -nextNoteCatcherHori.position, Time.deltaTime * posLerpRate / nextNoteCatcherHori.transform.position.y);
+                            mouseCursorPos.x = Mathf.Lerp(mouseCursorPos.x, -nextNoteCatcherHori.position, Time.deltaTime * posLerpRate / (nextNoteCatcherHori.time - floatMusicBeat));
                             break;
                     }
                 }
@@ -836,10 +839,10 @@ public class Game_Control : MonoBehaviour
                     switch (nextNoteCatcherVert.type)
                     {
                         case 2:
-                            mouseCursorPos.y = Mathf.Lerp(mouseCursorPos.y, -nextNoteCatcherVert.position, Time.deltaTime * posLerpRate / nextNoteCatcherVert.transform.position.y);
+                            mouseCursorPos.y = Mathf.Lerp(mouseCursorPos.y, -nextNoteCatcherVert.position, Time.deltaTime * posLerpRate / (nextNoteCatcherVert.time - floatMusicBeat));
                             break;
                         case 3:
-                            mouseCursorPos.y = Mathf.Lerp(mouseCursorPos.y, nextNoteCatcherVert.position, Time.deltaTime * posLerpRate / nextNoteCatcherVert.transform.position.y);
+                            mouseCursorPos.y = Mathf.Lerp(mouseCursorPos.y, nextNoteCatcherVert.position, Time.deltaTime * posLerpRate / (nextNoteCatcherVert.time - floatMusicBeat));
                             break;
                     }
                 }

@@ -15,7 +15,7 @@ public class Title_Control : MonoBehaviour
 
     void Start()
     {
-        cameraMain.backgroundColor = Random.ColorHSV(0f, 1f, 0.3f, 0.6f, 1f, 1f);
+        cameraMain.backgroundColor = Random.ColorHSV(0f, 1f, 0.1f, 0.5f, 1f, 1f);
         StartCoroutine("CameraMainColorCycle");
     }
 
