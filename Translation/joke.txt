@@ -161,3 +161,5 @@ CREATOR_EXITCONFIRMHEADER|exit da editur?
 CREATOR_EXITCONFIRMBODY|u gona exit 2 da titl scrin||were not responsible for ur sory ass if ur currnt work is not saved|cuz u cannot rewind time to save ur work||r u sure???????
 CREATOR_ERRORLOADCHARTNONEXISTENT|oH M@n u mssed up cuz it aint here
 CREATOR_ERRORSAVECHARTEMPTY|wat. ur chrt haz no notez 2 saev
+CREATOR_ERRORLOADCHARTNEWVERSION1|ur game is incumpatibl to lode dis nu cart
+CREATOR_ERRORLOADCHARTNEWVERSION2|go dl new vershun br0

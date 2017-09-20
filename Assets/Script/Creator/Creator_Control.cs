@@ -8,6 +8,7 @@ using UnityEngine.SceneManagement;
 public class Creator_Control : MonoBehaviour
 {
     public static Creator_Control control;
+    private const int INT_CHART_VERSION = 0;
 
     public Camera cameraMain;
     public Canvas canvasCreatorSetting;
@@ -159,6 +160,7 @@ public class Creator_Control : MonoBehaviour
         chartData.listNoteTapInfo = new List<string>();
         chartData.listSpecialEffectInfo = new List<string>();
 
+        chartData.chartVersion = INT_CHART_VERSION;
         chartData.songName = textSongName.text;
         chartData.songArtist = textSongArtist.text;
         chartData.chartDeveloper = textChartDeveloper.text;
@@ -311,6 +313,16 @@ public class Creator_Control : MonoBehaviour
         // Use file data
         JsonUtility.FromJsonOverwrite(input, chartData);
 
+        if (chartData.chartVersion > INT_CHART_VERSION)
+        {
+#if UNITY_EDITOR
+            Debug.LogWarning("Chart's version is newer than the current supported version. " + chartData.chartVersion.ToString() + " > " + INT_CHART_VERSION.ToString());
+#endif
+            Notification.Display(Translator.GetStringTranslation("CREATOR_ERRORLOADCHARTNEWVERSION1", "Failed to load the chart. The chart's version is somehow newer than the currently supported version."), new Color(1f, 0.2f, 0.2f));
+            Notification.Display(Translator.GetStringTranslation("CREATOR_ERRORLOADCHARTNEWVERSION2", "Please download the latest version of the game to be able to load this chart in the editor."), Color.yellow);
+            return;
+        }
+
         textSongName.text = chartData.songName;
         textSongArtist.text = chartData.songArtist;
         textChartDeveloper.text = chartData.chartDeveloper;
@@ -331,10 +343,7 @@ public class Creator_Control : MonoBehaviour
             newNote.time = float.Parse(y[2]);
             newNote.position = float.Parse(y[3]);
             newNote.length = float.Parse(y[4]);
-            if (y.Length > 5)
-            {
-                newNote.speed = float.Parse(y[5]);
-            }
+            newNote.speed = float.Parse(y[5]);
             if (y.Length > 6)
             {
                 for (int i = 6; i < y.Length; i++)
@@ -353,10 +362,7 @@ public class Creator_Control : MonoBehaviour
             newNote.time = float.Parse(y[2]);
             newNote.position = float.Parse(y[3]);
             newNote.length = float.Parse(y[4]);
-            if (y.Length > 5)
-            {
-                newNote.speed = float.Parse(y[5]);
-            }
+            newNote.speed = float.Parse(y[5]);
             if (y.Length > 6)
             {
                 for (int i = 6; i < y.Length; i++)
@@ -511,6 +517,8 @@ public class Creator_Control : MonoBehaviour
     /// <param name="time">Note's time. Determines when the note will pass the catcher's position.</param>
     /// <param name="type">Note's type. Determines which catcher it will appear for.</param>
     /// <param name="size">Note's size. Larger sizes make note judgment easier. Also affects note's appearance. The default value is 0 and cannot be lower than that.</param>
+    /// <param name="length">Note's length. Values above 0 make the note become a long note. Leave it at 0 to make it a normal note instead.</param>
+    /// <param name="speed">Note's scroll speed multiplier. Values above 1 make the note move faster and values below 1 make the note move slower. The default value is 1 and cannot be lower 0.</param>
     /// <param name="other">Note's additional attributes.</param>
     public void CreateNoteCatch(float position, float time, int type = 0, int size = 0, float length = 0f, float speed = 1f, List<string> other = null)
     {
@@ -641,6 +649,8 @@ public class Creator_Control : MonoBehaviour
     /// <param name="time">Note's time. Determines when the note will pass the catcher's position.</param>
     /// <param name="type">Note's type. Determines which catcher it will appear for.</param>
     /// <param name="size">Note's size. Larger sizes make note judgment easier. Also affects note's appearance. The default value is 0 and cannot be lower than that.</param>
+    /// <param name="length">Note's length. Values above 0 make the note become a long note. Leave it at 0 to make it a normal note instead.</param>
+    /// <param name="speed">Note's scroll speed multiplier. Values above 1 make the note move faster and values below 1 make the note move slower. The default value is 1 and cannot be lower 0.</param>
     /// <param name="other">Note's additional attributes.</param>
     public void CreateNoteTap(float time, int type = 0, int size = 0, float length = 0f, float speed = 1f, List<string> other = null)
     {
@@ -1662,6 +1672,7 @@ public class Creator_Control : MonoBehaviour
         // Open online manual
         if (Input.GetKeyDown(KeyCode.F1))
         {
+            Notification.Display("The online chart editor manual is being opened with your default browser...", Color.white);
             Application.OpenURL("https://docs.google.com/document/d/17A4IUbQejGyEl5mMLZwad12J05k_JhxREVYLD0zOjpk/edit?usp=sharing");
         }
     }
