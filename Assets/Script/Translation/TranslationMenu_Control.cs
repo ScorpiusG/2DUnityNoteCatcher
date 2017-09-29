@@ -33,11 +33,22 @@ public class TranslationMenu_Control : MonoBehaviour
 
     private void RefreshTexts()
     {
-        textTranslationName.text = Translator.GetStringTranslation("TRANSLATION_NAME", "");
-        textTranslationCredit.text = Translator.GetStringTranslation("TRANSLATION_AUTHOR", "");
-        textTranslationDescription.text = Translator.GetStringTranslation("TRANSLATION_DESCRIPTION", "You're currently not using a translation setting.\nClick a text file below to use it.");
-        textTranslationButtonConfirm.text = Translator.GetStringTranslation("TRANSLATION_CONFIRM", "Use translation");
-        textTranslationButtonDefault.text = Translator.GetStringTranslation("TRANSLATION_DEFAULT", "Use default");
+        if (PlayerPrefs.GetString("manual_translation_code", "").Length > 0)
+        {
+            textTranslationName.text = Translator.GetStringTranslation("TRANSLATION_NAME", "(no name)");
+            textTranslationCredit.text = Translator.GetStringTranslation("TRANSLATION_AUTHOR", "(no creator name)");
+            textTranslationDescription.text = Translator.GetStringTranslation("TRANSLATION_DESCRIPTION", "(no description)");
+            textTranslationButtonConfirm.text = Translator.GetStringTranslation("TRANSLATION_CONFIRM", "Use translation");
+            textTranslationButtonDefault.text = Translator.GetStringTranslation("TRANSLATION_DEFAULT", "Use default");
+        }
+        else
+        {
+            textTranslationName.text = "";
+            textTranslationCredit.text = "";
+            textTranslationDescription.text = "You're currently not using a translation setting.\nClick a text file below to use it.";
+            textTranslationButtonConfirm.text = "Use translation";
+            textTranslationButtonDefault.text = "Use default";
+        }
     }
 
     private void Start()
