@@ -946,8 +946,8 @@ public class Creator_Control : MonoBehaviour
     {
         intChartJudge += modifier;
 
-        if (intChartJudge < 0) modifier = 0;
-        if (intChartJudge > 9) modifier = 9;
+        if (intChartJudge < 0) intChartJudge = 0;
+        if (intChartJudge > 9) intChartJudge = 9;
 
         CalculateChartLevel();
     }
@@ -1145,7 +1145,7 @@ public class Creator_Control : MonoBehaviour
         }
         textSongLength.text = floatTextSongLength.ToString("f0");
 
-        textChartJudge.text = intChartJudge.ToString();
+        textChartJudge.text = (intChartJudge + 1).ToString();
 
 #if UNITY_EDITOR
         textChartLevel.text = Translator.GetStringTranslation("CREATOR_CHARTLEVEL", "CHART LEVEL") + " " + intChartLevel.ToString() + " (" + (1 + finalChartLevel).ToString("f3") + ")";
