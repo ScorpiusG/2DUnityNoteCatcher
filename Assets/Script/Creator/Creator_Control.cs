@@ -91,10 +91,11 @@ public class Creator_Control : MonoBehaviour
     public int[] intBeatSnapDivisorValue = { 2, 3, 4, 6, 8 };
     private int intHoriPosSnapDivisor = 0;
     public int[] intHoriPosSnapDivisorValue = { 2, 3, 4, 6, 8 };
-    [HideInInspector] public int intCursorPosition = 0;
+    [HideInInspector] public float floatCursorPosition = 0;
     private int intChartLevel = 0;
     private float floatGameplayLength = 0f;
     private Creator_Note objectNoteSelected = null;
+    [HideInInspector] public bool boolFullPreviewOngoing = false;
 
     private bool fixedUpdateCheckOtherFrame = false;
 
@@ -382,7 +383,7 @@ public class Creator_Control : MonoBehaviour
     public void ClearChart()
     {
         PlaySound(clipSelect);
-        intCursorPosition = 0;
+        floatCursorPosition = 0;
 
         //textFileName.text = "";
         textSongName.text = "";
@@ -1212,11 +1213,11 @@ public class Creator_Control : MonoBehaviour
         // Display cursor position
         float songTempo = 0;
         textTimeCurrentMeasure.text =
-            Translator.GetStringTranslation("CREATOR_CURRENTMEASURE", "Measure") + " " + ((intCursorPosition / 4) + 1).ToString() + " " +
-            Translator.GetStringTranslation("CREATOR_CURRENTBEAT", "Beat") + " " + ((intCursorPosition % 4) + 1).ToString() + "(" + (intCursorPosition + 1).ToString() + ")";
+            Translator.GetStringTranslation("CREATOR_CURRENTMEASURE", "Measure") + " " + (Mathf.Floor(floatCursorPosition / 4) + 1).ToString() + " " +
+            Translator.GetStringTranslation("CREATOR_CURRENTBEAT", "Beat") + " " + (Mathf.Floor(floatCursorPosition % 4) + 1).ToString() + " (" + Mathf.Floor(floatCursorPosition + 1).ToString() + ")";
         if (float.TryParse(textSongTempo.text, out songTempo))
         {
-            textTimeCurrentLength.text = Translator.GetStringTranslation("CREATOR_CURRENTSONGPOSITION", "Song Pos") + " " + (Mathf.FloorToInt(60f / songTempo * intCursorPosition / 60f)).ToString("0") + ":" + (60f / songTempo * intCursorPosition % 60f).ToString("00.00");
+            textTimeCurrentLength.text = Translator.GetStringTranslation("CREATOR_CURRENTSONGPOSITION", "Song Pos") + " " + (Mathf.FloorToInt(60f / songTempo * floatCursorPosition / 60f)).ToString("0") + ":" + (60f / songTempo * floatCursorPosition % 60f).ToString("00.00");
         }
         else
         {
@@ -1258,6 +1259,11 @@ public class Creator_Control : MonoBehaviour
 
     private void Update()
     {
+        if (boolFullPreviewOngoing)
+        {
+            return;
+        }
+
         holdDelayCurrent -= Time.deltaTime;
 
         // Cursor movement by input
@@ -1266,11 +1272,11 @@ public class Creator_Control : MonoBehaviour
             PlaySound(clipTick);
             if (Input.GetKey(KeyCode.LeftArrow))
             {
-                intCursorPosition -= 16;
+                floatCursorPosition -= 16;
             }
             else
             {
-                intCursorPosition--;
+                floatCursorPosition--;
             }
             holdDelayCurrent = holdDelay;
         }
@@ -1279,24 +1285,24 @@ public class Creator_Control : MonoBehaviour
             PlaySound(clipTick);
             if (Input.GetKey(KeyCode.RightArrow))
             {
-                intCursorPosition += 16;
+                floatCursorPosition += 16;
             }
             else
             {
-                intCursorPosition++;
+                floatCursorPosition++;
             }
             holdDelayCurrent = holdDelay;
         }
         if (Input.GetKey(KeyCode.LeftArrow) && holdDelayCurrent < 0f)
         {
             PlaySound(clipTick);
-            intCursorPosition -= 4;
+            floatCursorPosition -= 4;
             holdDelayCurrent = holdDelay;
         }
         if (Input.GetKey(KeyCode.RightArrow) && holdDelayCurrent < 0f)
         {
             PlaySound(clipTick);
-            intCursorPosition += 4;
+            floatCursorPosition += 4;
             holdDelayCurrent = holdDelay;
         }
 
@@ -1313,24 +1319,24 @@ public class Creator_Control : MonoBehaviour
                 if (Input.GetAxis("MouseScrollWheel") >  Mathf.Epsilon)
                 {
                     PlaySound(clipTick);
-                    intCursorPosition++;
+                    floatCursorPosition++;
                 }
                 if (Input.GetAxis("MouseScrollWheel") < -Mathf.Epsilon)
                 {
                     PlaySound(clipTick);
-                    intCursorPosition--;
+                    floatCursorPosition--;
                 }
                 break;
             case 1:
                 if (Input.GetAxis("MouseScrollWheel") > Mathf.Epsilon)
                 {
                     PlaySound(clipTick);
-                    intCursorPosition--;
+                    floatCursorPosition--;
                 }
                 if (Input.GetAxis("MouseScrollWheel") < -Mathf.Epsilon)
                 {
                     PlaySound(clipTick);
-                    intCursorPosition++;
+                    floatCursorPosition++;
                 }
                 break;
             case 2:
@@ -1365,6 +1371,13 @@ public class Creator_Control : MonoBehaviour
                     BeatSnapDivisorChange(-1);
                 }
                 break;
+        }
+
+        // Song full preview
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            boolFullPreviewOngoing = true;
+            Creator_SongPreview.mSongPreview.PreviewAll();
         }
 
         // Left-click to place a note
@@ -1661,20 +1674,23 @@ public class Creator_Control : MonoBehaviour
                 }
             }
         }
-
-        // Cursor cannot be positioned before the start of the chart
-        if (intCursorPosition < 0) intCursorPosition = 0;
-
-        // Camera manipulation
-        cameraMain.transform.position = Vector3.Lerp(cameraMain.transform.position, Vector3.up * intCursorPosition, Time.deltaTime * 16f);
-        cameraMain.orthographicSize = Mathf.Lerp(cameraMain.orthographicSize, cameraSizeMin + ((cameraSizeMax - cameraSizeMin) * sliderZoom.value), Time.deltaTime * 8f);
-
+        
         // Open online manual
         if (Input.GetKeyDown(KeyCode.F1))
         {
             Notification.Display("The online chart editor manual is being opened with your default browser...", Color.white);
             Application.OpenURL("https://docs.google.com/document/d/17A4IUbQejGyEl5mMLZwad12J05k_JhxREVYLD0zOjpk/edit?usp=sharing");
         }
+    }
+
+    void LateUpdate()
+    {
+        // Cursor cannot be positioned before the start of the chart
+        if (floatCursorPosition < 0) floatCursorPosition = 0;
+
+        // Camera manipulation
+        cameraMain.transform.position = Vector3.Lerp(cameraMain.transform.position, Vector3.up * floatCursorPosition, Time.deltaTime * 16f);
+        cameraMain.orthographicSize = Mathf.Lerp(cameraMain.orthographicSize, cameraSizeMin + ((cameraSizeMax - cameraSizeMin) * sliderZoom.value), Time.deltaTime * 8f);
     }
 
     private bool CheckNotePlacementValidity(float pos, float time, int type, float length)
