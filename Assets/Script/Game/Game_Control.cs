@@ -1332,19 +1332,20 @@ public class Game_Control : MonoBehaviour
             }
             // Score based on accuracy, best combo, chart level, and game mode.
             finalScore = Mathf.FloorToInt(
-                (1f * playerComboBest / chartTotalNotes) * finalAccuracy *
-                Mathf.Pow(4 + chartData.chartLevel, 2f) *
-                10 * gameModeScoreMultiplier
+                (1f * playerComboBest / chartTotalNotes) * finalAccuracy *  // Base accuracy
+                Mathf.Pow(4 + chartData.chartLevel, 2f) *                   // Chart level
+                10 * gameModeScoreMultiplier *                              // Game mode
+                chartData.gameplayLength / 60f                              // Chart gameplay length
                 );
-            // Additional score gained by achieving full combo and perfect accuracy respectively.
+            // Additional score gained by achieving perfect accuracy or full combo respectively.
             int additionalScore = 0;
-            if (playerAccuracyBest + playerAccuracyGreat + playerAccuracyFine == chartTotalNotes)
-            {
-                additionalScore += finalScore / 10;
-            }
             if (playerAccuracyBest == chartTotalNotes)
             {
-                additionalScore += finalScore / 15;
+                additionalScore += finalScore / 4;
+            }
+            else if (playerAccuracyBest + playerAccuracyGreat + playerAccuracyFine == chartTotalNotes)
+            {
+                additionalScore += finalScore / 10;
             }
             finalScore += additionalScore;
             PlayerSetting.setting.ScoreAdd(finalScore);

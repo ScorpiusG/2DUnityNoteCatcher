@@ -15,7 +15,7 @@ public class SongMenu_Control : MonoBehaviour
 
     public string stringSongDirectoryPath = "/Songs";
     //public string[] arrayStringSongDirectory;
-    private List<string> listStringSongDirectory;
+    private List<string> listStringSongDirectory = new List<string>();
 
     public RectTransform rectSongListParent;
     public Button buttonSongIndividual;
