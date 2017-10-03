@@ -15,7 +15,7 @@ public class SongMenu_Control : MonoBehaviour
 
     public string stringSongDirectoryPath = "/Songs";
     //public string[] arrayStringSongDirectory;
-    public List<string> listStringSongDirectory;
+    private List<string> listStringSongDirectory;
 
     public RectTransform rectSongListParent;
     public Button buttonSongIndividual;
@@ -75,9 +75,13 @@ public class SongMenu_Control : MonoBehaviour
     public Toggle toggleOptionsDisplayJudgmentCounter;
 
     public AudioSource audioSourcePreview;
+    public PlaySoundEffect mSoundPlayer;
+    public AudioClip clipRecordDelete;
 
     public bool isHighscoreDisabledByMods = false;
     public bool isHighscoreDisabledByChart = false;
+
+    public float floatHighscoreDeleteTimer = 0f;
 
     void Start()
     {
@@ -267,6 +271,30 @@ public class SongMenu_Control : MonoBehaviour
         }
         objectDetailsDescription.SetActive(boolDetailsDescriptionEnable);
         //objectDetailsDescription.SetActive(Input.GetKey(KeyCode.F1) && textDetailsDescription.text.Length > 0);
+
+        // Erase high score records by holding F9 for five seconds.
+        if (Input.GetKey(KeyCode.F9))
+        {
+            floatHighscoreDeleteTimer += Time.unscaledDeltaTime;
+        }
+        else
+        {
+            floatHighscoreDeleteTimer -= Time.unscaledDeltaTime * 4f;
+            if (floatHighscoreDeleteTimer < 0f) floatHighscoreDeleteTimer = 0f;
+        }
+        if (floatHighscoreDeleteTimer > 5f)
+        {
+            floatHighscoreDeleteTimer = 0f;
+
+            if (intGameType >= 0 && intGameChart >= 0)
+            {
+                mSoundPlayer.PlaySound(clipRecordDelete);
+                PlayerPrefs.DeleteKey(stringSongSelectedCurrent + "-" + intGameType.ToString() + "-" + intGameChart.ToString() + "-recordaccuracy");
+                PlayerPrefs.DeleteKey(stringSongSelectedCurrent + "-" + intGameType.ToString() + "-" + intGameChart.ToString() + "-playcount");
+                PlayerPrefs.Save();
+                textDetailsRecord.text = Translator.GetStringTranslation("SONGMENU_RECORDDELETE", "Records deleted.");
+            }
+        }
     }
 
     public void RefreshTexts()
@@ -383,6 +411,8 @@ public class SongMenu_Control : MonoBehaviour
         Debug.Log("Clicked on \"" + folder.name + "\" folder.");
 #endif
         stringSongSelectedCurrent = folder.name;
+        intGameType = -1;
+        intGameChart = -1;
 
         // The selected folder is darkened. The rest remain at normal color.
         Button[] listAllButtons = FindObjectsOfType<Button>();
@@ -474,11 +504,14 @@ public class SongMenu_Control : MonoBehaviour
                         case 0: stringMode = "LN"; break;
                         case 1: stringMode = "DB"; break;
                         case 2: stringMode = "QD"; break;
+                        case 3: stringMode = "ND"; break;
+                        /*
                         case 3: stringMode = "PWF"; break;
                         case 4: stringMode = "SP"; break;
                         case 5: stringMode = "ULT"; break;
                         case 6: stringMode = "BC"; break;
                         case 7: stringMode = "ND"; break;
+                        */
                     }
                     nb.textButton.text = stringMode + " " + (chartID + 1).ToString() + "\n*" + chartData.chartLevel.ToString();
 
@@ -654,11 +687,14 @@ public class SongMenu_Control : MonoBehaviour
             case 0: stringMode = "Linear"; break;
             case 1: stringMode = "Double"; break;
             case 2: stringMode = "Quad"; break;
+            case 3: stringMode = "Note Dodge"; break;
+            /*
             case 3: stringMode = "Powerful"; break;
             case 4: stringMode = "Super"; break;
             case 5: stringMode = "Ultra"; break;
             case 6: stringMode = "Black Core"; break;
             case 7: stringMode = "Note Dodge"; break;
+            */
         }
         stringMode = Translator.GetStringTranslation("SONGMENU_CHARTGAMETYPEBODY" + chartData.chartGameType, stringMode);
         float actualLength = chartData.songLength * 60f / chartData.songTempo;

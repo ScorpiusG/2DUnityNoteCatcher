@@ -91,6 +91,8 @@ public class Game_Control : MonoBehaviour
     public Text textRecordAccuracy;
     public Animator animatorNewRecord;
 
+    public Text textDebug;
+
     private ChartData chartData;
     private int chartTotalNotes = 0;
     private int chartJudgeDifficulty = 0;
@@ -132,6 +134,10 @@ public class Game_Control : MonoBehaviour
     private int playerAccuracyMiss = 0;
     private int playerComboCurrent = 0;
     private int playerComboBest = 0;
+
+    private bool lastHitNoteIsTap = false;
+    private float lastHitNoteDistance = 0f;
+    private int lastHitNoteType = 0;
 
     public void ExitGameScene()
     {
@@ -192,10 +198,14 @@ public class Game_Control : MonoBehaviour
     {
         bool playSoundEffect = false;
 
+        lastHitNoteIsTap = isTapNote;
+        lastHitNoteType = note.type % 4;
+
         // Catch note
         if (!isTapNote)
         {
-            float dist = Mathf.Abs(note.transform.position.x - catcher.transform.position.x);
+            lastHitNoteDistance = note.transform.position.x - catcher.transform.position.x;
+            float dist = Mathf.Abs(lastHitNoteDistance);
             switch (chartData.chartGameType)
             {
                 default:
@@ -273,7 +283,8 @@ public class Game_Control : MonoBehaviour
         // Tap note
         else
         {
-            float dist = Mathf.Abs(floatMusicBeat - note.time) / chartData.songTempo * 60f;
+            lastHitNoteDistance = (floatMusicBeat - note.time) / chartData.songTempo * 60f;
+            float dist = Mathf.Abs(lastHitNoteDistance);
             switch (chartData.chartGameType)
             {
                 default:
@@ -436,7 +447,7 @@ public class Game_Control : MonoBehaviour
         }
     }
 
-    void Start ()
+    void Start()
     {
         // Cursor lock
         Cursor.visible = false;
@@ -471,6 +482,7 @@ public class Game_Control : MonoBehaviour
         colorRecordGhostWorse.a = textAlpha;
 
         // Object initialization
+        textDebug.gameObject.SetActive(Debug.isDebugBuild || Application.isEditor);
         rendererPlaneBackground.gameObject.SetActive(false);
         objectAutoplayIndicator.SetActive(boolAutoplay);
         imageSongProgressGauge.fillAmount = 0f;
@@ -566,6 +578,7 @@ public class Game_Control : MonoBehaviour
         {
             rendererPlaneBackground.gameObject.SetActive(true);
             rendererPlaneBackground.material.mainTexture = textureBackground;
+            rendererPlaneBackground.material.color = new Color(0.7f, 0.7f, 0.7f);
         }
 
         string gameTypeAbbr = "";
@@ -575,11 +588,14 @@ public class Game_Control : MonoBehaviour
             case 0: gameTypeAbbr = "LN"; break;
             case 1: gameTypeAbbr = "DB"; break;
             case 2: gameTypeAbbr = "QD"; break;
+            case 3: gameTypeAbbr = "ND"; break;
+            /*
             case 3: gameTypeAbbr = "PWF"; break;
             case 4: gameTypeAbbr = "SP"; break;
             case 5: gameTypeAbbr = "ULT"; break;
             case 6: gameTypeAbbr = "BC"; break;
             case 7: gameTypeAbbr = "ND"; break;
+            */
         }
 
         if (PlayerSetting.setting.enableInterfaceSongDetails)
@@ -610,7 +626,7 @@ public class Game_Control : MonoBehaviour
         {
             string[] noteInfo = chartData.listNoteCatchInfo[i].Split('|');
             float longNoteLength = float.Parse(noteInfo[4]);
-            if (longNoteLength > 0.01f)
+            if (longNoteLength > 0.01f - Mathf.Epsilon)
             {
                 chartTotalNotes++;
             }
@@ -647,6 +663,61 @@ public class Game_Control : MonoBehaviour
             }
         }
         cameraMain.transform.rotation = cameraGame[0].transform.rotation;
+
+        if (textDebug.gameObject.activeInHierarchy)
+        {
+            textDebug.text =
+                "Accuracy Points: " + currentAccuracy.ToString() + " / " + (chartTotalNotes * 4).ToString() + "\n" +
+                "N Accuracy Points: " + currentAccuracyNegative.ToString() + " / " + (chartTotalNotes * 4).ToString() + "\n" +
+                "Combo (Current/Best): " + playerComboCurrent.ToString() + " / " + playerComboBest.ToString() + "\n" +
+                "   (of " + chartTotalNotes.ToString() + " chart total)\n" +
+                "\n" +
+                "Last Hit Note: ";
+
+            switch(lastHitNoteType)
+            {
+                case 0: textDebug.text += "BLUE  "; break;
+                case 1: textDebug.text += "RED   "; break;
+                case 2: textDebug.text += "GREEN "; break;
+                case 3: textDebug.text += "YELLOW"; break;
+            }
+            textDebug.text += " (" + lastHitNoteType.ToString() + ")\n";
+
+            if (!lastHitNoteIsTap)
+            {
+                if (lastHitNoteDistance < -Mathf.Epsilon)
+                {
+                    textDebug.text += " <<< " + Mathf.Abs(lastHitNoteDistance).ToString("f3") + "\n";
+                }
+                else if (lastHitNoteDistance > Mathf.Epsilon)
+                {
+                    textDebug.text += "     " + Mathf.Abs(lastHitNoteDistance).ToString("f3") + " >>>\n";
+                }
+                else
+                {
+                    textDebug.text += "     " + Mathf.Abs(lastHitNoteDistance).ToString("f3") + "\n";
+                }
+            }
+            else
+            {
+                if (lastHitNoteDistance < -Mathf.Epsilon)
+                {
+                    textDebug.text += "     " + Mathf.Abs(lastHitNoteDistance).ToString("f3") + " (TAP EARLY)\n";
+                }
+                else if (lastHitNoteDistance > Mathf.Epsilon)
+                {
+                    textDebug.text += "     " + Mathf.Abs(lastHitNoteDistance).ToString("f3") + " (TAP LATE)\n";
+                }
+                else
+                {
+                    textDebug.text += "     " + Mathf.Abs(lastHitNoteDistance).ToString("f3") + " (TAP =)\n";
+                }
+            }
+
+            textDebug.text +=
+                "\n" +
+                "Escape held: " + floatTimeEscapeHeld.ToString("f2");
+        }
     }
 	
 	private IEnumerator GameLoop ()
