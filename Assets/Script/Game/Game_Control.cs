@@ -91,6 +91,12 @@ public class Game_Control : MonoBehaviour
     public Text textRecordAccuracy;
     public Animator animatorNewRecord;
 
+    public Animator animatorPause;
+    private bool boolIsPaused = false;
+    private bool boolPauseMenuForceEnd = false;
+    private float floatLastPaused = -999f;
+    private bool boolPauseNotification = false;
+
     public Text textDebug;
 
     private ChartData chartData;
@@ -447,6 +453,26 @@ public class Game_Control : MonoBehaviour
         }
     }
 
+    public void UnpauseGame()
+    {
+        StopCoroutine("_UnpauseGame");
+        StartCoroutine("_UnpauseGame");
+    }
+    private IEnumerator _UnpauseGame()
+    {
+        animatorPause.Play("unpause");
+        Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Confined;
+        yield return new WaitForSeconds(1f);
+        boolIsPaused = false;
+        mSongLoader.audioSourceMusic.UnPause();
+    }
+
+    public void PauseMenuForceEnd()
+    {
+        boolPauseMenuForceEnd = true;
+    }
+
     void Start()
     {
         // Cursor lock
@@ -650,6 +676,13 @@ public class Game_Control : MonoBehaviour
 
     void Update()
     {
+        // Skip while game is paused
+        if (boolIsPaused)
+        {
+            return;
+        }
+
+        // Camera rotation
         floatCameraRotation += floatCameraRotationChangeRate * Time.deltaTime * chartData.songTempo / 60f;
         for (int i = 0; i < cameraGame.Length; i++)
         {
@@ -664,6 +697,7 @@ public class Game_Control : MonoBehaviour
         }
         cameraMain.transform.rotation = cameraGame[0].transform.rotation;
 
+        // Debug info
         if (textDebug.gameObject.activeInHierarchy)
         {
             textDebug.text =
@@ -825,9 +859,16 @@ public class Game_Control : MonoBehaviour
         yield return new WaitUntil(() => mSongLoader.audioSourceMusic.isPlaying);
 
         // Actual game loop
-        while (floatMusicPosition < floatMusicPositionEnd && mSongLoader.audioSourceMusic.isPlaying)
+        while (floatMusicPosition < floatMusicPositionEnd && (mSongLoader.audioSourceMusic.isPlaying || boolIsPaused))
         //while (floatMusicPosition < floatMusicPositionEnd && audioSourceMusic.isPlaying)
         {
+            // Skip while game is paused
+            if (boolIsPaused)
+            {
+                yield return null;
+                continue;
+            }
+
             // Time update
             floatMusicPosition = mSongLoader.audioSourceMusic.time - ((chartData.chartOffset + PlayerSetting.setting.intGameOffset) * 0.001f);
             //floatMusicPosition = audioSourceMusic.time - ((chartData.chartOffset + PlayerSetting.setting.intGameOffset) * 0.001f);
@@ -1179,8 +1220,8 @@ public class Game_Control : MonoBehaviour
                 }
             }
 
-            // Tap note input
-            if (Input.anyKeyDown && !boolAutoplay)
+            // Tap note input (and which is not the Escape key being used)
+            if (Input.anyKeyDown && !Input.GetKeyDown(KeyCode.Escape) && !boolAutoplay)
             {
                 // Get the lowest positioned note
                 Game_Note lowestNote = null;
@@ -1206,8 +1247,8 @@ public class Game_Control : MonoBehaviour
                 }
             }
 
-            // Player force end: Hold [Escape]
-            if (Input.GetKey(KeyCode.Escape))
+            // Hold [Escape] to end the game if it's in autoplay
+            if (boolAutoplay && Input.GetKey(KeyCode.Escape))
             {
                 floatTimeEscapeHeld += Time.deltaTime;
             }
@@ -1220,14 +1261,38 @@ public class Game_Control : MonoBehaviour
                 isForcedEnd = true;
             }
 
-            // Alternate force end condition: Current negative accuracy is below tolerance
-            if (1f * currentAccuracyNegative / (4f * chartTotalNotes) > 1f - (0.01f * PlayerSetting.setting.intAccuracyTolerance))
+            // Press [Escape] to pause the game in a normal game
+            if (!boolAutoplay && Input.GetKeyDown(KeyCode.Escape))
+            {
+                // Check if the last pause is at least 3 seconds before
+                if (floatMusicPosition > floatLastPaused + 3f)
+                {
+                    boolIsPaused = true;
+                    floatLastPaused = floatMusicPosition;
+                    mSongLoader.audioSourceMusic.Pause();
+                    Cursor.visible = true;
+                    Cursor.lockState = CursorLockMode.Locked;
+                    animatorPause.Play("pause");
+                    yield return null;
+                    Cursor.lockState = CursorLockMode.Confined;
+                }
+                // Display notification if the pause is too early
+                else if (!boolPauseNotification)
+                {
+                    boolPauseNotification = true;
+                    Notification.Display(Translator.GetStringTranslation("GAME_PAUSEFAILNOTIFICATION", "Wait at least three seconds from your last pause to pause again."), Color.white);
+                }
+            }
+
+            // Force end condition: Current negative accuracy is below tolerance
+            if (1f * currentAccuracyNegative / (4f * chartTotalNotes) >
+                1f - (0.01f * PlayerSetting.setting.intAccuracyTolerance))
             {
                 isForcedEnd = true;
             }
 
             // Force end consequences: Miss all remaining notes
-            if (isForcedEnd)
+            if (isForcedEnd || boolPauseMenuForceEnd)
             {
                 foreach (string s in chartData.listNoteCatchInfo)
                 {

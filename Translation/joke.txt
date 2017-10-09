@@ -68,6 +68,10 @@ SONGMENU_BUTTONSETTINGSSHOWCOUNTJUDGMENTHEADER|show judg count
 SONGMENU_BUTTONSETTINGSSHOWCOUNTJUDGMENTBODY|ever wanted 2 kno how u got that < bset acc in da middle of a song? now u can!
 GAME_CHARTDEV|tis mapcharts maed by
 GAME_CHARTLEVEL|levul
+GAME_PAUSEHEADER|da gaem iz stuck
+GAME_PAUSEBUTTONRESUME|unpaus
+GAME_PAUSEBUTTONEND|f dis sht
+GAME_PAUSEFAILNOTIFICATION|u mus wait liek 3 secunds b4 u wan to make gaem stuck
 GAME_FULLCOMBONORMAL|u rock dude|no misses
 GAME_FULLCOMBOPERFECT|omg u da man|all best hits
 GAME_RESULTPLAYPERFECT|OMG U PURFECTED THE CHRT
