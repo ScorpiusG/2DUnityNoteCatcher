@@ -45,6 +45,8 @@ public class Creator_Control : MonoBehaviour
     public Text textNoteLength;
     public Toggle toggleNoteLengthEnable;
     public Text textNoteSpeed;
+    public Text textNoteHitsound;
+    public Toggle toggleNoteHitsoundEnable;
     public Text textNoteOther;
     private List<string> listStringNoteOther = new List<string>();
 
@@ -1416,9 +1418,18 @@ public class Creator_Control : MonoBehaviour
                         int type = intNotePlacementType;
                         float length = 0f;
                         float speed = 1f;
+                        listStringNoteOther = new List<string>();
                         if (toggleNoteLengthEnable.isOn)
                         {
                             float.TryParse(textNoteLength.text, out length);
+                        }
+                        if (toggleNoteHitsoundEnable.isOn)
+                        {
+                            int intSoundID = -1;
+                            if (int.TryParse(textNoteHitsound.text, out intSoundID))
+                            {
+                                listStringNoteOther.Add("sound|" + intSoundID.ToString());
+                            }
                         }
                         float.TryParse(textNoteSpeed.text, out speed);
 

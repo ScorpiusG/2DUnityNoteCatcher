@@ -113,6 +113,8 @@ CREATOR_NOTEPLACETYPEBODY7|8 rite tap
 CREATOR_NOTEPLACETYPEHELP|* Da <color="yellow">Left Ctrl/Cmd</color> n <color="yellow">left-click</color> lets u <color="cyan">creat notes</color> n u can <color="yellow">right-click</color> 2 <color=#ff2222>delet nots</color>.|** <color="yellow">Hold Left Shift</color> 2 <color=#00ff00>ignor grid rulez</color> cuz they suck.
 CREATOR_NOTELENGTHHEADER|NOTE LONGNESS
 CREATOR_NOTELENGTHHELP|* must be <color="yellow">> 0.01</color> 2 plac looooooooong notes
+CREATOR_NOTESPEEDHEADER|NOTE FASTNESS
+CREATOR_NOTEHITSOUNDHEADER|NOTE BOOMIE EFFEXT
 CREATOR_NOTEEXTRAEFFECT|NTE XTRA FXez
 CREATOR_VIEWZOOM|ZOOOOOOOOOOOOOM
 CREATOR_SONGNAME|MUSIK NAM

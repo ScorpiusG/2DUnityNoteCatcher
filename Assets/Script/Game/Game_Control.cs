@@ -1359,11 +1359,8 @@ public class Game_Control : MonoBehaviour
         }
 
         // Check score validity
-        // Conditions:
-        //  - No mods enabled
-        //  - Actual gameplay length is over a minute (from first to last note)
-        //  - 25 or more notes present in chart
         isScoringDisabled =
+            // No mods enabled
             PlayerSetting.setting.modChartBerserk ||
             PlayerSetting.setting.modChartCluster ||
             PlayerSetting.setting.modChartFlip ||
@@ -1373,7 +1370,9 @@ public class Game_Control : MonoBehaviour
             PlayerSetting.setting.modDisableScore ||
             PlayerSetting.setting.modScreenFlip ||
             PlayerSetting.setting.modScreenMirror ||
+            // Actual gameplay length is over a minute (from first to last note)
             chartData.gameplayLength < 60f ||
+            // 25 or more notes present in chart
             chartTotalNotes < 25;
 
         // Add and record score
@@ -1415,6 +1414,7 @@ public class Game_Control : MonoBehaviour
             finalScore += additionalScore;
             PlayerSetting.setting.ScoreAdd(finalScore);
 
+            // Display old record
             oldRecordAccuracy = PlayerPrefs.GetFloat(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-recordaccuracy", 0f);
             textRecordAccuracy.gameObject.SetActive(true);
             textRecordAccuracy.text = (oldRecordAccuracy * 100f).ToString("f2") + "%";
@@ -1490,13 +1490,13 @@ public class Game_Control : MonoBehaviour
         StartCoroutine(TextIntGradualIncrease(textResultJudgeMiss, playerAccuracyMiss, 0.3f));
 
         for (float f = 0; f < 1.2f; f += Time.deltaTime * animatorResults.speed) yield return null;
-        if (finalAccuracy > oldRecordAccuracy && !isScoringDisabled)
-        {
-            animatorNewRecord.gameObject.SetActive(true);
-            animatorNewRecord.Play("clip");
-        }
         if (!isScoringDisabled)
         {
+            if (finalAccuracy > oldRecordAccuracy)
+            {
+                animatorNewRecord.gameObject.SetActive(true);
+                animatorNewRecord.Play("clip");
+            }
             textResultOther.text = Translator.GetStringTranslation("GAME_RESULTSCOREADD", "Score:") + " " + finalScore.ToString();
         }
         int newPlayerLevel = PlayerSetting.setting.GetPlayerLevel();
