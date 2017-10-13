@@ -132,7 +132,8 @@ CREATOR_CURRENTMEASURE|mesure
 CREATOR_CURRENTBEAT|beet
 CREATOR_CURRENTSONGPOSITION|sng pusitiun
 CREATOR_CURRENTSONGPOSITIONUNKNOWN|sng pusitiun ?????
-CREATOR_OPTIONSMANUAL|<color=yellow>[F1]</color>  lol who reeds <color=lime>manuls</color>
+CREATOR_OPTIONSMANUAL|<color=yellow>[F1]</color>  lol who reeds <color=lime>manuls</color> in engglysh
+CREATOR_OPTIONSMANUALNOTIFICATION|lol u opened teh online manul u nub
 CREATOR_OPTIONSMOUSESCROLLFUNCHEADER|mous scrol do what
 CREATOR_OPTIONSMOUSESCROLLFUNCBODY0|move teh chart
 CREATOR_OPTIONSMOUSESCROLLFUNCBODY1|move chart opposit dir

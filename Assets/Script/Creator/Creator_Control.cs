@@ -1689,7 +1689,7 @@ public class Creator_Control : MonoBehaviour
         // Open online manual
         if (Input.GetKeyDown(KeyCode.F1))
         {
-            Notification.Display("The online chart editor manual is being opened with your default browser...", Color.white);
+            Notification.Display(Translator.GetStringTranslation("CREATOR_OPTIONSMANUALNOTIFICATION", "Atempting to open the online chart editor manual with your default browser..."), Color.white);
             Application.OpenURL("https://docs.google.com/document/d/17A4IUbQejGyEl5mMLZwad12J05k_JhxREVYLD0zOjpk/edit?usp=sharing");
         }
     }
