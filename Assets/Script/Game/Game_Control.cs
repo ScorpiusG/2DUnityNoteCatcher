@@ -500,7 +500,14 @@ public class Game_Control : MonoBehaviour
         objectGroupType[3].SetActive(intChartGameType >= 2);
 
         // Variable initialization
-        floatPreviousRecord = PlayerPrefs.GetFloat(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-recordaccuracy", 0f);
+        if (boolCustomSong)
+        {
+            floatPreviousRecord = PlayerPrefs.GetFloat(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-recordaccuracy", 0f);
+        }
+        else
+        {
+            floatPreviousRecord = PlayerPrefs.GetFloat(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-recordaccuracy_official", 0f);
+        }
 
         float textAlpha = textMeshRecordGhost.color.a;
         colorRecordGhostBetter.a = textAlpha;
@@ -567,8 +574,8 @@ public class Game_Control : MonoBehaviour
         else
         {
             string chartFileName = stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString();
-            string path = "Songs/" + chartFileName + ".txt";
-            TextAsset info = Resources.Load(path) as TextAsset;
+            //string path = "Songs/" + chartFileName + ".txt";
+            TextAsset info = Resources.Load(chartFileName) as TextAsset;
             input = info.text;
         }
 
@@ -597,7 +604,7 @@ public class Game_Control : MonoBehaviour
         }
         else
         {
-            string path = "Songs/" + stringSongFileName + "_background.jpg";
+            string path = stringSongFileName + "_background";
             textureBackground = Resources.Load(path) as Texture;
         }
         if (textureBackground != null)
@@ -1383,7 +1390,55 @@ public class Game_Control : MonoBehaviour
         if (!isScoringDisabled)
         {
             float gameModeScoreMultiplier = 1f;
-            switch(chartData.chartGameType)
+            if (boolCustomSong)
+            {
+                // Accuracy record
+                oldRecordAccuracy = PlayerPrefs.GetFloat(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-recordaccuracy", 0f);
+                if (finalAccuracy > oldRecordAccuracy)
+                {
+                    PlayerPrefs.SetFloat(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-recordaccuracy", finalAccuracy);
+                }
+
+                // Mapchart play count increase
+                int songPlayCount = PlayerPrefs.GetInt(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-playcount", 0);
+                songPlayCount++;
+                PlayerPrefs.SetInt(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-playcount", songPlayCount);
+            }
+            else
+            {
+                // Score based on accuracy, best combo, chart level, and game mode.
+                finalScore = Mathf.FloorToInt(
+                    (1f * playerComboBest / chartTotalNotes) * finalAccuracy *  // Base accuracy
+                    Mathf.Pow(4 + chartData.chartLevel, 2f) *                   // Chart level
+                    10 * gameModeScoreMultiplier *                              // Game mode
+                    chartData.gameplayLength / 60f                              // Chart gameplay length
+                    );
+                // Additional score gained by achieving perfect accuracy or full combo respectively.
+                int additionalScore = 0;
+                if (playerAccuracyBest == chartTotalNotes)
+                {
+                    additionalScore += finalScore / 4;
+                }
+                else if (playerAccuracyBest + playerAccuracyGreat + playerAccuracyFine == chartTotalNotes)
+                {
+                    additionalScore += finalScore / 10;
+                }
+                finalScore += additionalScore;
+                PlayerSetting.setting.ScoreAdd(finalScore);
+                
+                // Accuracy record
+                oldRecordAccuracy = PlayerPrefs.GetFloat(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-recordaccuracy_official", 0f);
+                if (finalAccuracy > oldRecordAccuracy)
+                {
+                    PlayerPrefs.SetFloat(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-recordaccuracy_official", finalAccuracy);
+                }
+
+                // Mapchart play count increase
+                int songPlayCount = PlayerPrefs.GetInt(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-playcount_official", 0);
+                songPlayCount++;
+                PlayerPrefs.SetInt(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-playcount_official", songPlayCount);
+            }
+            switch (chartData.chartGameType)
             {
                 case 0: gameModeScoreMultiplier = 1.0f; break;
                 case 1: gameModeScoreMultiplier = 1.4f; break;
@@ -1394,41 +1449,10 @@ public class Game_Control : MonoBehaviour
                 case 6: gameModeScoreMultiplier = 5.0f; break;
                 case 7: gameModeScoreMultiplier = 0.0f; break;
             }
-            // Score based on accuracy, best combo, chart level, and game mode.
-            finalScore = Mathf.FloorToInt(
-                (1f * playerComboBest / chartTotalNotes) * finalAccuracy *  // Base accuracy
-                Mathf.Pow(4 + chartData.chartLevel, 2f) *                   // Chart level
-                10 * gameModeScoreMultiplier *                              // Game mode
-                chartData.gameplayLength / 60f                              // Chart gameplay length
-                );
-            // Additional score gained by achieving perfect accuracy or full combo respectively.
-            int additionalScore = 0;
-            if (playerAccuracyBest == chartTotalNotes)
-            {
-                additionalScore += finalScore / 4;
-            }
-            else if (playerAccuracyBest + playerAccuracyGreat + playerAccuracyFine == chartTotalNotes)
-            {
-                additionalScore += finalScore / 10;
-            }
-            finalScore += additionalScore;
-            PlayerSetting.setting.ScoreAdd(finalScore);
 
             // Display old record
-            oldRecordAccuracy = PlayerPrefs.GetFloat(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-recordaccuracy", 0f);
             textRecordAccuracy.gameObject.SetActive(true);
             textRecordAccuracy.text = (oldRecordAccuracy * 100f).ToString("f2") + "%";
-
-            // Accuracy record
-            if (finalAccuracy > oldRecordAccuracy)
-            {
-                PlayerPrefs.SetFloat(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-recordaccuracy", finalAccuracy);
-            }
-
-            // Mapchart play count increase
-            int songPlayCount = PlayerPrefs.GetInt(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-playcount", 0);
-            songPlayCount++;
-            PlayerPrefs.SetInt(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-playcount", songPlayCount);
 
             PlayerSetting.setting.Save();
         }
@@ -1445,7 +1469,7 @@ public class Game_Control : MonoBehaviour
             textResultHeader.color = colorResultHeaderPerfect;
             PlaySoundEffect(clipGameEndPerfect);
         }
-        else if (1f * finalAccuracy / chartTotalNotes >= 0.01f * PlayerSetting.setting.intAccuracyTolerance)
+        else if (finalAccuracy >= 0.01f * PlayerSetting.setting.intAccuracyTolerance)
         {
             textResultHeader.text = Translator.GetStringTranslation("GAME_RESULTPLAYCLEAR", "COMPLETE RHYTHM");
             textResultHeader.color = colorResultHeaderPass;
@@ -1499,11 +1523,13 @@ public class Game_Control : MonoBehaviour
             }
             textResultOther.text = Translator.GetStringTranslation("GAME_RESULTSCOREADD", "Score:") + " " + finalScore.ToString();
         }
+        /*
         int newPlayerLevel = PlayerSetting.setting.GetPlayerLevel();
         if (initialPlayerLevel < newPlayerLevel)
         {
             Notification.Display(Translator.GetStringTranslation("GAME_RESULTLEVELUP", "LEVEL UP!\nYour Play Level has rose to") + " " + newPlayerLevel.ToString(), Color.cyan);
         }
+        */
     }
     IEnumerator AnimatorResultsSpeedUp()
     {

@@ -68,7 +68,7 @@ public class Game_SongLoader : MonoBehaviour
         }
         else
         {
-            string path = "Songs/" + Game_Control.stringSongFileName + "/" + Game_Control.stringSongFileName + ".ogg";
+            string path = Game_Control.stringSongFileName;
             clipSong = Resources.Load(path) as AudioClip;
         }
 

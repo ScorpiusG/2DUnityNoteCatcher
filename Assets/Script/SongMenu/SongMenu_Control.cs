@@ -205,7 +205,7 @@ public class SongMenu_Control : MonoBehaviour
             // Official songs
             else if (!isLoadCustomSongs)
             {
-                TextAsset text = (TextAsset)Resources.Load(listStringSongDirectory[i] + "_customname.txt", typeof(TextAsset));
+                TextAsset text = (TextAsset)Resources.Load(listStringSongDirectory[i] + "_customname", typeof(TextAsset));
                 if (text != null)
                 {
                     newBtn.GetComponentInChildren<Text>().text = text.text;
@@ -232,7 +232,6 @@ public class SongMenu_Control : MonoBehaviour
             {
                 prevBtn = newBtn;
                 scrollbarListSongValue = 1f - (1f * i / listStringSongDirectory.Count);
-                Debug.Log(scrollbarListSongValue);
             }
         }
         // Destroy the template button
@@ -475,11 +474,6 @@ public class SongMenu_Control : MonoBehaviour
                     string path = Directory.GetCurrentDirectory() + stringSongDirectoryPath + "/" + folder.name + "/" + folder.name + "-" + gameModeID.ToString() + "-" + chartID.ToString() + ".txt";
                     if (File.Exists(path))
                     {
-                        if (!gameModeExist)
-                        {
-                            gameModeExist = true;
-                        }
-
                         reader = new StreamReader(path);
                         info = reader.ReadToEnd();
                         reader.Close();
@@ -491,7 +485,7 @@ public class SongMenu_Control : MonoBehaviour
                 }
                 else
                 {
-                    string path = folder.name + "-" + gameModeID.ToString() + "-" + chartID.ToString() + ".txt";
+                    string path = folder.name + "-" + gameModeID.ToString() + "-" + chartID.ToString();
                     TextAsset text = (TextAsset)Resources.Load(path, typeof(TextAsset));
                     if (text != null)
                     {
@@ -501,6 +495,11 @@ public class SongMenu_Control : MonoBehaviour
                     {
                         break;
                     }
+                }
+
+                if (!gameModeExist)
+                {
+                    gameModeExist = true;
                 }
 
                 // Create button from chart information
@@ -513,7 +512,7 @@ public class SongMenu_Control : MonoBehaviour
                     nb.gameObject.SetActive(true);
                     nb.transform.SetParent(rectChartListParent);
                     nb.transform.localScale = Vector3.one;
-                    nb.transform.localPosition = (Vector3.right * (sizePositionPerButton.x * chartID)) + (Vector3.down * (sizePositionPerButton.y * gameModeExists));
+                    nb.transform.localPosition = (Vector3.right * ((sizePositionPerButton.x * chartID) + 4f)) + (Vector3.down * ((sizePositionPerButton.y * gameModeExists) + 2f));
                     nb.intGameMode = gameModeID;
                     nb.intChart = chartID;
 
@@ -578,6 +577,11 @@ public class SongMenu_Control : MonoBehaviour
         // Automatically select the first chart in the list
         if (firstChart != null)
         {
+            scrollViewChartList.gameObject.SetActive(true);
+            foreach (Button x in arrayButtonChartListScroll)
+            {
+                x.gameObject.SetActive(true);
+            }
             UseChartInfo(firstChart);
 
             // Load the song file (.ogg) in the folder
@@ -602,7 +606,7 @@ public class SongMenu_Control : MonoBehaviour
             }
             else
             {
-                string path = "Songs/" + folder.name + "_background.jpg";
+                string path = "Songs/" + folder.name + "_background";
                 textureBackground = Resources.Load(path) as Texture;
             }
             if (textureBackground != null)
@@ -622,7 +626,12 @@ public class SongMenu_Control : MonoBehaviour
         else
         {
             objectButtonPlay.SetActive(false);
+            foreach (Button x in arrayButtonChartListScroll)
+            {
+                x.gameObject.SetActive(false);
+            }
             rawImageDetailsBackground.gameObject.SetActive(false);
+            scrollViewChartList.gameObject.SetActive(false);
             textDetailsHeader.text = "";
             textDetailsBody.text =
                 Translator.GetStringTranslation("SONGMENU_CHARTNONEXISTS",
@@ -684,7 +693,12 @@ public class SongMenu_Control : MonoBehaviour
         // Official song
         else
         {
-
+            newClip = (AudioClip)Resources.Load(name + "_preview", typeof(AudioClip));
+            if (newClip == null)
+            {
+                Debug.LogError("ERROR: " + name + "_preview resource does not exist.");
+                yield break;
+            }
         }
 
         // Play preview song
@@ -714,14 +728,14 @@ public class SongMenu_Control : MonoBehaviour
 
             input = reader.ReadToEnd();
             reader.Close();
-            JsonUtility.FromJsonOverwrite(input, chartData);
         }
         else
         {
-            string path = stringSongSelectedCurrent + "-" + intGameType.ToString() + "-" + intGameChart.ToString() + ".txt";
+            string path = stringSongSelectedCurrent + "-" + intGameType.ToString() + "-" + intGameChart.ToString();
             TextAsset text = (TextAsset)Resources.Load(path, typeof(TextAsset));
             input = text.text;
         }
+        JsonUtility.FromJsonOverwrite(input, chartData);
 
         string stringMode = "";
         switch (chartData.chartGameType)
@@ -751,9 +765,22 @@ public class SongMenu_Control : MonoBehaviour
             Translator.GetStringTranslation("SONGMENU_CHARTLENGTH", "Length:") + " " + Mathf.Floor(actualLength / 60f).ToString() + ":" + (actualLength % 60f).ToString("f2") + "\n" +
             Translator.GetStringTranslation("SONGMENU_CHARTBPM", "BPM:") + " " + chartData.songTempo.ToString("f0") + "\n" +
             Translator.GetStringTranslation("SONGMENU_CHARTJUDGELEVEL", "Judge Level:") + " " + (chartData.chartJudge + 1).ToString();
+
+        float floatRecordAccuracy = 0f;
+        int intRecordPlays = 0;
+        if (isLoadCustomSongs)
+        {
+            floatRecordAccuracy = PlayerPrefs.GetFloat(stringSongSelectedCurrent + "-" + intGameType.ToString() + "-" + intGameChart.ToString() + "-recordaccuracy", 0f);
+            intRecordPlays = PlayerPrefs.GetInt(stringSongSelectedCurrent + "-" + intGameType.ToString() + "-" + intGameChart.ToString() + "-playcount", 0);
+        }
+        else
+        {
+            floatRecordAccuracy = PlayerPrefs.GetFloat(stringSongSelectedCurrent + "-" + intGameType.ToString() + "-" + intGameChart.ToString() + "-recordaccuracy_official", 0f);
+            intRecordPlays = PlayerPrefs.GetInt(stringSongSelectedCurrent + "-" + intGameType.ToString() + "-" + intGameChart.ToString() + "-playcount_official", 0);
+        }
         textDetailsRecord.text =
-            Translator.GetStringTranslation("SONGMENU_RECORDACCURACY", "Best Accuracy:") + " " + (100f * PlayerPrefs.GetFloat(stringSongSelectedCurrent + "-" + intGameType.ToString() + "-" + intGameChart.ToString() + "-recordaccuracy", 0f)).ToString("f2") + "% | " +
-            Translator.GetStringTranslation("SONGMENU_RECORDPLAYCOUNT", "Attempts:") + " " + PlayerPrefs.GetInt(stringSongSelectedCurrent + "-" + intGameType.ToString() + "-" + intGameChart.ToString() + "-playcount", 0).ToString("n0");
+            Translator.GetStringTranslation("SONGMENU_RECORDACCURACY", "Best Accuracy:") + " " + (100f * floatRecordAccuracy).ToString("f2") + "% | " +
+            Translator.GetStringTranslation("SONGMENU_RECORDPLAYCOUNT", "Attempts:") + " " + intRecordPlays.ToString("n0");
         textDetailsDescription.text = chartData.chartDescription;
 
         isHighscoreDisabledByChart = !chartData.isHighScoreAllowed;
