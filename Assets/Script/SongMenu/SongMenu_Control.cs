@@ -31,6 +31,10 @@ public class SongMenu_Control : MonoBehaviour
 
     public ScrollRect scrollViewChartList;
     public RectTransform rectChartListParent;
+    private static int intChartListPage = 0;
+    private int intGameChartHighest = 0;
+    private int intChartListPageMaximum = 0;
+    public Button[] arrayButtonChartListScroll;
     public SongMenu_ButtonChart buttonChartIndividual;
     public Vector2 sizePositionPerButton = Vector2.one;
     private static int intGameType = -1;
@@ -95,6 +99,10 @@ public class SongMenu_Control : MonoBehaviour
         buttonChartIndividual.gameObject.SetActive(false);
         objectDetailsDescription.SetActive(false);
         rawImageDetailsBackground.gameObject.SetActive(false);
+        foreach (Button x in arrayButtonChartListScroll)
+        {
+            x.interactable = false;
+        }
 
         textPlayerScore.text = PlayerSetting.setting.GetScore();
         // Has already reached maximum level (100), display score only.
@@ -223,7 +231,8 @@ public class SongMenu_Control : MonoBehaviour
             if (stringSongSelectedCurrent == listStringSongDirectory[i])
             {
                 prevBtn = newBtn;
-                scrollbarListSongValue = 1f * i / listStringSongDirectory.Count;
+                scrollbarListSongValue = 1f - (1f * i / listStringSongDirectory.Count);
+                Debug.Log(scrollbarListSongValue);
             }
         }
         // Destroy the template button
@@ -248,6 +257,11 @@ public class SongMenu_Control : MonoBehaviour
 
     private void Update()
     {
+        rectChartListParent.transform.localPosition = Vector3.Lerp(
+            rectChartListParent.transform.localPosition,
+            Vector3.left * intChartListPage * sizePositionPerButton.x,
+            Time.deltaTime * 16f);
+
         for (int i = 0; i < groupOptionsMenuPage.Length; i++)
         {
             groupOptionsMenuPage[i].SetActive(i == intOptionsMenuPage);
@@ -411,8 +425,8 @@ public class SongMenu_Control : MonoBehaviour
         Debug.Log("Clicked on \"" + folder.name + "\" folder.");
 #endif
         stringSongSelectedCurrent = folder.name;
-        intGameType = -1;
-        intGameChart = -1;
+        //intGameType = -1;
+        //intGameChart = -1;
 
         // The selected folder is darkened. The rest remain at normal color.
         Button[] listAllButtons = FindObjectsOfType<Button>();
@@ -440,6 +454,8 @@ public class SongMenu_Control : MonoBehaviour
         ChartData chartData = ScriptableObject.CreateInstance(typeof(ChartData)) as ChartData;
         bool gameModeExist = false;
         int gameModeExists = 0;
+        bool boolResetChartPage = false;
+        intGameChartHighest = 0;
         // Game mode ID
         for (int gameModeID = 0; gameModeID < 5; gameModeID++)
         {
@@ -448,6 +464,11 @@ public class SongMenu_Control : MonoBehaviour
             // Chart ID
             for (int chartID = 0; ; chartID++)
             {
+                if (intGameChartHighest < chartID)
+                {
+                    intGameChartHighest = chartID;
+                }
+
                 string info = "";
                 if (isLoadCustomSongs)
                 {
@@ -457,7 +478,6 @@ public class SongMenu_Control : MonoBehaviour
                         if (!gameModeExist)
                         {
                             gameModeExist = true;
-                            gameModeExists++;
                         }
 
                         reader = new StreamReader(path);
@@ -493,7 +513,7 @@ public class SongMenu_Control : MonoBehaviour
                     nb.gameObject.SetActive(true);
                     nb.transform.SetParent(rectChartListParent);
                     nb.transform.localScale = Vector3.one;
-                    nb.transform.localPosition = (Vector3.right * ((sizePositionPerButton.x + 4f) * chartID)) + (Vector3.down * ((sizePositionPerButton.y + 4f) * gameModeExists));
+                    nb.transform.localPosition = (Vector3.right * (sizePositionPerButton.x * chartID)) + (Vector3.down * (sizePositionPerButton.y * gameModeExists));
                     nb.intGameMode = gameModeID;
                     nb.intChart = chartID;
 
@@ -513,20 +533,42 @@ public class SongMenu_Control : MonoBehaviour
                         case 7: stringMode = "ND"; break;
                         */
                     }
-                    nb.textButton.text = stringMode + " " + (chartID + 1).ToString() + "\n*" + chartData.chartLevel.ToString();
+                    nb.textButton.text = stringMode + " " + (chartID + 1).ToString() + " - *" + chartData.chartLevel.ToString();
 
                     // If it is the first chart found, it will be selected first
                     if (firstChart == null)
                     {
+                        boolResetChartPage = true;
                         firstChart = nb;
                     }
                     // If it was previously selected before, select this again
                     if (intGameType >= 0 && intGameType == gameModeID && intGameChart >= 0 && intGameChart == chartID)
                     {
+                        boolResetChartPage = false;
                         firstChart = nb;
                     }
                 }
             }
+
+            if (gameModeExist)
+            {
+                gameModeExists++;
+            }
+        }
+
+        // Set maximum chart list scroll page
+        intChartListPageMaximum = (intGameChartHighest - 3) / 2;
+        if (intChartListPageMaximum < 0) intChartListPageMaximum = 0;
+        foreach (Button x in arrayButtonChartListScroll)
+        {
+            x.interactable = intChartListPageMaximum > 0;
+        }
+        if (boolResetChartPage)
+        {
+            intGameType = -1;
+            intGameChart = -1;
+            intChartListPage = 0;
+            rectChartListParent.transform.localPosition = Vector3.zero;
         }
 
         // Stop the song preview
@@ -759,6 +801,19 @@ public class SongMenu_Control : MonoBehaviour
         if (intOptionsMenuPage >= groupOptionsMenuPage.Length)
         {
             intOptionsMenuPage = groupOptionsMenuPage.Length - 1;
+        }
+    }
+
+    public void ToggleChartListPage(int page)
+    {
+        intChartListPage += page;
+        if (intChartListPage < 0)
+        {
+            intChartListPage = 0;
+        }
+        if (intChartListPage > intChartListPageMaximum)
+        {
+            intChartListPage = intChartListPageMaximum;
         }
     }
 
