@@ -265,6 +265,9 @@ public class SongMenu_Control : MonoBehaviour
         {
             groupOptionsMenuPage[i].SetActive(i == intOptionsMenuPage);
         }
+    }
+    private void LateUpdate()
+    {
         if (Input.GetKeyDown(KeyCode.Escape))
         {
             if (objectOptionsMenu.activeSelf)

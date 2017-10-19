@@ -100,6 +100,7 @@ public class Creator_Control : MonoBehaviour
     [HideInInspector] public bool boolFullPreviewOngoing = false;
 
     private bool fixedUpdateCheckOtherFrame = false;
+    private bool isShortcutKeyDisabled = false;
 
     void Awake()
     {
@@ -285,6 +286,8 @@ public class Creator_Control : MonoBehaviour
         writer.WriteLine(output);
         writer.Close();
         Notification.Display(Translator.GetStringTranslation("CREATOR_SAVESUCCESS", "Save successful. Your chart is saved here:") + "\n" + path, Color.yellow);
+
+        ShortcutKeysEnable();
     }
 
     /// <summary>
@@ -377,6 +380,7 @@ public class Creator_Control : MonoBehaviour
         }
 
         CalculateChartLevel();
+        ShortcutKeysEnable();
     }
 
     /// <summary>
@@ -512,6 +516,8 @@ public class Creator_Control : MonoBehaviour
 
         // Make note active
         newNote.gameObject.SetActive(true);
+
+        ShortcutKeysEnable();
     }
     /// <summary>
     /// Create a new custom note from scratch.
@@ -993,6 +999,15 @@ public class Creator_Control : MonoBehaviour
         PlayerPrefs.Save();
     }
 
+    public void ShortcutKeysEnable()
+    {
+        isShortcutKeyDisabled = false;
+    }
+    public void ShortcutKeysDisable()
+    {
+        isShortcutKeyDisabled = true;
+    }
+
     public void ToggleObjectActivity(GameObject x)
     {
         x.SetActive(!x.activeSelf);
@@ -1131,7 +1146,7 @@ public class Creator_Control : MonoBehaviour
         float notesPerBeat = 1f * (listNotePosHori.Count + listNotePosVert.Count + listNoteTapPool.Count) / (floatNotePositionLastNote - floatNotePositionFirstNote);
         //int intChartJudge = 0;
         //int.TryParse(textChartJudge.text, out intChartJudge);
-        float finalChartLevel = Mathf.Pow(Mathf.Sqrt(notesPerBeat) + floatTotalMovement - 1f, 1.6f) * (0.08f + (0.02f + intChartJudge));
+        float finalChartLevel = Mathf.Pow(Mathf.Sqrt(notesPerBeat) + floatTotalMovement - 1f, 1.6f) * (0.08f + (0.02f * intChartJudge));
 
         intChartLevel = 1 + Mathf.FloorToInt(finalChartLevel);
         if (intChartLevel < 1) intChartLevel = 1;
@@ -1261,7 +1276,7 @@ public class Creator_Control : MonoBehaviour
 
     private void Update()
     {
-        if (boolFullPreviewOngoing)
+        if (boolFullPreviewOngoing || isShortcutKeyDisabled)
         {
             return;
         }
