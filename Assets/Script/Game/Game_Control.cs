@@ -1301,6 +1301,7 @@ public class Game_Control : MonoBehaviour
             // Force end consequences: Miss all remaining notes
             if (isForcedEnd || boolPauseMenuForceEnd)
             {
+                isForcedEnd = false;
                 foreach (string s in chartData.listNoteCatchInfo)
                 {
                     string[] noteInfo = s.Split('|');
@@ -1310,15 +1311,18 @@ public class Game_Control : MonoBehaviour
                     {
                         playerAccuracyMiss++;
                     }
+                    isForcedEnd = true;
                 }
                 foreach (string s in chartData.listNoteTapInfo)
                 {
                     playerAccuracyMiss++;
+                    isForcedEnd = true;
                 }
                 foreach (Game_Note x in listNoteCatch)
                 {
                     if (x.gameObject.activeSelf)
                     {
+                        isForcedEnd = true;
                         playerAccuracyMiss++;
                         DespawnNote(x);
                     }
@@ -1327,6 +1331,7 @@ public class Game_Control : MonoBehaviour
                 {
                     if (x.gameObject.activeSelf)
                     {
+                        isForcedEnd = true;
                         playerAccuracyMiss++;
                         DespawnNote(x);
                     }
