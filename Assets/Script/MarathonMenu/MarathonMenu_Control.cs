@@ -16,7 +16,7 @@ public class MarathonMenu_Control : MonoBehaviour
 
     public void ViewItemDetails (MarathonMenu_Button button)
     {
-        MarathonMenu_Item item = arrayMarathonItem[button.itemID];
+        //MarathonMenu_Item item = arrayMarathonItem[button.itemID];
 
         // TODO: show item details
     }

@@ -216,14 +216,14 @@ public class Game_Control : MonoBehaviour
             {
                 default:
                     int animJudgeID = 0;
-                    int animSortingLayerID = 0;
+                    //int animSortingLayerID = 0;
                     // BEST
                     if (dist < floatDistAccuracyCatchBest[chartJudgeDifficulty] || boolAutoplay)
                     {
                         playerAccuracyBest++;
                         playerComboCurrent++;
                         animJudgeID = 0;
-                        animSortingLayerID = playerComboCurrent;
+                        //animSortingLayerID = playerComboCurrent;
                         playSoundEffect = true;
 #if UNITY_EDITOR
                         Debug.Log("Catch note judgment - distance: " + dist + " (BEST)");
@@ -235,7 +235,7 @@ public class Game_Control : MonoBehaviour
                         playerAccuracyGreat++;
                         playerComboCurrent++;
                         animJudgeID = 1;
-                        animSortingLayerID = playerComboCurrent;
+                        //animSortingLayerID = playerComboCurrent;
                         playSoundEffect = true;
 #if UNITY_EDITOR
                         Debug.Log("Catch note judgment - distance: " + dist + " (GREAT)");
@@ -247,7 +247,7 @@ public class Game_Control : MonoBehaviour
                         playerAccuracyFine++;
                         playerComboCurrent++;
                         animJudgeID = 2;
-                        animSortingLayerID = playerComboCurrent;
+                        //animSortingLayerID = playerComboCurrent;
                         playSoundEffect = true;
 #if UNITY_EDITOR
                         Debug.Log("Catch note judgment - distance: " + dist + " (FINE)");
@@ -256,7 +256,7 @@ public class Game_Control : MonoBehaviour
                     // MISS
                     else
                     {
-                        animSortingLayerID = playerComboCurrent + 1;
+                        //animSortingLayerID = playerComboCurrent + 1;
                         playerAccuracyMiss++;
                         playerComboCurrent = 0;
                         animJudgeID = 3;
@@ -295,14 +295,14 @@ public class Game_Control : MonoBehaviour
             {
                 default:
                     int animJudgeID = 0;
-                    int animSortingLayerID = 0;
+                    //int animSortingLayerID = 0;
                     // BEST
                     if (dist < floatDistAccuracyTapBest[chartJudgeDifficulty] || boolAutoplay)
                     {
                         playerAccuracyBest++;
                         playerComboCurrent++;
                         animJudgeID = 0;
-                        animSortingLayerID = playerComboCurrent;
+                        //animSortingLayerID = playerComboCurrent;
                         playSoundEffect = true;
 #if UNITY_EDITOR
                         Debug.Log("Tap note judgment - distance: " + dist + " (BEST)");
@@ -314,7 +314,7 @@ public class Game_Control : MonoBehaviour
                         playerAccuracyGreat++;
                         playerComboCurrent++;
                         animJudgeID = 1;
-                        animSortingLayerID = playerComboCurrent;
+                        //animSortingLayerID = playerComboCurrent;
                         playSoundEffect = true;
 #if UNITY_EDITOR
                         Debug.Log("Tap note judgment - distance: " + dist + " (GREAT)");
@@ -326,7 +326,7 @@ public class Game_Control : MonoBehaviour
                         playerAccuracyFine++;
                         playerComboCurrent++;
                         animJudgeID = 2;
-                        animSortingLayerID = playerComboCurrent;
+                        //animSortingLayerID = playerComboCurrent;
                         playSoundEffect = true;
 #if UNITY_EDITOR
                         Debug.Log("Tap note judgment - distance: " + dist + " (FINE)");
@@ -335,7 +335,7 @@ public class Game_Control : MonoBehaviour
                     // MISS
                     else
                     {
-                        animSortingLayerID = playerComboCurrent + 1;
+                        //animSortingLayerID = playerComboCurrent + 1;
                         playerAccuracyMiss++;
                         playerComboCurrent = 0;
                         animJudgeID = 3;
@@ -1391,7 +1391,7 @@ public class Game_Control : MonoBehaviour
         textScoreDisabled.gameObject.SetActive(isScoringDisabled);
         int finalScore = 0;
         float oldRecordAccuracy = 0f;
-        int initialPlayerLevel = PlayerSetting.setting.GetPlayerLevel();
+        //int initialPlayerLevel = PlayerSetting.setting.GetPlayerLevel();
         if (!isScoringDisabled)
         {
             float gameModeScoreMultiplier = 1f;
