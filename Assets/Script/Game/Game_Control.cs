@@ -145,6 +145,8 @@ public class Game_Control : MonoBehaviour
     private float lastHitNoteDistance = 0f;
     private int lastHitNoteType = 0;
 
+    private const float NOTE_LERP_RATE_MULTIPLIER = 4f;
+
     public void ExitGameScene()
     {
         if (boolCustomSong)
@@ -460,6 +462,7 @@ public class Game_Control : MonoBehaviour
     }
     private IEnumerator _UnpauseGame()
     {
+        PlaySoundEffect(clipGameButtonPress);
         animatorPause.Play("unpause");
         Cursor.visible = false;
         Cursor.lockState = CursorLockMode.Confined;
@@ -993,8 +996,8 @@ public class Game_Control : MonoBehaviour
             if (textSongProgressTime.gameObject.activeSelf)
             {
                 textSongProgressTime.text =
-                    Mathf.Floor(floatMusicPosition / 60f).ToString() + ":" + Mathf.Floor(floatMusicPosition % 60f).ToString("00") + " / " +
-                    Mathf.Floor(floatMusicPositionEnd / 60f).ToString() + ":" + Mathf.Floor(floatMusicPositionEnd % 60f).ToString("00");
+                    Mathf.Floor(mSongLoader.audioSourceMusic.time / 60f).ToString() + ":" + Mathf.Floor(mSongLoader.audioSourceMusic.time % 60f).ToString("00") + " / " +
+                    Mathf.Floor(chartData.songLength / chartData.songTempo).ToString() + ":" + Mathf.Floor((chartData.songLength / chartData.songTempo * 60f) % 60f).ToString("00");
             }
             if (imageSongProgressGauge.gameObject.activeSelf)
             {
@@ -1176,7 +1179,15 @@ public class Game_Control : MonoBehaviour
             {
                 if (x.gameObject.activeSelf)
                 {
-                    x.transform.position = new Vector3(x.position, (x.time - floatMusicBeat) * floatNoteScrollMultiplier * PlayerSetting.setting.intScrollSpeed * x.speed);
+                    Vector3 notePos = new Vector3(x.position, (x.time - floatMusicBeat) * floatNoteScrollMultiplier * PlayerSetting.setting.intScrollSpeed * x.speed);
+                    if (Vector3.Distance(x.transform.position, notePos) < chartData.songTempo / 120f)
+                    {
+                        x.transform.position = Vector3.Lerp(x.transform.position, notePos, Time.deltaTime * NOTE_LERP_RATE_MULTIPLIER * PlayerSetting.setting.intScrollSpeed * chartData.songTempo / 600f);
+                    }
+                    else
+                    {
+                        x.transform.position = notePos;
+                    }
 
                     // Note flash
                     x.spriteRendererNoteHighlight.color = colorBeatFlash;
@@ -1203,7 +1214,16 @@ public class Game_Control : MonoBehaviour
             {
                 if (x.gameObject.activeSelf)
                 {
-                    x.transform.position = new Vector3(x.position, (x.time - floatMusicBeat) * floatNoteScrollMultiplier * PlayerSetting.setting.intScrollSpeed * x.speed);
+                    Vector3 notePos = new Vector3(x.position, (x.time - floatMusicBeat) * floatNoteScrollMultiplier * PlayerSetting.setting.intScrollSpeed * x.speed);
+                    if (Vector3.Distance(x.transform.position, notePos) < chartData.songTempo / 120f)
+                    {
+                        x.transform.position = Vector3.Lerp(x.transform.position, notePos, Time.deltaTime * NOTE_LERP_RATE_MULTIPLIER * PlayerSetting.setting.intScrollSpeed * chartData.songTempo / 600f);
+                    }
+                    else
+                    {
+                        x.transform.position = notePos;
+                    }
+
                     float dist = Mathf.Abs(floatMusicBeat - x.time) / chartData.songTempo * 60f;
 
                     // Note flash
@@ -1220,7 +1240,7 @@ public class Game_Control : MonoBehaviour
                         JudgeNote(x, objectCatcher[x.type], true);
                     }
                     // Autoplay
-                    if (boolAutoplay && floatMusicBeat >= x.time)
+                    if (boolAutoplay && floatMusicBeat >= x.time - floatDistAccuracyTapBest[chartJudgeDifficulty])
                     {
                         JudgeNote(x, objectCatcher[x.type], true);
                     }
@@ -1280,6 +1300,7 @@ public class Game_Control : MonoBehaviour
                     Cursor.visible = true;
                     Cursor.lockState = CursorLockMode.Locked;
                     animatorPause.Play("pause");
+                    PlaySoundEffect(clipGameButtonPress);
                     yield return null;
                     Cursor.lockState = CursorLockMode.Confined;
                 }

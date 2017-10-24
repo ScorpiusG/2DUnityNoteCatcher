@@ -277,6 +277,10 @@ public class Creator_Control : MonoBehaviour
         {
             Directory.CreateDirectory("Songs");
         }
+        if (!Directory.Exists("Songs/" + textFileName.text))
+        {
+            Directory.CreateDirectory("Songs/" + textFileName.text);
+        }
         string path = "Songs/" + textFileName.text + "/" + textFileName.text + "-" + intChartGameType.ToString() + "-" + textFileChart.text + ".txt";
         if (File.Exists(path))
         {
@@ -1146,11 +1150,11 @@ public class Creator_Control : MonoBehaviour
         float notesPerBeat = 1f * (listNotePosHori.Count + listNotePosVert.Count + listNoteTapPool.Count) / (floatNotePositionLastNote - floatNotePositionFirstNote);
         //int intChartJudge = 0;
         //int.TryParse(textChartJudge.text, out intChartJudge);
-        float finalChartLevel = Mathf.Pow(Mathf.Sqrt(notesPerBeat) + floatTotalMovement - 1f, 1.6f) * (0.08f + (0.02f * intChartJudge));
+        float finalChartLevel = Mathf.Sqrt(Mathf.Pow(Mathf.Sqrt(notesPerBeat) + floatTotalMovement - 1f, 1.6f) * (0.09f + (0.01f * intChartJudge)));
 
         intChartLevel = 1 + Mathf.FloorToInt(finalChartLevel);
         if (intChartLevel < 1) intChartLevel = 1;
-        if (intChartLevel > 200) intChartLevel = 200;
+        if (intChartLevel > 20) intChartLevel = 20;
         
         floatGameplayLength = floatNotePositionLastNote - floatNotePositionFirstNote;
 

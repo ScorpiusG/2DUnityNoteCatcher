@@ -274,6 +274,10 @@ public class SongMenu_Control : MonoBehaviour
             {
                 ToggleMenuOptions();
             }
+            else
+            {
+                LoadTitleScene();
+            }
         }
 
         // Show/Hide chart description by tapping F1.

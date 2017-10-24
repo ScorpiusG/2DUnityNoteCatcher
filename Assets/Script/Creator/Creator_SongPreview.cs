@@ -11,6 +11,8 @@ public class Creator_SongPreview : MonoBehaviour
     private AudioSource mAudioSource;
     private Coroutine coroutinePlaying;
 
+    private bool boolLoadSongError = false;
+
     void Awake()
     {
         mSongPreview = this;
@@ -30,6 +32,7 @@ public class Creator_SongPreview : MonoBehaviour
 #if UNITY_EDITOR
         Debug.Log("Song short preview.");
 #endif
+        boolLoadSongError = false;
         if (coroutinePlaying != null)
         {
             StopCoroutine(coroutinePlaying);
@@ -45,6 +48,7 @@ public class Creator_SongPreview : MonoBehaviour
 #if UNITY_EDITOR
         Debug.Log("Whole song preview.");
 #endif
+        boolLoadSongError = false;
         if (coroutinePlaying != null)
         {
             StopCoroutine(coroutinePlaying);
@@ -58,7 +62,13 @@ public class Creator_SongPreview : MonoBehaviour
         if (mAudioSource.clip == null)
         {
             StartCoroutine("LoadClip");
-            yield return new WaitWhile(() => mAudioSource.clip == null);
+            yield return new WaitWhile(() => mAudioSource.clip == null && !boolLoadSongError);
+
+            if (boolLoadSongError)
+            {
+                Creator_Control.control.boolFullPreviewOngoing = false;
+                yield break;
+            }
         }
 
         // Get current song positions depending on where the cursor is at
@@ -99,7 +109,13 @@ public class Creator_SongPreview : MonoBehaviour
         if (mAudioSource.clip == null)
         {
             StartCoroutine("LoadClip");
-            yield return new WaitWhile(() => mAudioSource.clip == null);
+            yield return new WaitWhile(() => mAudioSource.clip == null && !boolLoadSongError);
+
+            if (boolLoadSongError)
+            {
+                Creator_Control.control.boolFullPreviewOngoing = false;
+                yield break;
+            }
         }
 
 #if UNITY_EDITOR
@@ -144,6 +160,8 @@ public class Creator_SongPreview : MonoBehaviour
         if (!File.Exists(url))
         {
             Debug.LogError("ERROR: " + url + " does not exist.");
+            Notification.Display("ERROR: The following song file does not exist:\n" + url, Color.red);
+            boolLoadSongError = true;
             yield break;
         }
         
