@@ -598,8 +598,8 @@ public class SongMenu_Control : MonoBehaviour
             Texture textureBackground = null;
             if (isLoadCustomSongs)
             {
-                string path = Directory.GetCurrentDirectory() + "/Songs/" + folder.name + "/background.jpg";
-                if (!File.Exists(path))
+                string path = "/Songs/" + folder.name + "/background.jpg";
+                if (!File.Exists(Directory.GetCurrentDirectory() + path))
                 {
 #if UNITY_EDITOR
                     Debug.LogWarning("WARNING: The image file does not exist! Path: " + path);
@@ -608,7 +608,9 @@ public class SongMenu_Control : MonoBehaviour
                 else
                 {
                     WWW www = new WWW("file://" + Application.dataPath.Substring(0, Application.dataPath.LastIndexOf("/")) + path);
-                    textureBackground = www.texture;
+                    //textureBackground = www.texture;
+                    //www.LoadImageIntoTexture(textureBackground);
+                    textureBackground = www.textureNonReadable;
                 }
             }
             else

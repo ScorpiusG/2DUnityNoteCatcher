@@ -1438,7 +1438,8 @@ public class Creator_Control : MonoBehaviour
                         float length = 0f;
                         float speed = 1f;
                         listStringNoteOther = new List<string>();
-                        if (toggleNoteLengthEnable.isOn)
+                        // Length parse from string & catch note only
+                        if (toggleNoteLengthEnable.isOn && type < 4)
                         {
                             float.TryParse(textNoteLength.text, out length);
                         }

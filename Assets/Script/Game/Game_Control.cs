@@ -592,8 +592,8 @@ public class Game_Control : MonoBehaviour
         Texture textureBackground = null;
         if (boolCustomSong)
         {
-            string path = Directory.GetCurrentDirectory() + "/Songs/" + stringSongFileName + "/background.jpg";
-            if (!File.Exists(path))
+            string path = "/Songs/" + stringSongFileName + "/background.jpg";
+            if (!File.Exists(Directory.GetCurrentDirectory() + path))
             {
 #if UNITY_EDITOR
                 Debug.LogWarning("WARNING: The chart file does not exist! Path: " + path);
@@ -1109,6 +1109,9 @@ public class Game_Control : MonoBehaviour
                         note.spriteRendererLength.color = noteColor[note.type];
                     }
 
+                    Vector3 notePos = new Vector3(note.position, (note.time - floatMusicBeat) * floatNoteScrollMultiplier * PlayerSetting.setting.intScrollSpeed * note.speed);
+                    note.transform.position = notePos;
+
                     chartData.listNoteCatchInfo.RemoveAt(j);
                     break;
                 }
@@ -1169,6 +1172,9 @@ public class Game_Control : MonoBehaviour
                         note.spriteRendererLength.color = noteColor[note.type];
                     }
 
+                    Vector3 notePos = new Vector3(note.position, (note.time - floatMusicBeat) * floatNoteScrollMultiplier * PlayerSetting.setting.intScrollSpeed * note.speed);
+                    note.transform.position = notePos;
+
                     chartData.listNoteTapInfo.RemoveAt(j);
                 }
             }
@@ -1180,7 +1186,7 @@ public class Game_Control : MonoBehaviour
                 if (x.gameObject.activeSelf)
                 {
                     Vector3 notePos = new Vector3(x.position, (x.time - floatMusicBeat) * floatNoteScrollMultiplier * PlayerSetting.setting.intScrollSpeed * x.speed);
-                    if (Vector3.Distance(x.transform.position, notePos) < chartData.songTempo / 120f)
+                    if (Vector3.Distance(x.transform.position, notePos) < chartData.songTempo / 24f)
                     {
                         x.transform.position = Vector3.Lerp(x.transform.position, notePos, Time.deltaTime * NOTE_LERP_RATE_MULTIPLIER * PlayerSetting.setting.intScrollSpeed * chartData.songTempo / 600f);
                     }
@@ -1215,7 +1221,7 @@ public class Game_Control : MonoBehaviour
                 if (x.gameObject.activeSelf)
                 {
                     Vector3 notePos = new Vector3(x.position, (x.time - floatMusicBeat) * floatNoteScrollMultiplier * PlayerSetting.setting.intScrollSpeed * x.speed);
-                    if (Vector3.Distance(x.transform.position, notePos) < chartData.songTempo / 120f)
+                    if (Vector3.Distance(x.transform.position, notePos) < chartData.songTempo / 240f)
                     {
                         x.transform.position = Vector3.Lerp(x.transform.position, notePos, Time.deltaTime * NOTE_LERP_RATE_MULTIPLIER * PlayerSetting.setting.intScrollSpeed * chartData.songTempo / 600f);
                     }
