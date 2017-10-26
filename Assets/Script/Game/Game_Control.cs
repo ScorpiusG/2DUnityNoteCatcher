@@ -39,6 +39,7 @@ public class Game_Control : MonoBehaviour
     public float floatNoteDistanceSpawn = 3f;
 
     public Renderer rendererPlaneBackground;
+    public SpriteRenderer rendererBackgroundCover;
     public TextMesh textMeshComboCurrent;
     public int floatTextComboAppearComboMinimum = 4;
     public float floatTextComboScaleOnChange = 3f;
@@ -538,6 +539,16 @@ public class Game_Control : MonoBehaviour
         {
             x.color = Color.clear;
         }
+        //cameraMain.backgroundColor *= PlayerSetting.setting.floatBackgroundBrightness;
+        if (PlayerSetting.setting.floatBackgroundBrightness > 0.9999f)
+        {
+            rendererBackgroundCover.gameObject.SetActive(false);
+        }
+        else
+        {
+            rendererBackgroundCover.gameObject.SetActive(true);
+            rendererBackgroundCover.color = new Color(0f, 0f, 0f, 1f - PlayerSetting.setting.floatBackgroundBrightness);
+        }
         textNoteJudgeCount.gameObject.SetActive(PlayerSetting.setting.enableDisplayNoteHitCounterSmall);
         textNoteJudgeCount.text = "B 0\nG 0\nF 0\nM 0";
         animatorResults.gameObject.SetActive(false);
@@ -614,7 +625,7 @@ public class Game_Control : MonoBehaviour
         {
             rendererPlaneBackground.gameObject.SetActive(true);
             rendererPlaneBackground.material.mainTexture = textureBackground;
-            rendererPlaneBackground.material.color = new Color(0.7f, 0.7f, 0.7f);
+            //rendererPlaneBackground.material.color = new Color(PlayerSetting.setting.floatBackgroundBrightness, PlayerSetting.setting.floatBackgroundBrightness, PlayerSetting.setting.floatBackgroundBrightness);
         }
 
         string gameTypeAbbr = "";
@@ -632,6 +643,16 @@ public class Game_Control : MonoBehaviour
             case 6: gameTypeAbbr = "BC"; break;
             case 7: gameTypeAbbr = "ND"; break;
             */
+        }
+
+        if (intChartGameType == 3)
+        {
+            for (int i = 0; i < noteColor.Length; i++)
+            {
+                Color c = noteColor[i];
+                c.a *= 0.5f;
+                noteColor[i] = c;
+            }
         }
 
         if (PlayerSetting.setting.enableInterfaceSongDetails)
@@ -1202,16 +1223,28 @@ public class Game_Control : MonoBehaviour
                         x.spriteRendererLengthHighlight.color = colorBeatFlash;
                     }
 
-                    // Note judgment
-                    // Normal note or long note end - Go below pos 0 vertically
-                    // Long note length - Sway too far from the note's center enough to get a "Miss"
-                    if (floatMusicBeat >= x.time || 
-                        (x.length > 0.01f &&
-                        floatMusicBeat >= x.time - x.length &&
-                        Mathf.Abs(x.transform.position.x - objectCatcher[x.type].transform.position.x) > floatDistAccuracyCatchFine[chartJudgeDifficulty])
-                        )
+                    // Check game mode
+                    if (intChartGameType != 3)
                     {
-                        JudgeNote(x, objectCatcher[x.type], false);
+                        // Note judgment
+                        // Normal note or long note end - Go below pos 0 vertically
+                        // Long note length - Sway too far from the note's center enough to get a "Miss"
+                        if (floatMusicBeat >= x.time ||
+                            (x.length > 0.01f &&
+                            floatMusicBeat >= x.time - x.length &&
+                            Mathf.Abs(x.transform.position.x - objectCatcher[x.type].transform.position.x) > floatDistAccuracyCatchFine[chartJudgeDifficulty])
+                            )
+                        {
+                            JudgeNote(x, objectCatcher[x.type], false);
+                        }
+                    }
+                    else
+                    {
+                        // Bullet spawning for Note Dodge
+                        if (floatMusicBeat >= x.time)
+                        {
+
+                        }
                     }
                 }
             }
@@ -1239,16 +1272,28 @@ public class Game_Control : MonoBehaviour
                         x.spriteRendererLengthHighlight.color = colorBeatFlash;
                     }
 
-                    // Note judgment
-                    // Judge if below "fine" for "miss"
-                    if (x.transform.position.y < 0f && dist > floatDistAccuracyTapFine[chartJudgeDifficulty])
+                    // Check game mode
+                    if (intChartGameType != 3)
                     {
-                        JudgeNote(x, objectCatcher[x.type], true);
+                        // Note judgment
+                        // Judge if below "fine" for "miss"
+                        if (x.transform.position.y < 0f && dist > floatDistAccuracyTapFine[chartJudgeDifficulty])
+                        {
+                            JudgeNote(x, objectCatcher[x.type], true);
+                        }
+                        // Autoplay
+                        if (boolAutoplay && floatMusicBeat >= x.time - floatDistAccuracyTapBest[chartJudgeDifficulty])
+                        {
+                            JudgeNote(x, objectCatcher[x.type], true);
+                        }
                     }
-                    // Autoplay
-                    if (boolAutoplay && floatMusicBeat >= x.time - floatDistAccuracyTapBest[chartJudgeDifficulty])
+                    else
                     {
-                        JudgeNote(x, objectCatcher[x.type], true);
+                        // Bullet spawning for Note Dodge
+                        if (floatMusicBeat >= x.time)
+                        {
+
+                        }
                     }
                 }
             }

@@ -63,6 +63,8 @@ public class SongMenu_Control : MonoBehaviour
     private int intOptionsMenuPage = 0;
     public Text textOptionsAccuracyTolerance;
     public Slider sliderOptionsAccuracyTolerance;
+    public Text textOptionsBackgroundBrightness;
+    public Slider sliderOptionsBackgroundBrightness;
     public Slider sliderOptionsMouseSensitivity;
     public Text textOptionsMouseSensitivity;
     public Text textOptionsGameOffset;
@@ -130,6 +132,7 @@ public class SongMenu_Control : MonoBehaviour
         }
         sliderScrollSpeed.value = PlayerSetting.setting.intScrollSpeed;
         sliderOptionsAccuracyTolerance.value = PlayerSetting.setting.intAccuracyTolerance;
+        sliderOptionsBackgroundBrightness.value = PlayerSetting.setting.floatBackgroundBrightness;
         sliderOptionsMouseSensitivity.value = PlayerSetting.setting.floatMouseSensitivity;
         sliderOptionsVolumeMusic.value = PlayerSetting.setting.floatVolumeMusic;
         audioSourcePreview.volume = PlayerSetting.setting.floatVolumeMusic;
@@ -401,6 +404,7 @@ public class SongMenu_Control : MonoBehaviour
         }
 
         textOptionsAccuracyTolerance.text = PlayerSetting.setting.intAccuracyTolerance.ToString() + "%";
+        textOptionsBackgroundBrightness.text = (PlayerSetting.setting.floatBackgroundBrightness * 100f).ToString("f2") + "%";
         textOptionsMouseSensitivity.text = (PlayerSetting.setting.floatMouseSensitivity * 100f).ToString("f2") + "%";
         textOptionsGameOffset.text = PlayerSetting.setting.intGameOffset.ToString() + " ms";
         textOptionsVolumeMusic.text = (PlayerSetting.setting.floatVolumeMusic * 100f).ToString("f2") + "%";
@@ -864,6 +868,10 @@ public class SongMenu_Control : MonoBehaviour
     public void AdjustAccuracyToleranceAlt()
     {
         PlayerSetting.setting.intAccuracyTolerance = Mathf.RoundToInt(sliderOptionsAccuracyTolerance.value);
+    }
+    public void AdjustBackgroundBrightness()
+    {
+        PlayerSetting.setting.floatBackgroundBrightness = sliderOptionsBackgroundBrightness.value;
     }
     public void AdjustMouseSensitivity()
     {

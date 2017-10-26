@@ -16,6 +16,8 @@ public class PlayerSetting : MonoBehaviour
     public int intGameOffset = 0;
     // Affects mouse movement.
     public float floatMouseSensitivity = 0.06f;
+    // Affects brightness of background.
+    public float floatBackgroundBrightness = 0.8f;
     // Use raw mouse input than smooth input.
     public bool boolUseMouseRawInput = true;
     // Affects note scroll speed.

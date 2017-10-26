@@ -24,6 +24,9 @@ public class ChartData : ScriptableObject
     public List<string> listNoteCatchInfo;
     public List<string> listNoteTapInfo;
     public List<string> listSpecialEffectInfo;
+
+    // Format: x = time, y = tempo, z = first beat
+    public List<Vector3> listTempoChanges;
     
     public class NoteInfo : ScriptableObject
     {

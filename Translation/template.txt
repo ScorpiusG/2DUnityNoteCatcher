@@ -41,7 +41,9 @@ SONGMENU_BUTTONSETTINGSPAGE3|[Page 3]
 SONGMENU_BUTTONSETTINGSMODSHEADER|Game Modifiers
 SONGMENU_BUTTONSETTINGSMODSBODY|Fun modifiers to play the game in unusual ways. Will disable scoring.
 SONGMENU_BUTTONSETTINGSACCURACYTOLERANCEHEADER|Accuracy Tolerance
-SONGMENU_BUTTONSETTINGSACCURACYTOLERANCEBODY|The required accuracy to clear a chart. If it becomes impossible to achieve this number, the game will forcefully end.
+SONGMENU_BUTTONSETTINGSACCURACYTOLERANCEBODY|The required accuracy to clear a chart. If it becomes impossible|to achieve this number, the game will forcefully end.
+SONGMENU_BUTTONSETTINGSBACKGROUNDBRIGHTNESSHEADER|Background Brightness
+SONGMENU_BUTTONSETTINGSBACKGROUNDBRIGHTNESSBODY|Adjust the brightness of the in-game background.
 SONGMENU_BUTTONSETTINGSMOUSESENSITIVITYHEADER|Mouse Sensitivity
 SONGMENU_BUTTONSETTINGSMOUSESENSITIVITYBODY|Affects catcher movement speed via the mouse.
 SONGMENU_BUTTONSETTINGSVOLUMEMUSICHEADER|Music Volume

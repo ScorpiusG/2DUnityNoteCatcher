@@ -164,6 +164,8 @@ public class Creator_Control : MonoBehaviour
         chartData.listNoteTapInfo = new List<string>();
         chartData.listSpecialEffectInfo = new List<string>();
 
+        chartData.listTempoChanges = new List<Vector3>();
+
         chartData.chartVersion = INT_CHART_VERSION;
         chartData.songName = textSongName.text;
         chartData.songArtist = textSongArtist.text;
@@ -207,7 +209,7 @@ public class Creator_Control : MonoBehaviour
             }
             newNote.other = x.other;
 
-            // Format: <type> | <size> | <time> | <hori-position> | <length (long note)>
+            // Format: <type> | <size> | <time> | <hori-position> | <length (long note)> | <speed multiplier>
             string stringNote = newNote.type.ToString() + "|" +
                 newNote.size.ToString() + "|" +
                 newNote.time.ToString() + "|" +
