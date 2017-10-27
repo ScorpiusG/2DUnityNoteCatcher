@@ -49,6 +49,7 @@ public class SongMenu_Control : MonoBehaviour
     public Text textDetailsRecord;
     public GameObject objectButtonPlay;
 
+    public GameObject objectDetailsDescriptionIndicator;
     public GameObject objectDetailsDescription;
     private bool boolDetailsDescriptionEnable = false;
     public Text textDetailsDescription;
@@ -294,6 +295,14 @@ public class SongMenu_Control : MonoBehaviour
         }
         objectDetailsDescription.SetActive(boolDetailsDescriptionEnable);
         //objectDetailsDescription.SetActive(Input.GetKey(KeyCode.F1) && textDetailsDescription.text.Length > 0);
+        if (textDetailsDescription.text.Length > 0 && !objectDetailsDescriptionIndicator.activeSelf)
+        {
+            objectDetailsDescriptionIndicator.SetActive(true);
+        }
+        else if (textDetailsDescription.text.Length <= 0 && objectDetailsDescriptionIndicator.activeSelf)
+        {
+            objectDetailsDescriptionIndicator.SetActive(false);
+        }
 
         // Erase high score records by holding F9 for five seconds.
         if (Input.GetKey(KeyCode.F9))

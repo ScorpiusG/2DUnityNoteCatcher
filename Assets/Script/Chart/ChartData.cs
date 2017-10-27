@@ -6,6 +6,7 @@ using UnityEngine;
 [Serializable]
 public class ChartData : ScriptableObject
 {
+    // Main chart variables
     public string songName = "";
     public string songArtist = "";
     public string chartDeveloper = "";
@@ -27,7 +28,11 @@ public class ChartData : ScriptableObject
 
     // Format: x = time, y = tempo, z = first beat
     public List<Vector3> listTempoChanges;
-    
+
+    // Chart editor variables
+    public int beatsPerMeasure = 4;
+
+    // General subclasses
     public class NoteInfo : ScriptableObject
     {
         public int type = 0;

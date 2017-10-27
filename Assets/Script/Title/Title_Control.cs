@@ -12,6 +12,7 @@ public class Title_Control : MonoBehaviour
     public string stringSceneNameSongMenuOfficial = "SongMenuOfficial";
     public string stringSceneNameSongMenuCustom = "SongMenuCustom";
     public string stringSceneNameChartEditor = "Creator";
+    public string stringSceneNameTutorial = "Tutorial";
 
     void Start()
     {
@@ -62,6 +63,16 @@ public class Title_Control : MonoBehaviour
     {
         yield return null;
         SceneTransition.LoadScene(stringSceneNameChartEditor);
+    }
+
+    public void ButtonSceneTransferTutorial()
+    {
+        StartCoroutine("_ButtonSceneTransferTutorial");
+    }
+    private IEnumerator _ButtonSceneTransferTutorial()
+    {
+        yield return null;
+        SceneTransition.LoadScene(stringSceneNameTutorial);
     }
 
     public void ButtonGameExit()

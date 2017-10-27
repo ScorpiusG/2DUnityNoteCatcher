@@ -38,6 +38,7 @@ public class Creator_Control : MonoBehaviour
     public Text textTimeCurrentLength;
     public Text textBeatSnapDivisor;
     public Text textHoriPosSnapDivisor;
+    public Text textBeatsPerMeasure;
 
     public Text textChartGameType;
     public Text textNotePlacementType;
@@ -94,6 +95,7 @@ public class Creator_Control : MonoBehaviour
     private int intHoriPosSnapDivisor = 0;
     public int[] intHoriPosSnapDivisorValue = { 2, 3, 4, 6, 8 };
     [HideInInspector] public float floatCursorPosition = 0;
+    private int intBeatsPerMeasure = 4;
     private int intChartLevel = 0;
     private float floatGameplayLength = 0f;
     private Creator_Note objectNoteSelected = null;
@@ -269,6 +271,8 @@ public class Creator_Control : MonoBehaviour
             //}
         }
 
+        chartData.beatsPerMeasure = intBeatsPerMeasure;
+
         string output = JsonUtility.ToJson(chartData);
 #if UNITY_EDITOR
         Debug.Log(output);
@@ -385,6 +389,8 @@ public class Creator_Control : MonoBehaviour
             CreateNoteTap(newNote);
         }
 
+        intBeatsPerMeasure = chartData.beatsPerMeasure;
+
         CalculateChartLevel();
         ShortcutKeysEnable();
     }
@@ -415,6 +421,19 @@ public class Creator_Control : MonoBehaviour
 
         CalculateChartLevel();
         Creator_SongPreview.mSongPreview.ClearClip();
+    }
+    /// <summary>
+    /// Wipes chart of note data only.
+    /// </summary>
+    public void ClearNotesOnly()
+    {
+        Creator_Note[] listNoteC = FindObjectsOfType<Creator_Note>();
+        foreach (Creator_Note x in listNoteC)
+        {
+            DeleteNote(x);
+        }
+
+        CalculateChartLevel();
     }
 
     /// <summary>
@@ -956,6 +975,12 @@ public class Creator_Control : MonoBehaviour
         return newLine;
     }
 
+    public void AdjustBeatsPerMeasure(int modifier)
+    {
+        PlaySound(clipTick);
+        intBeatsPerMeasure = Mathf.Clamp(intBeatsPerMeasure + modifier, 3, 9);
+    }
+
     public void ChartJudgeLevelChange(int modifier)
     {
         intChartJudge += modifier;
@@ -1236,8 +1261,8 @@ public class Creator_Control : MonoBehaviour
         // Display cursor position
         float songTempo = 0;
         textTimeCurrentMeasure.text =
-            Translator.GetStringTranslation("CREATOR_CURRENTMEASURE", "Measure") + " " + (Mathf.Floor(floatCursorPosition / 4) + 1).ToString() + " " +
-            Translator.GetStringTranslation("CREATOR_CURRENTBEAT", "Beat") + " " + (Mathf.Floor(floatCursorPosition % 4) + 1).ToString() + " (" + Mathf.Floor(floatCursorPosition + 1).ToString() + ")";
+            Translator.GetStringTranslation("CREATOR_CURRENTMEASURE", "Measure") + " " + (Mathf.Floor(floatCursorPosition / intBeatsPerMeasure) + 1).ToString() + " " +
+            Translator.GetStringTranslation("CREATOR_CURRENTBEAT", "Beat") + " " + (Mathf.Floor(floatCursorPosition % intBeatsPerMeasure) + 1).ToString() + " (" + Mathf.Floor(floatCursorPosition + 1).ToString() + ")";
         if (float.TryParse(textSongTempo.text, out songTempo))
         {
             textTimeCurrentLength.text = Translator.GetStringTranslation("CREATOR_CURRENTSONGPOSITION", "Song Pos") + " " + (Mathf.FloorToInt(60f / songTempo * floatCursorPosition / 60f)).ToString("0") + ":" + (60f / songTempo * floatCursorPosition % 60f).ToString("00.00");
@@ -1255,6 +1280,7 @@ public class Creator_Control : MonoBehaviour
             textBeatSnapDivisor.text = "FREE";
         }
         textHoriPosSnapDivisor.text = "1/" + intHoriPosSnapDivisorValue[intHoriPosSnapDivisor].ToString();
+        textBeatsPerMeasure.text = intBeatsPerMeasure.ToString();
 
         // Current selection
         textChartGameType.text = Translator.GetStringTranslation("CREATOR_CHARTGAMETYPEBODY" + intChartGameType.ToString(), stringChartGameType[intChartGameType]);
