@@ -10,6 +10,7 @@ public class Creator_Control : MonoBehaviour
     public static Creator_Control control;
     private const int INT_CHART_VERSION = 0;
 
+    public GameObject objectCentralPivot;
     public Camera cameraMain;
     public Canvas canvasCreatorSetting;
 
@@ -43,10 +44,10 @@ public class Creator_Control : MonoBehaviour
     public Text textChartGameType;
     public Text textNotePlacementType;
     public Image[] imageNotePlacementHighlight;
-    public Text textNoteLength;
+    public InputField textNoteLength;
     public Toggle toggleNoteLengthEnable;
-    public Text textNoteSpeed;
-    public Text textNoteHitsound;
+    public InputField textNoteSpeed;
+    public InputField textNoteHitsound;
     public Toggle toggleNoteHitsoundEnable;
     public Text textNoteOther;
     private List<string> listStringNoteOther = new List<string>();
@@ -209,6 +210,7 @@ public class Creator_Control : MonoBehaviour
             {
                 newNote.length = 0;
             }
+            newNote.speed = x.speed;
             newNote.other = x.other;
 
             // Format: <type> | <size> | <time> | <hori-position> | <length (long note)> | <speed multiplier>
@@ -249,9 +251,10 @@ public class Creator_Control : MonoBehaviour
             {
                 newNote.length = 0;
             }
+            newNote.speed = x.speed;
             newNote.other = x.other;
 
-            // Format: <type> | <size> | <time> | <hori-position> | <length (long note)>
+            // Format: <type> | <size> | <time> | <hori-position> | <length (long note)> | <speed>
             string stringNote = newNote.type.ToString() + "|" +
                 newNote.size.ToString() + "|" +
                 newNote.time.ToString() + "|" +
@@ -465,11 +468,8 @@ public class Creator_Control : MonoBehaviour
         newNote.transform.position = new Vector3(note.position, note.time);
         newNote.type = note.type % 4;
         newNote.size = note.size;
-        if (note.speed > 0.01f)
-        {
-            newNote.speed = note.speed;
-        }
-        else
+        newNote.speed = note.speed;
+        if (note.speed < 0.01f)
         {
             newNote.speed = 1f;
         }
@@ -603,11 +603,8 @@ public class Creator_Control : MonoBehaviour
         newNote.transform.position = new Vector3(0f, note.time);
         newNote.type = note.type % 4;
         newNote.size = note.size;
-        if (note.speed > 0.01f)
-        {
-            newNote.speed = note.speed;
-        }
-        else
+        newNote.speed = note.speed;
+        if (note.speed < 0.01f)
         {
             newNote.speed = 1f;
         }
@@ -914,18 +911,18 @@ public class Creator_Control : MonoBehaviour
         GameObject line = null;
         if (intBeatSnapDivisor >= 0)
         {
-            for (int i = 0; i <= 5; i++)
+            for (int i = 0; i <= 10; i++)
             {
                 for (float f = 0; f < 1 - Mathf.Epsilon; f += 1f / intBeatSnapDivisorValue[intBeatSnapDivisor])
                 {
                     if (f < Mathf.Epsilon) continue;
 
                     line = GetObjectBeatSnapDivisorGuide();
-                    line.transform.parent = cameraMain.transform;
+                    line.transform.parent = objectCentralPivot.transform;
                     line.transform.localPosition = Vector3.up * (f + i);
                     line.SetActive(true);
                     line = GetObjectBeatSnapDivisorGuide();
-                    line.transform.parent = cameraMain.transform;
+                    line.transform.parent = objectCentralPivot.transform;
                     line.transform.localPosition = Vector3.down * (f + i);
                     line.SetActive(true);
                 }
@@ -937,11 +934,11 @@ public class Creator_Control : MonoBehaviour
             if (f < Mathf.Epsilon) continue;
 
             line = GetObjectHoriPosSnapDivisorGuide();
-            line.transform.parent = cameraMain.transform;
+            line.transform.parent = objectCentralPivot.transform;
             line.transform.localPosition = Vector3.left * f;
             line.SetActive(true);
             line = GetObjectHoriPosSnapDivisorGuide();
-            line.transform.parent = cameraMain.transform;
+            line.transform.parent = objectCentralPivot.transform;
             line.transform.localPosition = Vector3.right * f;
             line.SetActive(true);
         }
@@ -1566,7 +1563,7 @@ public class Creator_Control : MonoBehaviour
                                 }
                             }
 #if UNITY_EDITOR
-                            Debug.Log("Note creation: pos " + pos.ToString("f3") + ", time " + time.ToString("f3") + ", type " + type.ToString() + ", length " + length.ToString("f3"));
+                            Debug.Log("Note creation: pos " + pos.ToString("f3") + ", time " + time.ToString("f3") + ", type " + type.ToString() + ", length " + length.ToString("f3") + ", speed " + speed.ToString("f3"));
 #endif
                             if (type < 4)
                             {
@@ -1748,7 +1745,7 @@ public class Creator_Control : MonoBehaviour
         if (floatCursorPosition < 0) floatCursorPosition = 0;
 
         // Camera manipulation
-        cameraMain.transform.position = Vector3.Lerp(cameraMain.transform.position, Vector3.up * floatCursorPosition, Time.deltaTime * 16f);
+        objectCentralPivot.transform.position = Vector3.Lerp(objectCentralPivot.transform.position, Vector3.up * floatCursorPosition, Time.deltaTime * 16f);
         cameraMain.orthographicSize = Mathf.Lerp(cameraMain.orthographicSize, cameraSizeMin + ((cameraSizeMax - cameraSizeMin) * sliderZoom.value), Time.deltaTime * 8f);
     }
 

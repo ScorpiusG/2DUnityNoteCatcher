@@ -1104,6 +1104,9 @@ public class Game_Control : MonoBehaviour
                     note.gameObject.SetActive(true);
                     note.spriteRendererLength.gameObject.SetActive(false);
 
+                    Vector3 notePos = new Vector3(note.position, (note.time - floatMusicBeat) * floatNoteScrollMultiplier * PlayerSetting.setting.intScrollSpeed * note.speed);
+                    note.transform.position = notePos;
+
                     // If note has length, create a second note with a line below it
                     float longNoteLength = float.Parse(noteInfo[4]);
                     if (longNoteLength > 0.01f)
@@ -1128,10 +1131,10 @@ public class Game_Control : MonoBehaviour
                             longNoteLength * floatNoteScrollMultiplier * PlayerSetting.setting.intScrollSpeed * speed,
                             1f);
                         note.spriteRendererLength.color = noteColor[note.type];
-                    }
 
-                    Vector3 notePos = new Vector3(note.position, (note.time - floatMusicBeat) * floatNoteScrollMultiplier * PlayerSetting.setting.intScrollSpeed * note.speed);
-                    note.transform.position = notePos;
+                        notePos = new Vector3(note.position, (note.time - floatMusicBeat) * floatNoteScrollMultiplier * PlayerSetting.setting.intScrollSpeed * note.speed);
+                        note.transform.position = notePos;
+                    }
 
                     chartData.listNoteCatchInfo.RemoveAt(j);
                     break;
@@ -1169,6 +1172,9 @@ public class Game_Control : MonoBehaviour
                     note.gameObject.SetActive(true);
                     note.spriteRendererLength.gameObject.SetActive(false);
 
+                    Vector3 notePos = new Vector3(note.position, (note.time - floatMusicBeat) * floatNoteScrollMultiplier * PlayerSetting.setting.intScrollSpeed * note.speed);
+                    note.transform.position = notePos;
+
                     float longNoteLength = float.Parse(noteInfo[4]);
                     if (longNoteLength > 0.01f)
                     {
@@ -1191,10 +1197,10 @@ public class Game_Control : MonoBehaviour
                             longNoteLength * floatNoteScrollMultiplier * PlayerSetting.setting.intScrollSpeed * speed,
                             1f);
                         note.spriteRendererLength.color = noteColor[note.type];
-                    }
 
-                    Vector3 notePos = new Vector3(note.position, (note.time - floatMusicBeat) * floatNoteScrollMultiplier * PlayerSetting.setting.intScrollSpeed * note.speed);
-                    note.transform.position = notePos;
+                        notePos = new Vector3(note.position, (note.time - floatMusicBeat) * floatNoteScrollMultiplier * PlayerSetting.setting.intScrollSpeed * note.speed);
+                        note.transform.position = notePos;
+                    }
 
                     chartData.listNoteTapInfo.RemoveAt(j);
                 }
