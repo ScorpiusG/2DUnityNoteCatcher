@@ -994,7 +994,7 @@ public class Creator_Control : MonoBehaviour
     /// <param name="note">The note to be despawned.</param>
     public void DeleteNote(Creator_Note note)
     {
-        note.transform.position = Vector3.down * 1f;
+        note.transform.position = Vector3.down * 100000f + Vector3.right * 10f;
         note.gameObject.SetActive(false);
     }
 
