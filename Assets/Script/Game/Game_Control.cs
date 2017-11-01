@@ -120,6 +120,7 @@ public class Game_Control : MonoBehaviour
     public AudioClip clipGameEndFail;
     public AudioClip clipGameForceEnd;
     public AudioClip clipGameButtonPress;
+    public AudioClip clipGameNoteAssistTick;
 
     public float floatNoteScrollMultiplier = 0.05f;
     public float[] floatDistAccuracyCatchBest = { 0.12f, 0.11f, 0.1f, 0.09f, 0.81f };
@@ -392,6 +393,11 @@ public class Game_Control : MonoBehaviour
         //  where x is a number of the sound effect
         if (playSoundEffect)
         {
+            if (PlayerSetting.setting.enableAssistTickSound)
+            {
+                PlaySoundEffect(clipGameNoteAssistTick);
+            }
+
             foreach (string x in note.other)
             {
                 if (x.StartsWith("sound"))

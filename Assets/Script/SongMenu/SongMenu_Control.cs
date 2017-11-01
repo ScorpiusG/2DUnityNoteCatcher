@@ -7,8 +7,8 @@ using UnityEngine.SceneManagement;
 
 public class SongMenu_Control : MonoBehaviour
 {
-    public bool isLoadCustomSongs = true;
-    public string[] listOfficialSongFolderName = { };
+    public SongMenu_SongList[] listOfficialSongList = { };
+    private bool isLoadCustomSongs = false;
 
     public string stringSceneNameTitle = "Title";
     public string stringSceneNameGame = "Game";
@@ -80,6 +80,8 @@ public class SongMenu_Control : MonoBehaviour
     public Toggle toggleOptionsDisplayRecordGhost;
     public Toggle toggleOptionsDisplayJudgmentPerHit;
     public Toggle toggleOptionsDisplayJudgmentCounter;
+    public Toggle toggleOptionsObjectBeatPulse;
+    public Toggle toggleOptionsAssistTickSound;
 
     public AudioSource audioSourcePreview;
     public PlaySoundEffect mSoundPlayer;
@@ -145,6 +147,8 @@ public class SongMenu_Control : MonoBehaviour
         toggleOptionsDisplayRecordGhost.isOn = PlayerSetting.setting.enableDisplayRecordGhost;
         toggleOptionsDisplayJudgmentPerHit.isOn = PlayerSetting.setting.enableDisplayNoteJudgment;
         toggleOptionsDisplayJudgmentCounter.isOn = PlayerSetting.setting.enableDisplayNoteHitCounterSmall;
+        toggleOptionsObjectBeatPulse.isOn = PlayerSetting.setting.enableNoteAndCatcherHighlightBeatPulse;
+        toggleOptionsAssistTickSound.isOn = PlayerSetting.setting.enableAssistTickSound;
 
         string path = Directory.GetCurrentDirectory() + stringSongDirectoryPath;
 #if UNITY_EDITOR
@@ -152,14 +156,17 @@ public class SongMenu_Control : MonoBehaviour
 #endif
 
         // If it's a custom song list, get all the folders present
-        if (isLoadCustomSongs)
+        if (listOfficialSongList.Length <= 0)
         {
+            isLoadCustomSongs = true;
+
             // The "Songs" folder does not exist in the game directory
             if (!Directory.Exists(path))
             {
 #if UNITY_EDITOR
                 Debug.LogWarning("WARNING: \"Songs\" folder does not exist!");
 #endif
+                Notification.Display("WARNING\nThe \"Songs\" folder does not exist!", Color.white);
 
                 Destroy(buttonSongIndividual.gameObject);
                 buttonSongIndividual = null;
@@ -180,9 +187,13 @@ public class SongMenu_Control : MonoBehaviour
         // Otherwise, use its own list
         else
         {
-            foreach (string x in listOfficialSongFolderName)
+            isLoadCustomSongs = false;
+            foreach (SongMenu_SongList x in listOfficialSongList)
             {
-                listStringSongDirectory.Add(x);
+                foreach (string y in x.listStringSongList)
+                {
+                    listStringSongDirectory.Add(y);
+                }
             }
         }
         // Sort the names
@@ -926,5 +937,13 @@ public class SongMenu_Control : MonoBehaviour
     public void AdjustDisplayJudgmentCounter()
     {
         PlayerSetting.setting.enableDisplayNoteHitCounterSmall = toggleOptionsDisplayJudgmentCounter.isOn;
+    }
+    public void AdjustObjectBeatPulse()
+    {
+        PlayerSetting.setting.enableNoteAndCatcherHighlightBeatPulse = toggleOptionsObjectBeatPulse.isOn;
+    }
+    public void AdjustAssistTickSound()
+    {
+        PlayerSetting.setting.enableAssistTickSound = toggleOptionsAssistTickSound.isOn;
     }
 }

@@ -46,6 +46,8 @@ public class PlayerSetting : MonoBehaviour
     public bool enableDisplayNoteHitCounterSmall = false;
     // Have all catchers and notes pulse on every beat.
     public bool enableNoteAndCatcherHighlightBeatPulse = true;
+    // Play a tick sound effect upon hitting a note.
+    public bool enableAssistTickSound = false;
 
     // Other fun(?) stuff. DISABLE SCORING if any of these are used.
     // Does nothing while not affecting high score
