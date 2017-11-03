@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class Game_Note : MonoBehaviour
 {
+    public float health = 1f;
+
     public int type = 0;
     public int size = 0;
     public float position = 0f;

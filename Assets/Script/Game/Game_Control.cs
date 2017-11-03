@@ -20,11 +20,15 @@ public class Game_Control : MonoBehaviour
 
     public GameObject objectAutoplayIndicator;
     public GameObject[] objectGroupType;
-    public GameObject objectMouseCrosshair;
+    public GameObject objectMouseCursor;
+    public GameObject objectMouseCursorCrosshair;
+    public GameObject objectMouseCursorDodger;
     public GameObject[] objectCatcher;
     public SpriteRenderer[] spriteRendererCatcherHighlight;
+    private int intNoteDodgeHit = 0;
 
     public Camera cameraMain;
+    public Camera cameraObjectPlayer;
     public Camera[] cameraGame;
     public float floatCameraRotation = 0f;
     public bool boolCameraRotationNoLerp = false;
@@ -35,6 +39,10 @@ public class Game_Control : MonoBehaviour
     private List<Game_Note> listNoteCatch = new List<Game_Note>();
     public Game_Note noteTapPrefab;
     private List<Game_Note> listNoteTap = new List<Game_Note>();
+    public Game_NoteBullet noteBulletPrefab;
+    private List<Game_NoteBullet> listNoteBullet = new List<Game_NoteBullet>();
+    public Game_NoteItem noteItemPrefab;
+    private List<Game_NoteItem> listNoteItem = new List<Game_NoteItem>();
     public Color[] noteColor = { Color.blue, Color.red, Color.green, Color.yellow };
     public float floatNoteDistanceSpawn = 3f;
 
@@ -101,6 +109,7 @@ public class Game_Control : MonoBehaviour
     public Text textDebug;
 
     private ChartData chartData;
+    private float chartCurrentTempo = 60f;
     private int chartTotalNotes = 0;
     private int chartJudgeDifficulty = 0;
     private float floatMusicPosition = 0f;
@@ -121,8 +130,10 @@ public class Game_Control : MonoBehaviour
     public AudioClip clipGameForceEnd;
     public AudioClip clipGameButtonPress;
     public AudioClip clipGameNoteAssistTick;
+    public AudioClip clipGameBulletHit;
 
     public float floatNoteScrollMultiplier = 0.05f;
+    public float floatNoteCatchLongHealthDropDuration = 0.4f;
     public float[] floatDistAccuracyCatchBest = { 0.12f, 0.11f, 0.1f, 0.09f, 0.81f };
     public float[] floatDistAccuracyCatchGreat = { 0.15f, 0.139f, 0.128f, 0.115f, 0.101f };
     public float[] floatDistAccuracyCatchFine = { 0.168f, 0.156f, 0.142f, 0.128f, 0.114f };
@@ -130,6 +141,11 @@ public class Game_Control : MonoBehaviour
     public float[] floatDistAccuracyTapGreat = { 0.15f, 0.139f, 0.128f, 0.115f, 0.101f };
     public float[] floatDistAccuracyTapFine = { 0.168f, 0.156f, 0.142f, 0.128f, 0.114f };
     public float[] floatDistAccuracyTapMiss = { 0.17f, 0.16f, 0.15f, 0.14f, 0.13f };
+    public float floatNoteDodgeBulletHitboxRadius = 0.08f;
+    public float floatNoteDodgeItemHitboxRadius = 0.2f;
+    public float floatNoteDodgeInvincibilityPeriod = 1f;
+    private float floatNoteDodgeInvincibilityPeriodCurrent = 2f;
+    public int[] intNoteDodgeBulletRingSpawnQuantity = { 12, 14, 16, 18, 20, 22, 24, 26, 28, 30 };
 
     private bool isForcedEnd = false;
     private bool isScoringDisabled = false;
@@ -198,13 +214,51 @@ public class Game_Control : MonoBehaviour
         listNoteTap.Add(newNote);
         return newNote;
     }
+    private Game_NoteBullet SpawnNoteBullet()
+    {
+        foreach (Game_NoteBullet x in listNoteBullet)
+        {
+            if (!x.gameObject.activeSelf)
+            {
+                x.transform.position = new Vector3(0f, 100f, 0f);
+                return x;
+            }
+        }
+
+        Game_NoteBullet newNote = Instantiate(noteBulletPrefab);
+        listNoteBullet.Add(newNote);
+        return newNote;
+    }
+    private Game_NoteItem SpawnNoteItem()
+    {
+        foreach (Game_NoteItem x in listNoteItem)
+        {
+            if (!x.gameObject.activeSelf)
+            {
+                x.transform.position = new Vector3(0f, 100f, 0f);
+                return x;
+            }
+        }
+
+        Game_NoteItem newNote = Instantiate(noteItemPrefab);
+        listNoteItem.Add(newNote);
+        return newNote;
+    }
 
     private void DespawnNote(Game_Note note)
     {
         note.gameObject.SetActive(false);
     }
+    private void DespawnNote(Game_NoteBullet note)
+    {
+        note.gameObject.SetActive(false);
+    }
+    private void DespawnNote(Game_NoteItem note)
+    {
+        note.gameObject.SetActive(false);
+    }
 
-    private void JudgeNote(Game_Note note, GameObject catcher, bool isTapNote)
+    private void JudgeNote(Game_Note note, GameObject catcher, bool isTapNote, bool forceMiss = false)
     {
         bool playSoundEffect = false;
 
@@ -222,7 +276,7 @@ public class Game_Control : MonoBehaviour
                     int animJudgeID = 0;
                     //int animSortingLayerID = 0;
                     // BEST
-                    if (dist < floatDistAccuracyCatchBest[chartJudgeDifficulty] || boolAutoplay)
+                    if (!forceMiss && (dist < floatDistAccuracyCatchBest[chartJudgeDifficulty] || boolAutoplay))
                     {
                         playerAccuracyBest++;
                         playerComboCurrent++;
@@ -234,7 +288,7 @@ public class Game_Control : MonoBehaviour
 #endif
                     }
                     // GREAT
-                    else if (dist < floatDistAccuracyCatchGreat[chartJudgeDifficulty])
+                    else if (!forceMiss && dist < floatDistAccuracyCatchGreat[chartJudgeDifficulty])
                     {
                         playerAccuracyGreat++;
                         playerComboCurrent++;
@@ -246,7 +300,7 @@ public class Game_Control : MonoBehaviour
 #endif
                     }
                     // FINE
-                    else if (dist < floatDistAccuracyCatchFine[chartJudgeDifficulty])
+                    else if (!forceMiss && dist < floatDistAccuracyCatchFine[chartJudgeDifficulty])
                     {
                         playerAccuracyFine++;
                         playerComboCurrent++;
@@ -301,7 +355,7 @@ public class Game_Control : MonoBehaviour
                     int animJudgeID = 0;
                     //int animSortingLayerID = 0;
                     // BEST
-                    if (dist < floatDistAccuracyTapBest[chartJudgeDifficulty] || boolAutoplay)
+                    if (!forceMiss && (dist < floatDistAccuracyTapBest[chartJudgeDifficulty] || boolAutoplay))
                     {
                         playerAccuracyBest++;
                         playerComboCurrent++;
@@ -313,7 +367,7 @@ public class Game_Control : MonoBehaviour
 #endif
                     }
                     // GREAT
-                    else if (dist < floatDistAccuracyTapGreat[chartJudgeDifficulty])
+                    else if (!forceMiss && dist < floatDistAccuracyTapGreat[chartJudgeDifficulty])
                     {
                         playerAccuracyGreat++;
                         playerComboCurrent++;
@@ -325,7 +379,7 @@ public class Game_Control : MonoBehaviour
 #endif
                     }
                     // FINE
-                    else if (dist < floatDistAccuracyTapFine[chartJudgeDifficulty])
+                    else if (!forceMiss && dist < floatDistAccuracyTapFine[chartJudgeDifficulty])
                     {
                         playerAccuracyFine++;
                         playerComboCurrent++;
@@ -508,6 +562,16 @@ public class Game_Control : MonoBehaviour
         objectGroupType[1].SetActive(intChartGameType >= 1);
         objectGroupType[2].SetActive(intChartGameType >= 2);
         objectGroupType[3].SetActive(intChartGameType >= 2);
+        objectMouseCursorCrosshair.SetActive(intChartGameType != 3);
+        objectMouseCursorDodger.SetActive(intChartGameType == 3);
+
+        if (intChartGameType == 3)
+        {
+            foreach (GameObject x in objectCatcher)
+            {
+                x.SetActive(false);
+            }
+        }
 
         // Variable initialization
         if (boolCustomSong)
@@ -545,6 +609,10 @@ public class Game_Control : MonoBehaviour
         {
             x.color = Color.clear;
         }
+        if (intChartGameType == 3)
+        {
+            cameraObjectPlayer.depth += 100;
+        }
         //cameraMain.backgroundColor *= PlayerSetting.setting.floatBackgroundBrightness;
         if (PlayerSetting.setting.floatBackgroundBrightness > 0.9999f)
         {
@@ -556,7 +624,7 @@ public class Game_Control : MonoBehaviour
             rendererBackgroundCover.color = new Color(0f, 0f, 0f, 1f - PlayerSetting.setting.floatBackgroundBrightness);
         }
         textNoteJudgeCount.gameObject.SetActive(PlayerSetting.setting.enableDisplayNoteHitCounterSmall);
-        textNoteJudgeCount.text = "B 0\nG 0\nF 0\nM 0";
+        textNoteJudgeCount.text = "";
         animatorResults.gameObject.SetActive(false);
         animatorNewRecord.gameObject.SetActive(false);
         textMeshComboCurrent.gameObject.SetActive(false);
@@ -656,7 +724,7 @@ public class Game_Control : MonoBehaviour
             for (int i = 0; i < noteColor.Length; i++)
             {
                 Color c = noteColor[i];
-                c.a *= 0.5f;
+                c.a *= 0.6f;
                 noteColor[i] = c;
             }
         }
@@ -683,7 +751,7 @@ public class Game_Control : MonoBehaviour
         objectGroupInterfaceAccuracy.SetActive(PlayerSetting.setting.enableInterfaceAccuracy);
         imageAccuracyGauge.fillAmount = 0f;
         imageAccuracyNegativeGauge.fillAmount = 0f;
-        textAccuracy.text = "0.00%";
+        textAccuracy.text = "";
         chartTotalNotes = chartData.listNoteCatchInfo.Count + chartData.listNoteTapInfo.Count;
         for (int i = 0; i < chartData.listNoteCatchInfo.Count; i++)
         {
@@ -720,7 +788,7 @@ public class Game_Control : MonoBehaviour
         }
 
         // Camera rotation
-        floatCameraRotation += floatCameraRotationChangeRate * Time.deltaTime * chartData.songTempo / 60f;
+        floatCameraRotation += floatCameraRotationChangeRate * Time.deltaTime * chartCurrentTempo / 60f;
         for (int i = 0; i < cameraGame.Length; i++)
         {
             if (boolCameraRotationNoLerp)
@@ -889,7 +957,8 @@ public class Game_Control : MonoBehaviour
         //audioSourceMusic.Play();
         mSongLoader.audioSourceMusic.Play();
 
-        floatMusicPositionEnd = chartData.songLength / chartData.songTempo * 60f;
+        chartCurrentTempo = chartData.songTempo;
+        floatMusicPositionEnd = chartData.songLength / chartCurrentTempo * 60f;
         floatMusicPositionEnd -= (chartData.chartOffset + PlayerSetting.setting.intGameOffset) * 0.001f;
 
         yield return null;
@@ -909,7 +978,10 @@ public class Game_Control : MonoBehaviour
             // Time update
             floatMusicPosition = mSongLoader.audioSourceMusic.time - ((chartData.chartOffset + PlayerSetting.setting.intGameOffset) * 0.001f);
             //floatMusicPosition = audioSourceMusic.time - ((chartData.chartOffset + PlayerSetting.setting.intGameOffset) * 0.001f);
-            floatMusicBeat = floatMusicPosition * chartData.songTempo / 60f;
+            floatMusicBeat = floatMusicPosition * chartCurrentTempo / 60f;
+
+            // Invincibility timer for Note Dodge
+            floatNoteDodgeInvincibilityPeriodCurrent -= Time.deltaTime;
 
             // Highlight flash on beat
             float floatHighlightAlphaCurrent = 0f;
@@ -921,7 +993,7 @@ public class Game_Control : MonoBehaviour
             colorBeatFlash.a = floatHighlightAlphaCurrent;
 
             // Crosshair position
-            Vector3 mouseCursorPos = objectMouseCrosshair.transform.position;
+            Vector3 mouseCursorPos = objectMouseCursor.transform.position;
             // Normal play
             if (!boolAutoplay)
             {
@@ -937,80 +1009,109 @@ public class Game_Control : MonoBehaviour
                     movementVertAlpha = Input.GetAxis("MouseY");
                 }
 
-                mouseCursorPos.x = Mathf.Clamp(mouseCursorPos.x + movementHoriAlpha * PlayerSetting.setting.floatMouseSensitivity, -1f, 1f);
-                mouseCursorPos.y = Mathf.Clamp(mouseCursorPos.y + movementVertAlpha * PlayerSetting.setting.floatMouseSensitivity, -1f, 1f);
-                objectMouseCrosshair.transform.position = mouseCursorPos;
+                mouseCursorPos.x += movementHoriAlpha * PlayerSetting.setting.floatMouseSensitivity;
+                mouseCursorPos.y += movementVertAlpha * PlayerSetting.setting.floatMouseSensitivity;
+                objectMouseCursor.transform.position = mouseCursorPos;
             }
             // Automatic play (always perfect)
             else
             {
-                Game_Note nextNoteCatcherHori = null;
-                Game_Note nextNoteCatcherVert = null;
-                foreach (Game_Note x in listNoteCatch)
+                if (intChartGameType != 3)
                 {
-                    if (x.gameObject.activeSelf)
+                    Game_Note nextNoteCatcherHori = null;
+                    Game_Note nextNoteCatcherVert = null;
+                    foreach (Game_Note x in listNoteCatch)
                     {
-                        switch (x.type)
+                        if (x.gameObject.activeInHierarchy)
+                        {
+                            switch (x.type)
+                            {
+                                case 0:
+                                case 1:
+                                    if (nextNoteCatcherHori == null || x.transform.position.y < nextNoteCatcherHori.transform.position.y)
+                                    {
+                                        nextNoteCatcherHori = x;
+                                    }
+                                    break;
+                                case 2:
+                                case 3:
+                                    if (nextNoteCatcherVert == null || x.transform.position.y < nextNoteCatcherVert.transform.position.y)
+                                    {
+                                        nextNoteCatcherVert = x;
+                                    }
+                                    break;
+                            }
+                        }
+                    }
+
+                    float posLerpRate = 4f;
+                    if (nextNoteCatcherHori != null)
+                    {
+                        switch (nextNoteCatcherHori.type)
                         {
                             case 0:
-                            case 1:
-                                if (nextNoteCatcherHori == null || x.transform.position.y < nextNoteCatcherHori.transform.position.y)
-                                {
-                                    nextNoteCatcherHori = x;
-                                }
+                                mouseCursorPos.x = Mathf.Lerp(mouseCursorPos.x, nextNoteCatcherHori.position, Time.deltaTime * posLerpRate / (nextNoteCatcherHori.time - floatMusicBeat));
                                 break;
+                            case 1:
+                                mouseCursorPos.x = Mathf.Lerp(mouseCursorPos.x, -nextNoteCatcherHori.position, Time.deltaTime * posLerpRate / (nextNoteCatcherHori.time - floatMusicBeat));
+                                break;
+                        }
+                    }
+                    if (nextNoteCatcherVert != null)
+                    {
+                        switch (nextNoteCatcherVert.type)
+                        {
                             case 2:
+                                mouseCursorPos.y = Mathf.Lerp(mouseCursorPos.y, -nextNoteCatcherVert.position, Time.deltaTime * posLerpRate / (nextNoteCatcherVert.time - floatMusicBeat));
+                                break;
                             case 3:
-                                if (nextNoteCatcherVert == null || x.transform.position.y < nextNoteCatcherVert.transform.position.y)
-                                {
-                                    nextNoteCatcherVert = x;
-                                }
+                                mouseCursorPos.y = Mathf.Lerp(mouseCursorPos.y, nextNoteCatcherVert.position, Time.deltaTime * posLerpRate / (nextNoteCatcherVert.time - floatMusicBeat));
                                 break;
                         }
                     }
                 }
-
-                float posLerpRate = 4f;
-                if (nextNoteCatcherHori != null)
+                else
                 {
-                    switch(nextNoteCatcherHori.type)
+                    foreach (Game_NoteBullet x in listNoteBullet)
                     {
-                        case 0:
-                            mouseCursorPos.x = Mathf.Lerp(mouseCursorPos.x, nextNoteCatcherHori.position, Time.deltaTime * posLerpRate / (nextNoteCatcherHori.time - floatMusicBeat));
-                            break;
-                        case 1:
-                            mouseCursorPos.x = Mathf.Lerp(mouseCursorPos.x, -nextNoteCatcherHori.position, Time.deltaTime * posLerpRate / (nextNoteCatcherHori.time - floatMusicBeat));
-                            break;
+                        if (x.gameObject.activeInHierarchy &&
+                            Vector3.Distance(objectMouseCursorDodger.transform.position, x.transform.position) < floatNoteDodgeBulletHitboxRadius + (chartCurrentTempo / 30f) * Time.deltaTime * x.speed)
+                        {
+                            mouseCursorPos -= (x.transform.position - objectMouseCursorDodger.transform.position).normalized * (chartCurrentTempo / 60f) * Time.deltaTime;
+                        }
                     }
-                }
-                if (nextNoteCatcherVert != null)
-                {
-                    switch (nextNoteCatcherVert.type)
+                    Game_NoteItem closestItem = null;
+                    foreach (Game_NoteItem x in listNoteItem)
                     {
-                        case 2:
-                            mouseCursorPos.y = Mathf.Lerp(mouseCursorPos.y, -nextNoteCatcherVert.position, Time.deltaTime * posLerpRate / (nextNoteCatcherVert.time - floatMusicBeat));
-                            break;
-                        case 3:
-                            mouseCursorPos.y = Mathf.Lerp(mouseCursorPos.y, nextNoteCatcherVert.position, Time.deltaTime * posLerpRate / (nextNoteCatcherVert.time - floatMusicBeat));
-                            break;
+                        if (x.gameObject.activeInHierarchy && (closestItem == null ||
+                            Vector3.Distance(x.transform.position, objectMouseCursorDodger.transform.position) < Vector3.Distance(closestItem.transform.position, objectMouseCursorDodger.transform.position)))
+                        {
+                            closestItem = x;
+                        }
+                    }
+                    if (closestItem != null)
+                    {
+                        mouseCursorPos += (closestItem.transform.position - objectMouseCursorDodger.transform.position).normalized * (chartCurrentTempo / 60f) * Time.deltaTime;
                     }
                 }
             }
-            objectMouseCrosshair.transform.position = mouseCursorPos;
+            mouseCursorPos.x = Mathf.Clamp(mouseCursorPos.x, -1f, 1f);
+            mouseCursorPos.y = Mathf.Clamp(mouseCursorPos.y, -1f, 1f);
+            objectMouseCursor.transform.position = mouseCursorPos;
 
             // Catcher position
-            objectCatcher[0].transform.position = Vector3.right * objectMouseCrosshair.transform.position.x;
+            objectCatcher[0].transform.position = Vector3.right * objectMouseCursor.transform.position.x;
             if (objectCatcher[1].activeInHierarchy)
             {
-                objectCatcher[1].transform.position = Vector3.left * objectMouseCrosshair.transform.position.x;
+                objectCatcher[1].transform.position = Vector3.left * objectMouseCursor.transform.position.x;
             }
             if (objectCatcher[2].activeInHierarchy)
             {
-                objectCatcher[2].transform.position = Vector3.left * objectMouseCrosshair.transform.position.y;
+                objectCatcher[2].transform.position = Vector3.left * objectMouseCursor.transform.position.y;
             }
             if (objectCatcher[3].activeInHierarchy)
             {
-                objectCatcher[3].transform.position = Vector3.right * objectMouseCrosshair.transform.position.y;
+                objectCatcher[3].transform.position = Vector3.right * objectMouseCursor.transform.position.y;
             }
             // Catcher flash
             foreach(SpriteRenderer x in spriteRendererCatcherHighlight)
@@ -1024,7 +1125,7 @@ public class Game_Control : MonoBehaviour
             {
                 textSongProgressTime.text =
                     Mathf.Floor(mSongLoader.audioSourceMusic.time / 60f).ToString() + ":" + Mathf.Floor(mSongLoader.audioSourceMusic.time % 60f).ToString("00") + " / " +
-                    Mathf.Floor(chartData.songLength / chartData.songTempo).ToString() + ":" + Mathf.Floor((chartData.songLength / chartData.songTempo * 60f) % 60f).ToString("00");
+                    Mathf.Floor(chartData.songLength / chartCurrentTempo).ToString() + ":" + Mathf.Floor((chartData.songLength / chartCurrentTempo * 60f) % 60f).ToString("00");
             }
             if (imageSongProgressGauge.gameObject.activeSelf)
             {
@@ -1033,20 +1134,46 @@ public class Game_Control : MonoBehaviour
             // Bottom - Accuracy
             currentAccuracy = (playerAccuracyBest * 4) + (playerAccuracyGreat * 2) + playerAccuracyFine;
             currentAccuracyNegative = (playerAccuracyGreat * 2) + (playerAccuracyFine * 3) + (playerAccuracyMiss * 4);
+            // Note Dodge accuracy modifier
+            if (intChartGameType == 3)
+            {
+                int additionalAccuracyNegative = ((chartTotalNotes * 4) - currentAccuracyNegative) - Mathf.FloorToInt(((chartTotalNotes * 4) - currentAccuracyNegative) * Mathf.Pow(0.95f, intNoteDodgeHit));
+                currentAccuracyNegative += additionalAccuracyNegative;
+
+                currentAccuracy = Mathf.CeilToInt(currentAccuracy * Mathf.Pow(0.95f, intNoteDodgeHit));
+            }
             if (objectGroupInterfaceAccuracy.activeSelf)
             {
                 floatAccuracyDisplay = Mathf.Lerp(floatAccuracyDisplay, 1f * currentAccuracy / (chartTotalNotes * 4), Time.deltaTime * 8f);
                 imageAccuracyGauge.fillAmount = floatAccuracyDisplay;
                 imageAccuracyNegativeGauge.fillAmount = 1f * currentAccuracyNegative / (chartTotalNotes * 4);
-                textAccuracy.text = (floatAccuracyDisplay * 100f).ToString("f2") + "%";
+                
+                if (intChartGameType != 3)
+                {
+                    textAccuracy.text = (floatAccuracyDisplay * 100f).ToString("f2") + "%";
+                }
+                else
+                {
+                    textAccuracy.text = (floatAccuracyDisplay * 100f).ToString("f2") + "% | Hits: " + intNoteDodgeHit;
+                }
             }
             if (PlayerSetting.setting.enableDisplayNoteHitCounterSmall)
             {
-                textNoteJudgeCount.text =
-                    "B " + playerAccuracyBest.ToString() + "\n" +
-                    "G " + playerAccuracyGreat.ToString() + "\n" +
-                    "F " + playerAccuracyFine.ToString() + "\n" +
-                    "M " + playerAccuracyMiss.ToString();
+                if (intChartGameType != 3)
+                {
+                    textNoteJudgeCount.text =
+                        "B " + playerAccuracyBest.ToString() + "\n" +
+                        "G " + playerAccuracyGreat.ToString() + "\n" +
+                        "F " + playerAccuracyFine.ToString() + "\n" +
+                        "M " + playerAccuracyMiss.ToString();
+                }
+                else
+                {
+                    textNoteJudgeCount.text =
+                        "B " + playerAccuracyBest.ToString() + "\n" +
+                        "M " + playerAccuracyMiss.ToString() + "\n" +
+                        "H " + intNoteDodgeHit;
+                }
             }
             // Center - Combo and judgment
             if (textMeshComboCurrent.gameObject.activeSelf)
@@ -1091,6 +1218,7 @@ public class Game_Control : MonoBehaviour
                 if (time < floatMusicBeat + (floatNoteDistanceSpawn / floatNoteScrollMultiplier / PlayerSetting.setting.intScrollSpeed / speed))
                 {
                     Game_Note note = SpawnNoteCatch();
+                    note.health = 1f;
                     note.type = int.Parse(noteInfo[0]);
                     note.size = int.Parse(noteInfo[1]);
                     note.time = time;
@@ -1106,6 +1234,7 @@ public class Game_Control : MonoBehaviour
                         }
                     }
                     note.gameObject.layer = 9 + note.type;
+                    if (intChartGameType == 3) note.gameObject.layer += 4;
                     note.spriteRendererNote.color = noteColor[note.type];
                     note.gameObject.SetActive(true);
                     note.spriteRendererLength.gameObject.SetActive(false);
@@ -1118,6 +1247,7 @@ public class Game_Control : MonoBehaviour
                     if (longNoteLength > 0.01f)
                     {
                         note = SpawnNoteCatch();
+                        note.health = 1f;
                         note.type = int.Parse(noteInfo[0]);
                         note.size = int.Parse(noteInfo[1]);
                         note.time = time + longNoteLength;
@@ -1126,6 +1256,7 @@ public class Game_Control : MonoBehaviour
                         note.speed = speed;
                         note.other = new List<string>();
                         note.gameObject.layer = 9 + note.type;
+                        if (intChartGameType == 3) note.gameObject.layer += 4;
                         note.spriteRendererNote.color = noteColor[note.type];
                         note.gameObject.SetActive(true);
 
@@ -1159,6 +1290,7 @@ public class Game_Control : MonoBehaviour
                 if (time < floatMusicBeat + (floatNoteDistanceSpawn / floatNoteScrollMultiplier / PlayerSetting.setting.intScrollSpeed / speed))
                 {
                     Game_Note note = SpawnNoteTap();
+                    note.health = 1f;
                     note.type = int.Parse(noteInfo[0]);
                     note.size = int.Parse(noteInfo[1]);
                     note.time = time;
@@ -1185,6 +1317,7 @@ public class Game_Control : MonoBehaviour
                     if (longNoteLength > 0.01f)
                     {
                         note = SpawnNoteTap();
+                        note.health = 1f;
                         note.type = int.Parse(noteInfo[0]);
                         note.size = int.Parse(noteInfo[1]);
                         note.time = time;
@@ -1216,12 +1349,12 @@ public class Game_Control : MonoBehaviour
             // Catch note
             foreach (Game_Note x in listNoteCatch)
             {
-                if (x.gameObject.activeSelf)
+                if (x.gameObject.activeInHierarchy)
                 {
                     Vector3 notePos = new Vector3(x.position, (x.time - floatMusicBeat) * floatNoteScrollMultiplier * PlayerSetting.setting.intScrollSpeed * x.speed);
-                    if (Vector3.Distance(x.transform.position, notePos) < chartData.songTempo / 24f)
+                    if (Vector3.Distance(x.transform.position, notePos) < chartCurrentTempo / 24f)
                     {
-                        x.transform.position = Vector3.Lerp(x.transform.position, notePos, Time.deltaTime * NOTE_LERP_RATE_MULTIPLIER * PlayerSetting.setting.intScrollSpeed * chartData.songTempo / 600f);
+                        x.transform.position = Vector3.Lerp(x.transform.position, notePos, Time.deltaTime * NOTE_LERP_RATE_MULTIPLIER * PlayerSetting.setting.intScrollSpeed * chartCurrentTempo / 600f);
                     }
                     else
                     {
@@ -1240,22 +1373,100 @@ public class Game_Control : MonoBehaviour
                     {
                         // Note judgment
                         // Normal note or long note end - Go below pos 0 vertically
-                        // Long note length - Sway too far from the note's center enough to get a "Miss"
+                        /*
                         if (floatMusicBeat >= x.time ||
                             (x.length > 0.01f &&
                             floatMusicBeat >= x.time - x.length &&
                             Mathf.Abs(x.transform.position.x - objectCatcher[x.type].transform.position.x) > floatDistAccuracyCatchFine[chartJudgeDifficulty])
                             )
+                        */
+                        if (floatMusicBeat >= x.time)
                         {
                             JudgeNote(x, objectCatcher[x.type], false);
+                        }
+                        // Long note length - Sway too far from the note's center long enough to get a "Miss"
+                        else if (x.length > 0.01f && floatMusicBeat >= x.time - x.length)
+                        {
+                            if (Mathf.Abs(x.transform.position.x - objectCatcher[x.type].transform.position.x) > floatDistAccuracyCatchFine[chartJudgeDifficulty])
+                            {
+                                x.health -= 1f / floatNoteCatchLongHealthDropDuration * Time.deltaTime;
+                                if (x.health < 0f)
+                                {
+                                    JudgeNote(x, objectCatcher[x.type], false, true);
+                                }
+
+                                Color y = noteColor[x.type];
+                                y.r *= 0.4f;
+                                y.g *= 0.4f;
+                                y.b *= 0.4f;
+                                x.spriteRendererLength.color = y;
+                            }
+                            else
+                            {
+                                x.health = 1f;
+                                x.spriteRendererLength.color = noteColor[x.type];
+                            }
                         }
                     }
                     else
                     {
-                        // Bullet spawning for Note Dodge
+                        // Bullet and item spawning for Note Dodge
                         if (floatMusicBeat >= x.time)
                         {
+                            Vector3 bulletPos = Vector3.zero;
+                            switch (x.type)
+                            {
+                                default: case 0:
+                                    bulletPos = Vector3.down * 1.1f + Vector3.right * x.position;
+                                    break;
+                                case 1:
+                                    bulletPos = Vector3.up * 1.1f + Vector3.left * x.position;
+                                    break;
+                                case 2:
+                                    bulletPos = Vector3.left * 1.1f + Vector3.down * x.position;
+                                    break;
+                                case 3:
+                                    bulletPos = Vector3.right * 1.1f + Vector3.up * x.position;
+                                    break;
+                            }
 
+                            Game_NoteBullet bullet;
+                            for (int i = 0; i < intNoteDodgeBulletRingSpawnQuantity[chartJudgeDifficulty]; i++)
+                            {
+                                bullet = SpawnNoteBullet();
+                                bullet.transform.position = bulletPos;
+                                bullet.transform.rotation = Quaternion.Euler(Vector3.forward * ((((360f * i / intNoteDodgeBulletRingSpawnQuantity[chartJudgeDifficulty])) + (floatMusicPosition * 90f)) % 360f));
+                                bullet.speed = x.speed;
+
+                                bullet.gameObject.SetActive(true);
+                            }
+
+                            Game_NoteItem item = SpawnNoteItem();
+                            item.transform.position = bulletPos;
+                            switch (x.type)
+                            {
+                                default:
+                                case 0:
+                                    item.transform.rotation = Quaternion.Euler(Vector3.forward * 0f);
+                                    break;
+                                case 1:
+                                    item.transform.rotation = Quaternion.Euler(Vector3.forward * 180f);
+                                    break;
+                                case 2:
+                                    item.transform.rotation = Quaternion.Euler(Vector3.forward * 270f);
+                                    break;
+                                case 3:
+                                    item.transform.rotation = Quaternion.Euler(Vector3.forward * 90f);
+                                    break;
+                            }
+                            item.speed = x.speed;
+                            item.gameObject.SetActive(true);
+
+                            DespawnNote(x);
+                        }
+                        else if (floatMusicBeat >= x.time - x.length - 1f)
+                        {
+                            x.length -= 1f;
                         }
                     }
                 }
@@ -1263,19 +1474,19 @@ public class Game_Control : MonoBehaviour
             // Tap note
             foreach (Game_Note x in listNoteTap)
             {
-                if (x.gameObject.activeSelf)
+                if (x.gameObject.activeInHierarchy)
                 {
                     Vector3 notePos = new Vector3(x.position, (x.time - floatMusicBeat) * floatNoteScrollMultiplier * PlayerSetting.setting.intScrollSpeed * x.speed);
-                    if (Vector3.Distance(x.transform.position, notePos) < chartData.songTempo / 240f)
+                    if (Vector3.Distance(x.transform.position, notePos) < chartCurrentTempo / 240f)
                     {
-                        x.transform.position = Vector3.Lerp(x.transform.position, notePos, Time.deltaTime * NOTE_LERP_RATE_MULTIPLIER * PlayerSetting.setting.intScrollSpeed * chartData.songTempo / 600f);
+                        x.transform.position = Vector3.Lerp(x.transform.position, notePos, Time.deltaTime * NOTE_LERP_RATE_MULTIPLIER * PlayerSetting.setting.intScrollSpeed * chartCurrentTempo / 600f);
                     }
                     else
                     {
                         x.transform.position = notePos;
                     }
 
-                    float dist = Mathf.Abs(floatMusicBeat - x.time) / chartData.songTempo * 60f;
+                    float dist = Mathf.Abs(floatMusicBeat - x.time) / chartCurrentTempo * 60f;
 
                     // Note flash
                     x.spriteRendererNoteHighlight.color = colorBeatFlash;
@@ -1304,7 +1515,121 @@ public class Game_Control : MonoBehaviour
                         // Bullet spawning for Note Dodge
                         if (floatMusicBeat >= x.time)
                         {
+                            Game_NoteBullet bullet;
+                            for (int i = 0; i < intNoteDodgeBulletRingSpawnQuantity[chartJudgeDifficulty]; i++)
+                            {
+                                bullet = SpawnNoteBullet();
+                                switch (x.type)
+                                {
+                                    default:
+                                    case 0:
+                                        bullet.transform.position = Vector3.down * 1.1f + Vector3.right * ((3f * (1f * i / (intNoteDodgeBulletRingSpawnQuantity.Length))) - 1.5f);
+                                        bullet.transform.rotation = Quaternion.Euler(Vector3.forward * 0f);
+                                        break;
+                                    case 1:
+                                        bullet.transform.position = Vector3.up * 1.1f + Vector3.left * ((3f * (1f * i / (intNoteDodgeBulletRingSpawnQuantity.Length))) - 1.5f);
+                                        bullet.transform.rotation = Quaternion.Euler(Vector3.forward * 180f);
+                                        break;
+                                    case 2:
+                                        bullet.transform.position = Vector3.left * 1.1f + Vector3.down * ((3f * (1f * i / (intNoteDodgeBulletRingSpawnQuantity.Length))) - 1.5f);
+                                        bullet.transform.rotation = Quaternion.Euler(Vector3.forward * 270f);
+                                        break;
+                                    case 3:
+                                        bullet.transform.position = Vector3.right * 1.1f + Vector3.up * ((3f * (1f * i / (intNoteDodgeBulletRingSpawnQuantity.Length))) - 1.5f);
+                                        bullet.transform.rotation = Quaternion.Euler(Vector3.forward * 90f);
+                                        break;
+                                }
+                                bullet.speed = x.speed;
 
+                                bullet.gameObject.SetActive(true);
+                            }
+
+                            Game_NoteItem item = SpawnNoteItem();
+                            switch (x.type)
+                            {
+                                default:
+                                case 0:
+                                    item.transform.position = Vector3.down * 1.1f + Vector3.right * ((floatMusicPosition % 2f) - 1f);
+                                    item.transform.rotation = Quaternion.Euler(Vector3.forward * 0f);
+                                    break;
+                                case 1:
+                                    item.transform.position = Vector3.up * 1.1f + Vector3.left * ((floatMusicPosition % 2f) - 1f);
+                                    item.transform.rotation = Quaternion.Euler(Vector3.forward * 180f);
+                                    break;
+                                case 2:
+                                    item.transform.position = Vector3.left * 1.1f + Vector3.down * ((floatMusicPosition % 2f) - 1f);
+                                    item.transform.rotation = Quaternion.Euler(Vector3.forward * 270f);
+                                    break;
+                                case 3:
+                                    item.transform.position = Vector3.right * 1.1f + Vector3.up * ((floatMusicPosition % 2f) - 1f);
+                                    item.transform.rotation = Quaternion.Euler(Vector3.forward * 90f);
+                                    break;
+                            }
+                            item.speed = x.speed;
+                            item.gameObject.SetActive(true);
+
+                            DespawnNote(x);
+                        }
+                    }
+                }
+            }
+            // Note Dodge-exclusive objects
+            if (intChartGameType == 3)
+            {
+                // Bullets
+                foreach (Game_NoteBullet x in listNoteBullet)
+                {
+                    if (x.gameObject.activeInHierarchy)
+                    {
+                        // Move them
+                        x.transform.position += x.transform.up * x.speed * chartCurrentTempo / 120f * Time.deltaTime;
+
+                        // Check if its too close to the dodger
+                        if (Vector3.Distance(objectMouseCursorDodger.transform.position, x.transform.position) < floatNoteDodgeBulletHitboxRadius && !boolAutoplay)
+                        {
+                            if (floatNoteDodgeInvincibilityPeriodCurrent < 0f)
+                            {
+                                floatNoteDodgeInvincibilityPeriodCurrent = floatNoteDodgeInvincibilityPeriod;
+                                PlaySoundEffect(clipGameBulletHit);
+                                intNoteDodgeHit++;
+                            }
+                            DespawnNote(x);
+                        }
+
+                        // Despawn it if it's out of bounds
+                        if (x.transform.position.x > 1.5f ||
+                            x.transform.position.x < -1.5f ||
+                            x.transform.position.y > 1.5f ||
+                            x.transform.position.y < -1.5f)
+                        {
+                            DespawnNote(x);
+                        }
+                    }
+                }
+                // Point Items
+                foreach (Game_NoteItem x in listNoteItem)
+                {
+                    if (x.gameObject.activeInHierarchy)
+                    {
+                        // Move them
+                        x.transform.position += x.transform.up * x.speed * chartCurrentTempo / 210f * Time.deltaTime;
+
+                        // Check if its close to the dodger
+                        if (Vector3.Distance(objectMouseCursorDodger.transform.position, x.transform.position) < floatNoteDodgeItemHitboxRadius)
+                        {
+                            PlaySoundEffect(clipGameNoteAssistTick);
+                            playerAccuracyBest++;
+                            DespawnNote(x);
+                        }
+
+                        // Despawn it if it's out of bounds
+                        if (x.transform.position.x > 1.5f ||
+                            x.transform.position.x < -1.5f ||
+                            x.transform.position.y > 1.5f ||
+                            x.transform.position.y < -1.5f)
+                        {
+                            playerAccuracyMiss++;
+                            DespawnNote(x);
                         }
                     }
                 }
@@ -1329,7 +1654,7 @@ public class Game_Control : MonoBehaviour
                 // Note judgment
                 if (lowestNote != null)
                 {
-                    float dist = Mathf.Abs(floatMusicBeat - lowestNote.time) / chartData.songTempo * 60f;
+                    float dist = Mathf.Abs(floatMusicBeat - lowestNote.time) / chartCurrentTempo * 60f;
                     if (dist < floatDistAccuracyTapMiss[chartJudgeDifficulty])
                     {
                         JudgeNote(lowestNote, objectCatcher[lowestNote.type % 4], true);
@@ -1337,6 +1662,7 @@ public class Game_Control : MonoBehaviour
                 }
             }
 
+            /*
             // Hold [Escape] to end the game if it's in autoplay
             if (boolAutoplay && Input.GetKey(KeyCode.Escape))
             {
@@ -1350,12 +1676,14 @@ public class Game_Control : MonoBehaviour
             {
                 isForcedEnd = true;
             }
+            */
 
-            // Press [Escape] to pause the game in a normal game
-            if (!boolAutoplay && Input.GetKeyDown(KeyCode.Escape))
+            // Press [Escape] to pause the game
+            //if (!boolAutoplay && Input.GetKeyDown(KeyCode.Escape))
+            if (Input.GetKeyDown(KeyCode.Escape))
             {
                 // Check if the last pause is at least 3 seconds before
-                if (floatMusicPosition > floatLastPaused + 3f)
+                if (boolAutoplay || floatMusicPosition > floatLastPaused + 3f)
                 {
                     boolIsPaused = true;
                     floatLastPaused = floatMusicPosition;
@@ -1407,13 +1735,22 @@ public class Game_Control : MonoBehaviour
                     if (x.gameObject.activeSelf)
                     {
                         isForcedEnd = true;
-                        playerAccuracyMiss++;
+                        if (intChartGameType != 3) playerAccuracyMiss++;
                         DespawnNote(x);
                     }
                 }
                 foreach (Game_Note x in listNoteTap)
                 {
                     if (x.gameObject.activeSelf)
+                    {
+                        isForcedEnd = true;
+                        if (intChartGameType != 3) playerAccuracyMiss++;
+                        DespawnNote(x);
+                    }
+                }
+                if (intChartGameType == 3)
+                {
+                    foreach (Game_NoteItem x in listNoteItem)
                     {
                         isForcedEnd = true;
                         playerAccuracyMiss++;
@@ -1428,11 +1765,10 @@ public class Game_Control : MonoBehaviour
         }
         // End game loop
 
-        imageSongProgressGauge.fillAmount = 1f;
         Cursor.lockState = CursorLockMode.Locked;
         yield return null;
 
-        float finalAccuracy = 1f * ((playerAccuracyBest * 4) + (playerAccuracyGreat * 2) + playerAccuracyFine) / (chartTotalNotes * 4);
+        float finalAccuracy = 1f * ((playerAccuracyBest * 4) + (playerAccuracyGreat * 2) + playerAccuracyFine) / (chartTotalNotes * 4) * Mathf.Pow(0.95f, intNoteDodgeHit);
 #if UNITY_EDITOR
         Debug.Log("Song finished. Accuracy: " + (finalAccuracy * 100f).ToString("f2") + "%");
 #endif
@@ -1557,12 +1893,14 @@ public class Game_Control : MonoBehaviour
             textResultHeader.text = Translator.GetStringTranslation("GAME_RESULTPLAYPERFECT", "PERFECT RHYTHM");
             textResultHeader.color = colorResultHeaderPerfect;
             PlaySoundEffect(clipGameEndPerfect);
+            imageSongProgressGauge.fillAmount = 1f;
         }
         else if (finalAccuracy >= 0.01f * PlayerSetting.setting.intAccuracyTolerance)
         {
             textResultHeader.text = Translator.GetStringTranslation("GAME_RESULTPLAYCLEAR", "COMPLETE RHYTHM");
             textResultHeader.color = colorResultHeaderPass;
             PlaySoundEffect(clipGameEndPass);
+            imageSongProgressGauge.fillAmount = 1f;
         }
         else
         {
