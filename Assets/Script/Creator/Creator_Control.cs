@@ -104,6 +104,7 @@ public class Creator_Control : MonoBehaviour
 
     private bool fixedUpdateCheckOtherFrame = false;
     private bool isShortcutKeyDisabled = false;
+    private bool isNotificationShownGameTypeChangeDisable = false;
 
     void Awake()
     {
@@ -396,6 +397,8 @@ public class Creator_Control : MonoBehaviour
 
         CalculateChartLevel();
         ShortcutKeysEnable();
+
+        Notification.Display(Translator.GetStringTranslation("CREATOR_LOADSUCCESS", "Chart loaded successfully."), Color.white);
     }
 
     /// <summary>
@@ -769,6 +772,37 @@ public class Creator_Control : MonoBehaviour
     public void ChartGameTypeChange(int modifier)
     {
         if (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.LeftCommand)) return;
+
+        bool boolChangeTypeValidity = true;
+        foreach (Creator_Note x in listNoteCatchPool)
+        {
+            if (x.gameObject.activeSelf)
+            {
+                boolChangeTypeValidity = false;
+                break;
+            }
+        }
+        if (boolChangeTypeValidity)
+        {
+            foreach (Creator_Note x in listNoteTapPool)
+            {
+                if (x.gameObject.activeSelf)
+                {
+                    boolChangeTypeValidity = false;
+                    break;
+                }
+            }
+        }
+        if (!boolChangeTypeValidity)
+        {
+            if (!isNotificationShownGameTypeChangeDisable)
+            {
+                isNotificationShownGameTypeChangeDisable = true;
+                Notification.Display(Translator.GetStringTranslation("CREATOR_ERRORCHANGEGAMETYPE1", "You must clear ALL notes from the chart\nif you want to change game modes."), Color.white);
+                Notification.Display(Translator.GetStringTranslation("CREATOR_ERRORCHANGEGAMETYPE2", "To clear all notes, click the following buttons:\nEditor Settings > Clear Chart > Clear Notes Only"), Color.white);
+            }
+            return;
+        }
 
         PlaySound(clipTick);
         intChartGameType += modifier;
@@ -1200,8 +1234,18 @@ public class Creator_Control : MonoBehaviour
     }
     public float CalculateIntensityOfNotes(Vector2 point1, Vector2 point2)
     {
-        float calc =
-            Mathf.Abs(Mathf.Pow(Mathf.Abs(point1.x - point2.x), 2) * (1f / (point2.y - point1.y + 1f)));
+        float calc = 0f;
+        calc = Mathf.Abs(Mathf.Pow(Mathf.Abs(point1.x - point2.x), 2) * (1f / (point2.y - point1.y + 1f)));
+        /*
+        if (intChartGameType != 3)
+        {
+            calc = Mathf.Abs(Mathf.Pow(Mathf.Abs(point1.x - point2.x), 2) * (1f / (point2.y - point1.y + 1f)));
+        }
+        else
+        {
+            calc = Mathf.Abs(point1.x - point2.x) + Mathf.Abs(point1.y - point2.y);
+        }
+        */
         return calc;
     }
 
@@ -1503,27 +1547,16 @@ public class Creator_Control : MonoBehaviour
 
                         if (CheckNotePlacementValidity(pos, time, type, length))
                         {
-                            // If there is a note of a type from the opposite catcher, place on the opposite horizontal position
-                            foreach (Creator_Note x in listNoteCatchPool)
+                            // Note repositioning for all game modes except Note Dodge
+                            if (intChartGameType != 3)
                             {
-                                // Note main position
-                                Creator_Note sameNote = null;
-                                Creator_Note oppositeNote = null;
-                                float dist = Mathf.Abs(time - x.transform.position.y);
-                                if (dist < 0.01f)
+                                // If there is a note of a type from the opposite catcher, place on the opposite horizontal position
+                                foreach (Creator_Note x in listNoteCatchPool)
                                 {
-                                    switch (type)
-                                    {
-                                        case 0: if (x.type == 1) oppositeNote = x; break;
-                                        case 1: if (x.type == 0) oppositeNote = x; break;
-                                        case 2: if (x.type == 3) oppositeNote = x; break;
-                                        case 3: if (x.type == 2) oppositeNote = x; break;
-                                    }
-                                }
-                                if (x.length > 0.01f)
-                                {
-                                    // Long note end
-                                    dist = Mathf.Abs(time - (x.transform.position.y + x.length));
+                                    // Note main position
+                                    Creator_Note sameNote = null;
+                                    Creator_Note oppositeNote = null;
+                                    float dist = Mathf.Abs(time - x.transform.position.y);
                                     if (dist < 0.01f)
                                     {
                                         switch (type)
@@ -1534,32 +1567,47 @@ public class Creator_Control : MonoBehaviour
                                             case 3: if (x.type == 2) oppositeNote = x; break;
                                         }
                                     }
-
-                                    // Long note length
-                                    if (time < x.transform.position.y + x.length - Mathf.Epsilon && time > x.transform.position.y + Mathf.Epsilon)
+                                    if (x.length > 0.01f)
                                     {
-                                        if ((type == 0 || type == 1) && (x.type == 0 || x.type == 1))
+                                        // Long note end
+                                        dist = Mathf.Abs(time - (x.transform.position.y + x.length));
+                                        if (dist < 0.01f)
                                         {
-                                            if (type == x.type) sameNote = x;
-                                            else oppositeNote = x;
+                                            switch (type)
+                                            {
+                                                case 0: if (x.type == 1) oppositeNote = x; break;
+                                                case 1: if (x.type == 0) oppositeNote = x; break;
+                                                case 2: if (x.type == 3) oppositeNote = x; break;
+                                                case 3: if (x.type == 2) oppositeNote = x; break;
+                                            }
                                         }
-                                        if ((type == 2 || type == 3) && (x.type == 2 || x.type == 3))
+
+                                        // Long note length
+                                        if (time < x.transform.position.y + x.length - Mathf.Epsilon && time > x.transform.position.y + Mathf.Epsilon)
                                         {
-                                            if (type == x.type) sameNote = x;
-                                            else oppositeNote = x;
+                                            if ((type == 0 || type == 1) && (x.type == 0 || x.type == 1))
+                                            {
+                                                if (type == x.type) sameNote = x;
+                                                else oppositeNote = x;
+                                            }
+                                            if ((type == 2 || type == 3) && (x.type == 2 || x.type == 3))
+                                            {
+                                                if (type == x.type) sameNote = x;
+                                                else oppositeNote = x;
+                                            }
                                         }
                                     }
-                                }
 
-                                if (sameNote != null)
-                                {
-                                    pos = x.transform.position.x;
-                                    break;
-                                }
-                                if (oppositeNote != null)
-                                {
-                                    pos = -x.transform.position.x;
-                                    break;
+                                    if (sameNote != null)
+                                    {
+                                        pos = x.transform.position.x;
+                                        break;
+                                    }
+                                    if (oppositeNote != null)
+                                    {
+                                        pos = -x.transform.position.x;
+                                        break;
+                                    }
                                 }
                             }
 #if UNITY_EDITOR
@@ -1751,82 +1799,164 @@ public class Creator_Control : MonoBehaviour
 
     private bool CheckNotePlacementValidity(float pos, float time, int type, float length)
     {
-        // If the new note is too close to another note of the same type, don't create
-        if (type < 4)
+        // Any game mode that isn't Note Dodge
+        if (intChartGameType != 3)
         {
-            // Catch note
-            foreach (Creator_Note x in listNoteCatchPool)
+            // If the new note is too close to another note of the same type, don't create
+            if (type < 4)
             {
-                if (x.gameObject.activeSelf && type == x.type)
+                // Catch note
+                foreach (Creator_Note x in listNoteCatchPool)
                 {
-                    float dist = Mathf.Abs(time - x.transform.position.y);
-                    if (dist < 0.01f)
+                    if (x.gameObject.activeSelf && type == x.type)
                     {
-                        return false;
-                    }
-                    if (x.length > 0.01f)
-                    {
-                        dist = Mathf.Abs(time - (x.transform.position.y + x.length));
-                        if (dist < 0.01f)
-                        {
-                            return false;
-                        }
-                    }
-
-                    // Same for long note ends
-                    if (length > 0.01f)
-                    {
-                        dist = Mathf.Abs(time + length - x.transform.position.y);
+                        float dist = Mathf.Abs(time - x.transform.position.y);
                         if (dist < 0.01f)
                         {
                             return false;
                         }
                         if (x.length > 0.01f)
                         {
-                            dist = Mathf.Abs(time + length - (x.transform.position.y + x.length));
+                            dist = Mathf.Abs(time - (x.transform.position.y + x.length));
                             if (dist < 0.01f)
                             {
                                 return false;
+                            }
+                        }
+
+                        // Same for long note ends
+                        if (length > 0.01f)
+                        {
+                            dist = Mathf.Abs(time + length - x.transform.position.y);
+                            if (dist < 0.01f)
+                            {
+                                return false;
+                            }
+                            if (x.length > 0.01f)
+                            {
+                                dist = Mathf.Abs(time + length - (x.transform.position.y + x.length));
+                                if (dist < 0.01f)
+                                {
+                                    return false;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                // Tap note
+                foreach (Creator_Note x in listNoteTapPool)
+                {
+                    if (x.gameObject.activeSelf)
+                    {
+                        float dist = Mathf.Abs(time - x.transform.position.y);
+                        if (dist < 0.01f)
+                        {
+                            return false;
+                        }
+                        if (x.length > 0.01f)
+                        {
+                            dist = Mathf.Abs(time - (x.transform.position.y + x.length));
+                            if (dist < 0.01f)
+                            {
+                                return false;
+                            }
+                        }
+
+                        if (length > 0.01f)
+                        {
+                            dist = Mathf.Abs(time + length - x.transform.position.y);
+                            if (dist < 0.01f)
+                            {
+                                return false;
+                            }
+                            if (x.length > 0.01f)
+                            {
+                                dist = Mathf.Abs(time + length - (x.transform.position.y + x.length));
+                                if (dist < 0.01f)
+                                {
+                                    return false;
+                                }
                             }
                         }
                     }
                 }
             }
         }
+        // Note Dodge game mode only
         else
         {
-            // Tap note
-            foreach (Creator_Note x in listNoteTapPool)
+            // If the new note is too close to another note of the same type, don't create
+            if (type < 4)
             {
-                if (x.gameObject.activeSelf)
+                // Catch note
+                foreach (Creator_Note x in listNoteCatchPool)
                 {
-                    float dist = Mathf.Abs(time - x.transform.position.y);
-                    if (dist < 0.01f)
+                    if (x.gameObject.activeSelf && type == x.type)
                     {
-                        return false;
-                    }
-                    if (x.length > 0.01f)
-                    {
-                        dist = Mathf.Abs(time - (x.transform.position.y + x.length));
-                        if (dist < 0.01f)
+                        float dist = Mathf.Abs(time - x.transform.position.y);
+                        float distAlt = Mathf.Abs(pos - x.transform.position.x);
+                        if (dist < 0.01f && distAlt < 0.01f)
                         {
                             return false;
                         }
+                        
+                        if (length > 0.01f)
+                        {
+                            dist = Mathf.Abs(time + length - x.transform.position.y);
+                            if (dist < 0.01f && distAlt < 0.01f)
+                            {
+                                return false;
+                            }
+                            if (x.length > 0.01f)
+                            {
+                                dist = Mathf.Abs(time + length - (x.transform.position.y + x.length));
+                                if (dist < 0.01f && distAlt < 0.01f)
+                                {
+                                    return false;
+                                }
+                            }
+                        }
                     }
-
-                    if (length > 0.01f)
+                }
+            }
+            else
+            {
+                // Tap note
+                foreach (Creator_Note x in listNoteTapPool)
+                {
+                    if (x.gameObject.activeSelf)
                     {
-                        dist = Mathf.Abs(time + length - x.transform.position.y);
+                        float dist = Mathf.Abs(time - x.transform.position.y);
                         if (dist < 0.01f)
                         {
                             return false;
                         }
                         if (x.length > 0.01f)
                         {
-                            dist = Mathf.Abs(time + length - (x.transform.position.y + x.length));
+                            dist = Mathf.Abs(time - (x.transform.position.y + x.length));
                             if (dist < 0.01f)
                             {
                                 return false;
+                            }
+                        }
+
+                        if (length > 0.01f)
+                        {
+                            dist = Mathf.Abs(time + length - x.transform.position.y);
+                            if (dist < 0.01f)
+                            {
+                                return false;
+                            }
+                            if (x.length > 0.01f)
+                            {
+                                dist = Mathf.Abs(time + length - (x.transform.position.y + x.length));
+                                if (dist < 0.01f)
+                                {
+                                    return false;
+                                }
                             }
                         }
                     }

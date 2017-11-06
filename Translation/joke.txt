@@ -89,6 +89,7 @@ GAME_RESULTTITLE2|old rekurd
 GAME_RESULTTITLE3|wat u wanna do now
 GAME_RESULTBESTCOMBO|hi combuh
 GAME_RESULTJUDGELABEL|bset|nice|meh|noooo
+GAME_RESULTJUDGELABELND|got it|nope||ouchies
 GAME_RESULTSCOREADD|skore:
 GAME_RESULTRECORDDISABLE|oh noes ur scors not gunna be recorded cuz it no wurkx
 GAME_RESULTNEWRECORD|u r|da best
@@ -175,8 +176,11 @@ CREATOR_SAVECONFIRMBODY|u gona save ur chart onto a text file||were not responsi
 CREATOR_SAVESUCCESS|cungratz ur chart is savd here
 CREATOR_LOADCONFIRMHEADER|read ur chart frm a txt fle?
 CREATOR_LOADCONFIRMBODY|u gona load ur chart onto a text file||were not responsible for ur sory ass if ur currnt work is not saved|cuz u cannot rewind time to save ur work||r u sure???????
+CREATOR_LOADSUCCESS|ok ur chart is bak
 CREATOR_EXITCONFIRMHEADER|exit da editur?
 CREATOR_EXITCONFIRMBODY|u gona exit 2 da titl scrin||were not responsible for ur sory ass if ur currnt work is not saved|cuz u cannot rewind time to save ur work||r u sure???????
+CREATOR_ERRORCHANGEGAMETYPE1|u cant do dat now|or u wil mss up teh chrt
+CREATOR_ERRORCHANGEGAMETYPE2|if u wana du tat tho,|click "ERZE NOTZ" butan
 CREATOR_ERRORLOADCHARTNONEXISTENT|oH M@n u mssed up cuz it aint here
 CREATOR_ERRORSAVECHARTEMPTY|wat. ur chrt haz no notez 2 saev
 CREATOR_ERRORLOADCHARTNEWVERSION1|ur game is incumpatibl to lode dis nu cart
