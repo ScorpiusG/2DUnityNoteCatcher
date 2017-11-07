@@ -160,7 +160,7 @@ public class Creator_Control : MonoBehaviour
 #if UNITY_EDITOR
             Debug.LogWarning("WARNING: There are no notes in this chart. Save cancelled.");
 #endif
-            Notification.Display(Translator.GetStringTranslation("CREATOR_ERRORSAVECHARTEMPTY", "Save cancelled, the chart does not have at least one note."), Color.yellow);
+            Notification.Display(Translator.GetStringTranslation("CREATOR_ERRORSAVECHARTEMPTY", "Save cancelled, the chart does not have at least one note."), Color.white);
             return;
         }
 
@@ -299,7 +299,7 @@ public class Creator_Control : MonoBehaviour
         StreamWriter writer = new StreamWriter(path, true);
         writer.WriteLine(output);
         writer.Close();
-        Notification.Display(Translator.GetStringTranslation("CREATOR_SAVESUCCESS", "Save successful. Your chart is saved here:") + "\n" + path, Color.yellow);
+        Notification.Display(Translator.GetStringTranslation("CREATOR_SAVESUCCESS", "Save successful. Your chart is saved here:") + "\n" + path, Color.white);
 
         ShortcutKeysEnable();
     }
@@ -320,7 +320,7 @@ public class Creator_Control : MonoBehaviour
 #if UNITY_EDITOR
             Debug.LogWarning("WARNING: The chart file does not exist! Path: " + path);
 #endif
-            Notification.Display(Translator.GetStringTranslation("CREATOR_ERRORLOADCHARTNONEXISTENT", "The following chart file does not exist:") + "\n" + path, Color.yellow);
+            Notification.Display(Translator.GetStringTranslation("CREATOR_ERRORLOADCHARTNONEXISTENT", "The following chart file does not exist:") + "\n" + path, Color.white);
             return;
         }
         StreamReader reader = new StreamReader(path);
@@ -338,8 +338,8 @@ public class Creator_Control : MonoBehaviour
 #if UNITY_EDITOR
             Debug.LogWarning("Chart's version is newer than the current supported version. " + chartData.chartVersion.ToString() + " > " + INT_CHART_VERSION.ToString());
 #endif
-            Notification.Display(Translator.GetStringTranslation("CREATOR_ERRORLOADCHARTNEWVERSION1", "Failed to load the chart. The chart's version is somehow newer than the currently supported version."), new Color(1f, 0.2f, 0.2f));
-            Notification.Display(Translator.GetStringTranslation("CREATOR_ERRORLOADCHARTNEWVERSION2", "Please download the latest version of the game to be able to load this chart in the editor."), Color.yellow);
+            Notification.Display(Translator.GetStringTranslation("CREATOR_ERRORLOADCHARTNEWVERSION1", "Failed to load the chart. The chart's version is|somehow newer than the currently supported version."), new Color(1f, 0.2f, 0.2f));
+            Notification.Display(Translator.GetStringTranslation("CREATOR_ERRORLOADCHARTNEWVERSION2", "Please download the latest version of the game|to be able to load this chart in the editor."), Color.white);
             return;
         }
 

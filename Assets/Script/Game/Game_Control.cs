@@ -147,6 +147,7 @@ public class Game_Control : MonoBehaviour
     public float[] floatDistAccuracyTapMiss = { 0.17f, 0.16f, 0.15f, 0.14f, 0.13f };
     public float floatNoteDodgeBulletHitboxRadius = 0.08f;
     public float floatNoteDodgeItemHitboxRadius = 0.2f;
+    public float floatNoteDodgeItemSpawnFrequency = 4f;
     public float floatNoteDodgeInvincibilityPeriod = 1f;
     private float floatNoteDodgeInvincibilityPeriodCurrent = 2f;
     public int[] intNoteDodgeBulletRingSpawnQuantity = { 12, 14, 16, 18, 20, 22, 24, 26, 28, 30 };
@@ -162,6 +163,8 @@ public class Game_Control : MonoBehaviour
     private int playerAccuracyMiss = 0;
     private int playerComboCurrent = 0;
     private int playerComboBest = 0;
+    private float timeItemLastSpawn = 0f;
+    private int itemQuantityTotal = 0;
 
     private bool lastHitNoteIsTap = false;
     private float lastHitNoteDistance = 0f;
@@ -972,6 +975,8 @@ public class Game_Control : MonoBehaviour
         chartCurrentTempo = chartData.songTempo;
         floatMusicPositionEnd = chartData.songLength / chartCurrentTempo * 60f;
         floatMusicPositionEnd -= (chartData.chartOffset + PlayerSetting.setting.intGameOffset) * 0.001f;
+        timeItemLastSpawn = -4f;
+        itemQuantityTotal = Mathf.FloorToInt((chartData.gameplayLength - ((floatNoteDodgeItemSpawnFrequency * 4f) + Mathf.Epsilon)) / 4f) * 1000;
 
         yield return null;
         yield return new WaitUntil(() => mSongLoader.audioSourceMusic.isPlaying);
@@ -1084,13 +1089,21 @@ public class Game_Control : MonoBehaviour
                 }
                 else
                 {
+                    bool isDodging = false;
                     foreach (Game_NoteBullet x in listNoteBullet)
                     {
                         if (x.gameObject.activeInHierarchy &&
                             Vector3.Distance(objectMouseCursorDodger.transform.position, x.transform.position) < floatNoteDodgeBulletHitboxRadius + (chartCurrentTempo / 30f) * Time.deltaTime * x.speed)
                         {
+                            isDodging = true;
                             mouseCursorPos -= (x.transform.position - objectMouseCursorDodger.transform.position).normalized * (chartCurrentTempo / 60f) * Time.deltaTime;
                         }
+                    }
+                    if (!isDodging &&
+                        (Mathf.Abs(objectMouseCursorDodger.transform.position.x) > 0.2f ||
+                        Mathf.Abs(objectMouseCursorDodger.transform.position.y) > 0.2f))
+                    {
+                        mouseCursorPos += -objectMouseCursorDodger.transform.position * (chartCurrentTempo / 300f) * Time.deltaTime;
                     }
                     Game_NoteItem closestItem = null;
                     foreach (Game_NoteItem x in listNoteItem)
@@ -1144,37 +1157,12 @@ public class Game_Control : MonoBehaviour
                 imageSongProgressGauge.fillAmount = floatMusicPosition / floatMusicPositionEnd;
             }
             // Bottom - Accuracy
-            currentAccuracy = (playerAccuracyBest * 4) + (playerAccuracyGreat * 2) + playerAccuracyFine;
             if (intChartGameType != 3)
             {
+                currentAccuracy = (playerAccuracyBest * 4) + (playerAccuracyGreat * 2) + playerAccuracyFine;
                 currentAccuracyNegative = (playerAccuracyGreat * 2) + (playerAccuracyFine * 3) + (playerAccuracyMiss * 4);
-            }
-            else
-            {
-                currentAccuracyNegative = (chartTotalNotes * 4) - Mathf.FloorToInt((chartTotalNotes * 4) * Mathf.Pow(0.95f, 1f * Mathf.Clamp(intNoteDodgeHit, 0, intNoteDodgeHitMaximum)));
-                currentAccuracyNegative += Mathf.FloorToInt(((playerAccuracyGreat * 2) + (playerAccuracyFine * 3) + (playerAccuracyMiss * 4)) * Mathf.Pow(0.95f, 1f * Mathf.Clamp(intNoteDodgeHit, 0, intNoteDodgeHitMaximum)));
 
-                currentAccuracy = Mathf.RoundToInt(currentAccuracy * Mathf.Pow(0.95f, 1f * Mathf.Clamp(intNoteDodgeHit, 0, intNoteDodgeHitMaximum)));
-            }
-
-            if (objectGroupInterfaceAccuracy.activeSelf)
-            {
-                floatAccuracyDisplay = Mathf.Lerp(floatAccuracyDisplay, 1f * currentAccuracy / (chartTotalNotes * 4), Time.deltaTime * 8f);
-                imageAccuracyGauge.fillAmount = floatAccuracyDisplay;
-                imageAccuracyNegativeGauge.fillAmount = 1f * currentAccuracyNegative / (chartTotalNotes * 4);
-                
-                if (intChartGameType != 3)
-                {
-                    textAccuracy.text = (floatAccuracyDisplay * 100f).ToString("f2") + "%";
-                }
-                else
-                {
-                    textAccuracy.text = "~" + (floatAccuracyDisplay * 100f).ToString("f2") + "% | Hits: " + intNoteDodgeHit;
-                }
-            }
-            if (PlayerSetting.setting.enableDisplayNoteHitCounterSmall)
-            {
-                if (intChartGameType != 3)
+                if (PlayerSetting.setting.enableDisplayNoteHitCounterSmall)
                 {
                     textNoteJudgeCount.text =
                         "B " + playerAccuracyBest.ToString() + "\n" +
@@ -1182,14 +1170,44 @@ public class Game_Control : MonoBehaviour
                         "F " + playerAccuracyFine.ToString() + "\n" +
                         "M " + playerAccuracyMiss.ToString();
                 }
-                else
+
+                if (objectGroupInterfaceAccuracy.activeSelf)
                 {
-                    textNoteJudgeCount.text =
-                        "B " + playerAccuracyBest.ToString() + "\n" +
-                        "M " + playerAccuracyMiss.ToString() + "\n" +
-                        "H " + intNoteDodgeHit;
+                    floatAccuracyDisplay = Mathf.Lerp(floatAccuracyDisplay, 1f * currentAccuracy / (chartTotalNotes * 4), Time.deltaTime * 8f);
+                    imageAccuracyGauge.fillAmount = floatAccuracyDisplay;
+                    imageAccuracyNegativeGauge.fillAmount = 1f * currentAccuracyNegative / (chartTotalNotes * 4);
+                    
+                    textAccuracy.text = (floatAccuracyDisplay * 100f).ToString("f2") + "%";
                 }
             }
+            else
+            {
+                currentAccuracy = Mathf.CeilToInt(1000000 * Mathf.Pow(0.95f, 1f * intNoteDodgeHit));
+                //currentAccuracy = Mathf.FloorToInt((1000f * playerAccuracyBest / itemQuantityTotal) * Mathf.Pow(0.95f, 1f * Mathf.Clamp(intNoteDodgeHit, 0, intNoteDodgeHitMaximum)));
+                currentAccuracyNegative = 1000000 - Mathf.CeilToInt(1000000 * Mathf.Pow(0.95f, 1f * intNoteDodgeHit));
+
+                if (PlayerSetting.setting.enableDisplayNoteHitCounterSmall)
+                {
+                    textNoteJudgeCount.text = "H " + intNoteDodgeHit;
+                }
+
+                if (objectGroupInterfaceAccuracy.activeSelf)
+                {
+                    floatAccuracyDisplay = Mathf.Lerp(floatAccuracyDisplay, 1f * currentAccuracy / 1000000, Time.deltaTime * 8f);
+                    imageAccuracyGauge.fillAmount = floatAccuracyDisplay;
+                    imageAccuracyNegativeGauge.fillAmount = 1f * currentAccuracyNegative / 1000000;
+                    
+                    textAccuracy.text = "Hits: " + intNoteDodgeHit;
+                }
+
+                /*
+                currentAccuracyNegative = (chartTotalNotes * 4) - Mathf.FloorToInt((chartTotalNotes * 4) * Mathf.Pow(0.95f, 1f * Mathf.Clamp(intNoteDodgeHit, 0, intNoteDodgeHitMaximum)));
+                currentAccuracyNegative += Mathf.FloorToInt(((playerAccuracyGreat * 2) + (playerAccuracyFine * 3) + (playerAccuracyMiss * 4)) * Mathf.Pow(0.95f, 1f * Mathf.Clamp(intNoteDodgeHit, 0, intNoteDodgeHitMaximum)));
+
+                currentAccuracy = Mathf.RoundToInt(currentAccuracy * Mathf.Pow(0.95f, 1f * Mathf.Clamp(intNoteDodgeHit, 0, intNoteDodgeHitMaximum)));
+                */
+            }
+
             // Center - Combo and judgment
             if (textMeshComboCurrent.gameObject.activeSelf)
             {
@@ -1198,8 +1216,19 @@ public class Game_Control : MonoBehaviour
             }
             if (textMeshRecordGhost.gameObject.activeSelf)
             {
-                float currentAccuracyPercentage = 1f * currentAccuracy / (chartTotalNotes * 4);
-                float ghostAccuracy = 1f * floatPreviousRecord * (playerAccuracyBest + playerAccuracyGreat + playerAccuracyFine + playerAccuracyMiss) / chartTotalNotes;
+                float currentAccuracyPercentage = 0f;
+                float ghostAccuracy = 0f;
+
+                if (intChartGameType != 3)
+                {
+                    currentAccuracyPercentage = 1f * currentAccuracy / (chartTotalNotes * 4);
+                    ghostAccuracy = 1f * floatPreviousRecord * (playerAccuracyBest + playerAccuracyGreat + playerAccuracyFine + playerAccuracyMiss) / chartTotalNotes;
+                }
+                else
+                {
+                    currentAccuracyPercentage = 1f * currentAccuracy / 1000000;
+                    ghostAccuracy = 1f - ((1f - floatPreviousRecord) * (floatMusicPosition / floatMusicPositionEnd));
+                }
 
                 if (currentAccuracyPercentage > ghostAccuracy + Mathf.Epsilon)
                 {
@@ -1359,6 +1388,42 @@ public class Game_Control : MonoBehaviour
                     chartData.listNoteTapInfo.RemoveAt(j);
                 }
             }
+            // Item
+            /*
+            if (intChartGameType == 3 &&
+                floatMusicBeat > timeItemLastSpawn + floatNoteDodgeItemSpawnFrequency &&
+                timeItemLastSpawn < chartData.gameplayLength - (floatNoteDodgeItemSpawnFrequency * 4f + Mathf.Epsilon))
+            {
+                timeItemLastSpawn += floatNoteDodgeItemSpawnFrequency;
+
+                int iType = Mathf.FloorToInt(floatMusicPosition * 4f) % 4;
+                float iPos = floatMusicPosition * 30f;
+
+                Game_NoteItem item = SpawnNoteItem();
+                switch (iType)
+                {
+                    default:
+                    case 0:
+                        item.transform.position = Vector3.down * 1.1f + Vector3.right * ((iPos % 2f) - 1f);
+                        item.transform.rotation = Quaternion.Euler(Vector3.forward * 0f);
+                        break;
+                    case 1:
+                        item.transform.position = Vector3.up * 1.1f + Vector3.left * ((iPos % 2f) - 1f);
+                        item.transform.rotation = Quaternion.Euler(Vector3.forward * 180f);
+                        break;
+                    case 2:
+                        item.transform.position = Vector3.left * 1.1f + Vector3.down * ((iPos % 2f) - 1f);
+                        item.transform.rotation = Quaternion.Euler(Vector3.forward * 270f);
+                        break;
+                    case 3:
+                        item.transform.position = Vector3.right * 1.1f + Vector3.up * ((iPos % 2f) - 1f);
+                        item.transform.rotation = Quaternion.Euler(Vector3.forward * 90f);
+                        break;
+                }
+                item.speed = chartCurrentTempo / chartData.songTempo;
+                item.gameObject.SetActive(true);
+            }
+            */
 
             // Note positioning
             // Catch note
@@ -1455,6 +1520,7 @@ public class Game_Control : MonoBehaviour
                                 bullet.gameObject.SetActive(true);
                             }
 
+                            /*
                             Game_NoteItem item = SpawnNoteItem();
                             item.transform.position = bulletPos;
                             switch (x.type)
@@ -1475,6 +1541,7 @@ public class Game_Control : MonoBehaviour
                             }
                             item.speed = x.speed;
                             item.gameObject.SetActive(true);
+                            */
 
                             DespawnNote(x);
                         }
@@ -1563,19 +1630,19 @@ public class Game_Control : MonoBehaviour
                                 {
                                     default:
                                     case 0:
-                                        bullet.transform.position = Vector3.down * 1.1f + Vector3.right * ((3f * (1f * i / (intNoteDodgeBulletRingSpawnQuantity.Length))) - 1.5f);
+                                        bullet.transform.position = Vector3.down * 1.1f + Vector3.right * ((2f * (1f * i / intNoteDodgeBulletRingSpawnQuantity[chartJudgeDifficulty])) - 1f) * 3f;
                                         bullet.transform.rotation = Quaternion.Euler(Vector3.forward * 0f);
                                         break;
                                     case 1:
-                                        bullet.transform.position = Vector3.up * 1.1f + Vector3.left * ((3f * (1f * i / (intNoteDodgeBulletRingSpawnQuantity.Length))) - 1.5f);
+                                        bullet.transform.position = Vector3.up * 1.1f + Vector3.left * ((2f * (1f * i / intNoteDodgeBulletRingSpawnQuantity[chartJudgeDifficulty])) - 1f) * 3f;
                                         bullet.transform.rotation = Quaternion.Euler(Vector3.forward * 180f);
                                         break;
                                     case 2:
-                                        bullet.transform.position = Vector3.left * 1.1f + Vector3.down * ((3f * (1f * i / (intNoteDodgeBulletRingSpawnQuantity.Length))) - 1.5f);
+                                        bullet.transform.position = Vector3.left * 1.1f + Vector3.down * ((2f * (1f * i / intNoteDodgeBulletRingSpawnQuantity[chartJudgeDifficulty])) - 1f) * 3f;
                                         bullet.transform.rotation = Quaternion.Euler(Vector3.forward * 270f);
                                         break;
                                     case 3:
-                                        bullet.transform.position = Vector3.right * 1.1f + Vector3.up * ((3f * (1f * i / (intNoteDodgeBulletRingSpawnQuantity.Length))) - 1.5f);
+                                        bullet.transform.position = Vector3.right * 1.1f + Vector3.up * ((2f * (1f * i / intNoteDodgeBulletRingSpawnQuantity[chartJudgeDifficulty])) - 1f) * 3f;
                                         bullet.transform.rotation = Quaternion.Euler(Vector3.forward * 90f);
                                         break;
                                 }
@@ -1584,6 +1651,7 @@ public class Game_Control : MonoBehaviour
                                 bullet.gameObject.SetActive(true);
                             }
 
+                            /*
                             Game_NoteItem item = SpawnNoteItem();
                             switch (x.type)
                             {
@@ -1607,6 +1675,7 @@ public class Game_Control : MonoBehaviour
                             }
                             item.speed = x.speed;
                             item.gameObject.SetActive(true);
+                            */
 
                             DespawnNote(x);
                         }
@@ -1777,10 +1846,21 @@ public class Game_Control : MonoBehaviour
             }
 
             // Force end condition: Current negative accuracy is below tolerance
-            if (1f * currentAccuracyNegative / (4f * chartTotalNotes) >
-                1f - (0.01f * PlayerSetting.setting.intAccuracyTolerance))
+            if (intChartGameType != 3)
             {
-                isForcedEnd = true;
+                if (1f * currentAccuracyNegative / (4f * chartTotalNotes) >
+                    1f - (0.01f * PlayerSetting.setting.intAccuracyTolerance))
+                {
+                    isForcedEnd = true;
+                }
+            }
+            else
+            {
+                if (1f * currentAccuracyNegative / 1000000 >
+                    1000000f - (10000f * PlayerSetting.setting.intAccuracyTolerance))
+                {
+                    isForcedEnd = true;
+                }
             }
 
             // Force end consequences: Miss all remaining notes
@@ -1840,8 +1920,17 @@ public class Game_Control : MonoBehaviour
 
         Cursor.lockState = CursorLockMode.Locked;
         yield return null;
-        
-        float finalAccuracy = 1f * ((playerAccuracyBest * 4) + (playerAccuracyGreat * 2) + playerAccuracyFine) / (chartTotalNotes * 4) * Mathf.Pow(0.95f, Mathf.Clamp(intNoteDodgeHit, 0, intNoteDodgeHitMaximum));
+
+        float finalAccuracy = 0f;
+        if (intChartGameType != 3)
+        {
+            finalAccuracy = 1f * ((playerAccuracyBest * 4) + (playerAccuracyGreat * 2) + playerAccuracyFine) / (chartTotalNotes * 4) * Mathf.Pow(0.95f, Mathf.Clamp(intNoteDodgeHit, 0, intNoteDodgeHitMaximum));
+        }
+        else
+        {
+            //finalAccuracy = (1f * playerAccuracyBest / itemQuantityTotal) * Mathf.Pow(0.95f, 1f * Mathf.Clamp(intNoteDodgeHit, 0, intNoteDodgeHitMaximum));
+            finalAccuracy = Mathf.Pow(0.95f, 1f * intNoteDodgeHit);
+        }
 #if UNITY_EDITOR
         Debug.Log("Song finished. Accuracy: " + (finalAccuracy * 100f).ToString("f2") + "%");
 #endif
@@ -1859,6 +1948,15 @@ public class Game_Control : MonoBehaviour
         // If the game was being autoplayed, skip result screen.
         if (boolAutoplay)
         {
+            ExitGameScene();
+            yield break;
+        }
+        else if (intChartGameType == 3 && isForcedEnd)
+        {
+            int songPlayCount = PlayerPrefs.GetInt(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-playcount", 0);
+            songPlayCount++;
+            PlayerPrefs.SetInt(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-playcount", songPlayCount);
+
             ExitGameScene();
             yield break;
         }

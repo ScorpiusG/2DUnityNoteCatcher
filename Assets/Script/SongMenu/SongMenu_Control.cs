@@ -877,6 +877,11 @@ public class SongMenu_Control : MonoBehaviour
         }
     }
 
+    public void ToggleChartDescription()
+    {
+        boolDetailsDescriptionEnable = !boolDetailsDescriptionEnable;
+    }
+
     public void AdjustScrollSpeed()
     {
         PlayerSetting.setting.intScrollSpeed = Mathf.RoundToInt(sliderScrollSpeed.value);
