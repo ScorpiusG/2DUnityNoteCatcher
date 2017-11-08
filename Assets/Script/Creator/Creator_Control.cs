@@ -1680,24 +1680,13 @@ public class Creator_Control : MonoBehaviour
 
                     if (CheckNotePlacementValidity(pos, time, type, length))
                     {
-                        foreach (Creator_Note x in listNoteCatchPool)
+                        if (intChartGameType != 3)
                         {
-                            Creator_Note sameNote = null;
-                            Creator_Note oppositeNote = null;
-                            float dist = Mathf.Abs(time - x.transform.position.y);
-                            if (dist < 0.01f)
+                            foreach (Creator_Note x in listNoteCatchPool)
                             {
-                                switch (type)
-                                {
-                                    case 0: if (x.type == 1) oppositeNote = x; break;
-                                    case 1: if (x.type == 0) oppositeNote = x; break;
-                                    case 2: if (x.type == 3) oppositeNote = x; break;
-                                    case 3: if (x.type == 2) oppositeNote = x; break;
-                                }
-                            }
-                            if (x.length > 0.01f)
-                            {
-                                dist = Mathf.Abs(time - (x.transform.position.y + x.length));
+                                Creator_Note sameNote = null;
+                                Creator_Note oppositeNote = null;
+                                float dist = Mathf.Abs(time - x.transform.position.y);
                                 if (dist < 0.01f)
                                 {
                                     switch (type)
@@ -1708,30 +1697,44 @@ public class Creator_Control : MonoBehaviour
                                         case 3: if (x.type == 2) oppositeNote = x; break;
                                     }
                                 }
-                                if (time < x.transform.position.y + x.length - Mathf.Epsilon && time > x.transform.position.y + Mathf.Epsilon)
+                                if (x.length > 0.01f)
                                 {
-                                    if ((type == 0 || type == 1) && (x.type == 0 || x.type == 1))
+                                    dist = Mathf.Abs(time - (x.transform.position.y + x.length));
+                                    if (dist < 0.01f)
                                     {
-                                        if (type == x.type) sameNote = x;
-                                        else oppositeNote = x;
+                                        switch (type)
+                                        {
+                                            case 0: if (x.type == 1) oppositeNote = x; break;
+                                            case 1: if (x.type == 0) oppositeNote = x; break;
+                                            case 2: if (x.type == 3) oppositeNote = x; break;
+                                            case 3: if (x.type == 2) oppositeNote = x; break;
+                                        }
                                     }
-                                    if ((type == 2 || type == 3) && (x.type == 2 || x.type == 3))
+                                    if (time < x.transform.position.y + x.length - Mathf.Epsilon && time > x.transform.position.y + Mathf.Epsilon)
                                     {
-                                        if (type == x.type) sameNote = x;
-                                        else oppositeNote = x;
+                                        if ((type == 0 || type == 1) && (x.type == 0 || x.type == 1))
+                                        {
+                                            if (type == x.type) sameNote = x;
+                                            else oppositeNote = x;
+                                        }
+                                        if ((type == 2 || type == 3) && (x.type == 2 || x.type == 3))
+                                        {
+                                            if (type == x.type) sameNote = x;
+                                            else oppositeNote = x;
+                                        }
                                     }
                                 }
-                            }
 
-                            if (sameNote != null)
-                            {
-                                pos = x.transform.position.x;
-                                break;
-                            }
-                            if (oppositeNote != null)
-                            {
-                                pos = -x.transform.position.x;
-                                break;
+                                if (sameNote != null)
+                                {
+                                    pos = x.transform.position.x;
+                                    break;
+                                }
+                                if (oppositeNote != null)
+                                {
+                                    pos = -x.transform.position.x;
+                                    break;
+                                }
                             }
                         }
 #if UNITY_EDITOR

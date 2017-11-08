@@ -1918,6 +1918,8 @@ public class Game_Control : MonoBehaviour
         }
         // End game loop
 
+        textMeshRecordGhost.gameObject.SetActive(false);
+        textMeshComboCurrent.gameObject.SetActive(false);
         Cursor.lockState = CursorLockMode.Locked;
         yield return null;
 

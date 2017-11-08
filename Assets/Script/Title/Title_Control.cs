@@ -81,6 +81,11 @@ public class Title_Control : MonoBehaviour
     }
     private IEnumerator _ButtonGameExit()
     {
+        if (Input.GetKey(KeyCode.Delete) && Input.GetKey(KeyCode.D))
+        {
+            PlayerPrefs.DeleteAll();
+        }
+
         yield return null;
         Application.Quit();
     }
