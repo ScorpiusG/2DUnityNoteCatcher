@@ -17,13 +17,13 @@ public class PlayerSetting : MonoBehaviour
     // Affects mouse movement.
     public float floatMouseSensitivity = 0.06f;
     // Affects brightness of background.
-    public float floatBackgroundBrightness = 0.8f;
+    public float floatBackgroundBrightness = 0.7f;
     // Use raw mouse input than smooth input.
     public bool boolUseMouseRawInput = true;
     // Affects note scroll speed.
-    public int intScrollSpeed = 40;
+    public int intScrollSpeed = 10;
     // Affects song force end on being unable to achieve a certain accuracy percentage.
-    public int intAccuracyTolerance = 30;
+    public int intAccuracyTolerance = 0;
     // Music volume
     public float floatVolumeMusic = 1f;
     // Sound effect volume
@@ -49,25 +49,41 @@ public class PlayerSetting : MonoBehaviour
     // Play a tick sound effect upon hitting a note.
     public bool enableAssistTickSound = false;
 
-    // Other fun(?) stuff. DISABLE SCORING if any of these are used.
-    // Does nothing while not affecting high score
+    // Game modifiers. Enabling certain ones will disable scoring (record for highest accuracy and total score). As of now, these are not implemented yet.
+    // Does nothing while disabling high score.
     public bool modDisableScore = false;
-    // Flips the whole screen 180 degrees.
+    // Flips the whole screen 180 degrees. Disables scoring.
     public bool modScreenFlip = false;
-    // Mirrors the screen horizontally.
+    // Mirrors the screen horizontally. Disables scoring.
     public bool modScreenMirror = false;
-    // All note types are inverted: 0 <> 1, 2 <> 3.
+    // All note types are inverted: 0 <> 1, 2 <> 3. Disables scoring.
     public bool modChartFlip = false;
-    // All notes' horizontal positions are inverted.
+    // All notes' horizontal positions are inverted. Disables scoring.
     public bool modChartMirror = false;
-    // All notes' horizontal positions are randomly assigned with fixed distances between each other. (If the note is somehow positioned outside the field, position it back in the center.)
+    // All notes' horizontal positions are randomly assigned with fixed distances between each other. (If the note is somehow positioned outside the field, position it back in the center.) Disables scoring.
     public bool modChartRandom = false;
-    // All notes' horizontal positions are randomly assigned. Unlike ChartRandom mod above, this one has no fixed distances between each note and is completely random.
+    // All notes' horizontal positions are randomly assigned. Unlike ChartRandom mod above, this one has no fixed distances between each note and is completely random. Disables scoring.
     public bool modChartBerserk = false;
-    // Random fake(!) notes appear around the real note.
+    // Random fake(!) notes appear around the real note. Disables scoring.
     public bool modChartCluster = false;
-    // A thermometer will appear on screen. With little to no movement, the temperature rises. Moving the cursor will lower the temperature. Force end on maxed temperature.
+    // A thermometer will appear on screen. With little to no movement, the temperature rises. Moving the cursor will lower the temperature. Force end on maxed temperature. Disables scoring.
     public bool modChartHell = false;
+    // Notes will reduce opacity as it is being reached.
+    public bool modNoteFadeOut = false;
+    // Notes will start transparent and increase opacity as it is being reached.
+    public bool modNoteFadeIn = false;
+    // Notes' opacity will blink on beat to the song.
+    public bool modNoteBlink = false;
+    // Note color will be randomized upon being spawned.
+    public bool modNoteRandomColor = false;
+    // Bullets will reduce opacity over time.
+    public bool modDodgeBulletFadeOut = false;
+    // Bullets will start transparent and increase opacity over time.
+    public bool modDodgeBulletFadeIn = false;
+    // Bullets' opacity will blink on beat to the song.
+    public bool modDodgeBulletBlink = false;
+    // A small area is only visible around the dodger.
+    public bool modDodgeDarkRoom = false;
 
     /// <summary>
     /// Adds score to the total amount. The score limit implemented is super high and may take centuries to reach. (Or in this case, a few years?)
