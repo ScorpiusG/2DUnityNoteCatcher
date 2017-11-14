@@ -85,6 +85,10 @@ public class PlayerSetting : MonoBehaviour
     // A small area is only visible around the dodger.
     public bool modDodgeDarkRoom = false;
 
+    // Et cetera
+    // Screenshot quantity number.
+    public int intScreenshotValue = 0;
+
     /// <summary>
     /// Adds score to the total amount. The score limit implemented is super high and may take centuries to reach. (Or in this case, a few years?)
     /// </summary>
@@ -332,6 +336,18 @@ public class PlayerSetting : MonoBehaviour
 #if UNITY_EDITOR
             Debug.Log("No save data detected.");
 #endif
+        }
+    }
+
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Home))
+        {
+#if UNITY_EDITOR
+            Debug.Log("Screen captured: screenshot" + intScreenshotValue.ToString() + ".png");
+#endif
+            Application.CaptureScreenshot("screenshot" + intScreenshotValue.ToString() + ".png");
+            intScreenshotValue++;
         }
     }
 }

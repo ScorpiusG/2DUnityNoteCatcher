@@ -163,8 +163,8 @@ public class Game_Control : MonoBehaviour
     private int playerAccuracyMiss = 0;
     private int playerComboCurrent = 0;
     private int playerComboBest = 0;
-    private float timeItemLastSpawn = 0f;
-    private int itemQuantityTotal = 0;
+    //private float timeItemLastSpawn = 0f;
+    //private int itemQuantityTotal = 0;
 
     private bool lastHitNoteIsTap = false;
     private float lastHitNoteDistance = 0f;
@@ -975,8 +975,8 @@ public class Game_Control : MonoBehaviour
         chartCurrentTempo = chartData.songTempo;
         floatMusicPositionEnd = chartData.songLength / chartCurrentTempo * 60f;
         floatMusicPositionEnd -= (chartData.chartOffset + PlayerSetting.setting.intGameOffset) * 0.001f;
-        timeItemLastSpawn = -4f;
-        itemQuantityTotal = Mathf.FloorToInt((chartData.gameplayLength - ((floatNoteDodgeItemSpawnFrequency * 4f) + Mathf.Epsilon)) / 4f) * 1000;
+        //timeItemLastSpawn = -4f;
+        //itemQuantityTotal = Mathf.FloorToInt((chartData.gameplayLength - ((floatNoteDodgeItemSpawnFrequency * 4f) + Mathf.Epsilon)) / 4f) * 1000;
 
         yield return null;
         yield return new WaitUntil(() => mSongLoader.audioSourceMusic.isPlaying);
