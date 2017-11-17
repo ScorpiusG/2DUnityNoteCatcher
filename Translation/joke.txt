@@ -89,7 +89,7 @@ GAME_RESULTTITLE2|old rekurd
 GAME_RESULTTITLE3|wat u wanna do now
 GAME_RESULTBESTCOMBO|hi combuh
 GAME_RESULTJUDGELABEL|bset|nice|meh|noooo
-GAME_RESULTJUDGELABELND|got it|nope||ouchies
+GAME_RESULTJUDGELABELND|ouchies
 GAME_RESULTSCOREADD|skore:
 GAME_RESULTRECORDDISABLE|oh noes ur scors not gunna be recorded cuz it no wurkx
 GAME_RESULTNEWRECORD|u r|da best

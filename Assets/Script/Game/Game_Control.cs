@@ -151,6 +151,7 @@ public class Game_Control : MonoBehaviour
     public float floatNoteDodgeInvincibilityPeriod = 1f;
     private float floatNoteDodgeInvincibilityPeriodCurrent = 2f;
     public int[] intNoteDodgeBulletRingSpawnQuantity = { 12, 14, 16, 18, 20, 22, 24, 26, 28, 30 };
+    public float[] floatNoteDodgeBulletLongNoteSpawnFrequency = { 1f, 1f, 1f, 2f, 2f, 2f, 4f, 4f, 4f, 8f, 8f };
 
     private bool isForcedEnd = false;
     private bool isScoringDisabled = false;
@@ -1545,9 +1546,9 @@ public class Game_Control : MonoBehaviour
 
                             DespawnNote(x);
                         }
-                        else if (floatMusicBeat >= x.time - x.length + 1f)
+                        else if (floatMusicBeat >= x.time - x.length + (1f / floatNoteDodgeBulletLongNoteSpawnFrequency[chartJudgeDifficulty]))
                         {
-                            x.length -= 1f;
+                            x.length -= 1f / floatNoteDodgeBulletLongNoteSpawnFrequency[chartJudgeDifficulty];
 
                             Vector3 bulletPos = Vector3.zero;
                             switch (x.type)
@@ -1694,13 +1695,37 @@ public class Game_Control : MonoBehaviour
                         x.transform.position += x.transform.up * x.speed * chartCurrentTempo / 180f * Time.deltaTime;
 
                         // Check if its too close to the dodger
-                        if (Vector3.Distance(objectMouseCursorDodger.transform.position, x.transform.position) < floatNoteDodgeBulletHitboxRadius && !boolAutoplay)
+                        if (Vector3.Distance(objectMouseCursorDodger.transform.position, x.transform.position) < floatNoteDodgeBulletHitboxRadius)
                         {
                             if (floatNoteDodgeInvincibilityPeriodCurrent < 0f)
                             {
                                 floatNoteDodgeInvincibilityPeriodCurrent = floatNoteDodgeInvincibilityPeriod;
                                 PlaySoundEffect(clipGameBulletHit);
                                 intNoteDodgeHit++;
+                                
+                                // Remove nearby bullets
+                                foreach (Game_NoteBullet y in listNoteBullet)
+                                {
+                                    if (Vector3.Distance(objectMouseCursorDodger.transform.position, y.transform.position) < 0.5f)
+                                    {
+                                        DespawnNote(y);
+                                    }
+                                }
+
+                                if (PlayerSetting.setting.enableDisplayNoteJudgment)
+                                {
+                                    Game_AnimationJudgment anim = SpawnJudgeAnimation();
+                                    anim.gameObject.SetActive(true);
+                                    anim.transform.position = x.transform.position + Vector3.up;
+                                    anim.gameObject.layer = 9;
+                                    anim.spriteRendererJudgment.sprite = spriteJudgment[3];
+                                    anim.animatorJudgment.Play("anim");
+
+                                    ParticleSystem.MainModule animParticleModule = anim.particleSystemJudgment.main;
+                                    animParticleModule.startColor = colorJudgmentParticle[3];
+                                    anim.particleSystemJudgment.gameObject.layer = anim.gameObject.layer;
+                                    anim.particleSystemJudgment.Play();
+                                }
                             }
                             DespawnNote(x);
                         }
@@ -2061,7 +2086,8 @@ public class Game_Control : MonoBehaviour
         yield return null;
 
         // Update texts
-        if (playerAccuracyFine == 0 && playerAccuracyGreat == 0 && playerAccuracyMiss == 0)
+        if ((intChartGameType != 3 && playerAccuracyFine == 0 && playerAccuracyGreat == 0 && playerAccuracyMiss == 0) ||
+            (intChartGameType == 3 && intNoteDodgeHit == 0))
         {
             textResultHeader.text = Translator.GetStringTranslation("GAME_RESULTPLAYPERFECT", "PERFECT RHYTHM");
             textResultHeader.color = colorResultHeaderPerfect;
@@ -2103,31 +2129,23 @@ public class Game_Control : MonoBehaviour
 
         for (float f = 0; f < 0.5f; f += Time.deltaTime * animatorResults.speed) yield return null;
         StartCoroutine(TextFloatGradualIncrease(textResultAccuracy, finalAccuracy * 100f, 0.8f));
-        StartCoroutine(TextIntGradualIncrease(textResultBestCombo, playerComboBest, 0.8f));
-        for (float f = 0; f < 0.5f; f += Time.deltaTime * animatorResults.speed) yield return null;
-        StartCoroutine(TextIntGradualIncrease(textResultJudgeBest, playerAccuracyBest, 0.6f));
-        for (float f = 0; f < 0.3f; f += Time.deltaTime * animatorResults.speed) yield return null;
         if (intChartGameType != 3)
         {
+            StartCoroutine(TextIntGradualIncrease(textResultBestCombo, playerComboBest, 0.8f));
+            for (float f = 0; f < 0.5f; f += Time.deltaTime * animatorResults.speed) yield return null;
+            StartCoroutine(TextIntGradualIncrease(textResultJudgeBest, playerAccuracyBest, 0.6f));
+            for (float f = 0; f < 0.3f; f += Time.deltaTime * animatorResults.speed) yield return null;
             StartCoroutine(TextIntGradualIncrease(textResultJudgeGreat, playerAccuracyGreat, 0.5f));
-        }
-        else
-        {
-            StartCoroutine(TextIntGradualIncrease(textResultJudgeGreat, playerAccuracyMiss, 0.5f));
-        }
-        for (float f = 0; f < 0.3f; f += Time.deltaTime * animatorResults.speed) yield return null;
-        if (intChartGameType != 3)
-        {
+            for (float f = 0; f < 0.3f; f += Time.deltaTime * animatorResults.speed) yield return null;
             StartCoroutine(TextIntGradualIncrease(textResultJudgeFine, playerAccuracyFine, 0.4f));
-        }
-        for (float f = 0; f < 0.3f; f += Time.deltaTime * animatorResults.speed) yield return null;
-        if (intChartGameType != 3)
-        {
+            for (float f = 0; f < 0.3f; f += Time.deltaTime * animatorResults.speed) yield return null;
             StartCoroutine(TextIntGradualIncrease(textResultJudgeMiss, playerAccuracyMiss, 0.3f));
         }
         else
         {
-            StartCoroutine(TextIntGradualIncrease(textResultJudgeMiss, intNoteDodgeHit, 0.3f));
+            textResultBestCombo.text = "0";
+            StartCoroutine(TextIntGradualIncrease(textResultJudgeBest, intNoteDodgeHit, 1.0f));
+            for (float f = 0; f < 1.4f; f += Time.deltaTime * animatorResults.speed) yield return null;
         }
 
         for (float f = 0; f < 1.2f; f += Time.deltaTime * animatorResults.speed) yield return null;
