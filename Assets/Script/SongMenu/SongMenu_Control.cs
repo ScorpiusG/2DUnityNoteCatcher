@@ -86,6 +86,7 @@ public class SongMenu_Control : MonoBehaviour
     public AudioSource audioSourcePreview;
     public PlaySoundEffect mSoundPlayer;
     public AudioClip clipRecordDelete;
+    public AudioClip clipToggleDescription;
 
     public bool isHighscoreDisabledByMods = false;
     public bool isHighscoreDisabledByChart = false;
@@ -880,6 +881,7 @@ public class SongMenu_Control : MonoBehaviour
     public void ToggleChartDescription()
     {
         boolDetailsDescriptionEnable = !boolDetailsDescriptionEnable;
+        mSoundPlayer.PlaySound(clipToggleDescription);
     }
 
     public void AdjustScrollSpeed()
