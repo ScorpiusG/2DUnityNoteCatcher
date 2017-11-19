@@ -87,6 +87,7 @@ public class SongMenu_Control : MonoBehaviour
     public PlaySoundEffect mSoundPlayer;
     public AudioClip clipRecordDelete;
     public AudioClip clipToggleDescription;
+    public AudioClip clipPressedEscape;
 
     public bool isHighscoreDisabledByMods = false;
     public bool isHighscoreDisabledByChart = false;
@@ -286,7 +287,12 @@ public class SongMenu_Control : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.Escape))
         {
-            if (objectOptionsMenu.activeSelf)
+            mSoundPlayer.PlaySound(clipPressedEscape);
+            if (boolDetailsDescriptionEnable)
+            {
+                boolDetailsDescriptionEnable = false;
+            }
+            else if (objectOptionsMenu.activeSelf)
             {
                 ToggleMenuOptions();
             }
@@ -297,9 +303,9 @@ public class SongMenu_Control : MonoBehaviour
         }
 
         // Show/Hide chart description by tapping F1.
-        if (Input.GetKeyDown(KeyCode.F1) && textDetailsDescription.text.Length > 0)
+        if (Input.GetKeyDown(KeyCode.F1) && textDetailsDescription.text.Length > 0 && !objectOptionsMenu.activeSelf)
         {
-            boolDetailsDescriptionEnable = !boolDetailsDescriptionEnable;
+            ToggleChartDescription();
         }
         if (boolDetailsDescriptionEnable && textDetailsDescription.text.Length <= 0)
         {
