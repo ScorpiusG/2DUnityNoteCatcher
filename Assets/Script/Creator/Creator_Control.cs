@@ -100,6 +100,7 @@ public class Creator_Control : MonoBehaviour
     private int intChartLevel = 0;
     private float floatGameplayLength = 0f;
     private Creator_Note objectNoteSelected = null;
+    private bool boolEditNoteLength = false;
     [HideInInspector] public bool boolFullPreviewOngoing = false;
 
     private bool fixedUpdateCheckOtherFrame = false;
@@ -1630,9 +1631,7 @@ public class Creator_Control : MonoBehaviour
                         }
                     }
                 }
-                else if (hit.collider.tag == "Creator_Note" &&
-                    !Input.GetKey(KeyCode.LeftControl) && !Input.GetKey(KeyCode.LeftCommand) &&
-                    !Input.GetKey(KeyCode.LeftShift) && !Input.GetKey(KeyCode.LeftAlt))
+                else if (hit.collider.tag == "Creator_Note" && !Input.GetKey(KeyCode.LeftControl) && !Input.GetKey(KeyCode.LeftCommand) && !Input.GetKey(KeyCode.LeftAlt))
                 {
                     // Drag start - keep the on-clicked note in memory
                     objectNoteSelected = hit.collider.GetComponent<Creator_Note>();
@@ -1640,43 +1639,59 @@ public class Creator_Control : MonoBehaviour
 
                     objectSelectedNoteHighlight.SetActive(true);
                     objectSelectedNoteHighlight.transform.position = objectNoteSelected.transform.position;
+
+                    boolEditNoteLength = Input.GetKey(KeyCode.LeftShift);
                 }
             }
         }
 
+        // Drag end
         if (Input.GetMouseButtonUp(0) && objectNoteSelected != null)
         {
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             RaycastHit hit;
 
-            // Drag end - move the note
             Creator_Note draggedNote = objectNoteSelected;
             objectNoteSelected = null;
             objectSelectedNoteHighlight.SetActive(false);
 
             if (Physics.Raycast(ray, out hit, 15f))
             {
-                // More or less the same check as creating the note
-                if (hit.point.y > -Mathf.Epsilon)
+                // Set note length
+                if (boolEditNoteLength)
                 {
-                    float pos = hit.point.x;
-                    float time = hit.point.y;
+                    float pos = draggedNote.transform.position.x;
+                    float time = draggedNote.transform.position.y;
                     int type = draggedNote.type;
-                    float length = draggedNote.length;
+                    float length = hit.point.y - draggedNote.transform.position.y;
                     float speed = draggedNote.speed;
-                    if (draggedNote.isNoteTap) type += 4;
 
                     float oldPosY = draggedNote.transform.position.y;
                     draggedNote.transform.position += Vector3.down * (oldPosY + 1f);
-                    
-                    if (!Input.GetKey(KeyCode.LeftShift))
+
+                    length = Mathf.Round(intBeatSnapDivisorValue[intBeatSnapDivisor] * length) / intBeatSnapDivisorValue[intBeatSnapDivisor];
+
+                    /*
+                    // Old method: Edit the note directly
+                    if (length < 0.01f || draggedNote.isNoteTap)
                     {
-                        pos = Mathf.Round(intHoriPosSnapDivisorValue[intHoriPosSnapDivisor] * pos) / intHoriPosSnapDivisorValue[intHoriPosSnapDivisor];
+                        length = 0;
+                        draggedNote.spriteRendererLength.gameObject.SetActive(false);
+                        draggedNote.spriteRendererLengthEndNote.gameObject.SetActive(false);
                     }
-                    if (intBeatSnapDivisor >= 0)
+                    else
                     {
-                        time = Mathf.Round(intBeatSnapDivisorValue[intBeatSnapDivisor] * time) / intBeatSnapDivisorValue[intBeatSnapDivisor];
+                        draggedNote.length = length;
+                        draggedNote.spriteRendererLength.gameObject.SetActive(true);
+                        draggedNote.spriteRendererLength.transform.localPosition = Vector3.up * length * 0.5f;
+                        draggedNote.spriteRendererLength.transform.localScale = new Vector3(
+                            draggedNote.spriteRendererLength.transform.localScale.x,
+                            25f * length,
+                            draggedNote.spriteRendererLength.transform.localScale.z);
+                        draggedNote.spriteRendererLengthEndNote.gameObject.SetActive(true);
+                        draggedNote.spriteRendererLengthEndNote.transform.localPosition = Vector3.up * length;
                     }
+                    */
 
                     if (CheckNotePlacementValidity(pos, time, type, length))
                     {
@@ -1737,9 +1752,7 @@ public class Creator_Control : MonoBehaviour
                                 }
                             }
                         }
-#if UNITY_EDITOR
-                        Debug.Log("Note move: pos " + pos.ToString("f3") + ", time " + time.ToString("f3") + ", type " + type.ToString() + ", length " + length.ToString("f3"));
-#endif
+
                         if (!draggedNote.isNoteTap)
                         {
                             CreateNoteCatch(pos, time, type, 0, length, speed, draggedNote.other);
@@ -1749,13 +1762,119 @@ public class Creator_Control : MonoBehaviour
                             CreateNoteTap(time, type, 0, length, speed, draggedNote.other);
                         }
                         PlaySound(clipTick);
-                        CalculateChartLevel();
                         DeleteNote(draggedNote);
+                        CalculateChartLevel();
                     }
                     else
                     {
                         draggedNote.transform.position += Vector3.up * (oldPosY + 1f);
                         PlaySound(clipCancel);
+                    }
+                }
+                // Set note position
+                else
+                {
+                    // More or less the same check as creating the note
+                    if (hit.point.y > -Mathf.Epsilon)
+                    {
+                        float pos = hit.point.x;
+                        float time = hit.point.y;
+                        int type = draggedNote.type;
+                        float length = draggedNote.length;
+                        float speed = draggedNote.speed;
+                        if (draggedNote.isNoteTap) type += 4;
+
+                        float oldPosY = draggedNote.transform.position.y;
+                        draggedNote.transform.position += Vector3.down * (oldPosY + 1f);
+
+                        if (!Input.GetKey(KeyCode.LeftShift))
+                        {
+                            pos = Mathf.Round(intHoriPosSnapDivisorValue[intHoriPosSnapDivisor] * pos) / intHoriPosSnapDivisorValue[intHoriPosSnapDivisor];
+                        }
+                        if (intBeatSnapDivisor >= 0)
+                        {
+                            time = Mathf.Round(intBeatSnapDivisorValue[intBeatSnapDivisor] * time) / intBeatSnapDivisorValue[intBeatSnapDivisor];
+                        }
+
+                        if (CheckNotePlacementValidity(pos, time, type, length))
+                        {
+                            if (intChartGameType != 3)
+                            {
+                                foreach (Creator_Note x in listNoteCatchPool)
+                                {
+                                    Creator_Note sameNote = null;
+                                    Creator_Note oppositeNote = null;
+                                    float dist = Mathf.Abs(time - x.transform.position.y);
+                                    if (dist < 0.01f)
+                                    {
+                                        switch (type)
+                                        {
+                                            case 0: if (x.type == 1) oppositeNote = x; break;
+                                            case 1: if (x.type == 0) oppositeNote = x; break;
+                                            case 2: if (x.type == 3) oppositeNote = x; break;
+                                            case 3: if (x.type == 2) oppositeNote = x; break;
+                                        }
+                                    }
+                                    if (x.length > 0.01f)
+                                    {
+                                        dist = Mathf.Abs(time - (x.transform.position.y + x.length));
+                                        if (dist < 0.01f)
+                                        {
+                                            switch (type)
+                                            {
+                                                case 0: if (x.type == 1) oppositeNote = x; break;
+                                                case 1: if (x.type == 0) oppositeNote = x; break;
+                                                case 2: if (x.type == 3) oppositeNote = x; break;
+                                                case 3: if (x.type == 2) oppositeNote = x; break;
+                                            }
+                                        }
+                                        if (time < x.transform.position.y + x.length - Mathf.Epsilon && time > x.transform.position.y + Mathf.Epsilon)
+                                        {
+                                            if ((type == 0 || type == 1) && (x.type == 0 || x.type == 1))
+                                            {
+                                                if (type == x.type) sameNote = x;
+                                                else oppositeNote = x;
+                                            }
+                                            if ((type == 2 || type == 3) && (x.type == 2 || x.type == 3))
+                                            {
+                                                if (type == x.type) sameNote = x;
+                                                else oppositeNote = x;
+                                            }
+                                        }
+                                    }
+
+                                    if (sameNote != null)
+                                    {
+                                        pos = x.transform.position.x;
+                                        break;
+                                    }
+                                    if (oppositeNote != null)
+                                    {
+                                        pos = -x.transform.position.x;
+                                        break;
+                                    }
+                                }
+                            }
+#if UNITY_EDITOR
+                            //Debug.Log("Note move: pos " + pos.ToString("f3") + ", time " + time.ToString("f3") + ", type " + type.ToString() + ", length " + length.ToString("f3"));
+#endif
+                            if (!draggedNote.isNoteTap)
+                            {
+                                CreateNoteCatch(pos, time, type, 0, length, speed, draggedNote.other);
+                            }
+                            else
+                            {
+                                CreateNoteTap(time, type, 0, length, speed, draggedNote.other);
+                            }
+                            PlaySound(clipTick);
+                            DeleteNote(draggedNote);
+                            CalculateChartLevel();
+                        }
+                        else
+                        {
+                            draggedNote.transform.position += Vector3.up * (oldPosY + 1f);
+                            PlaySound(clipCancel);
+                        }
                     }
                 }
             }

@@ -113,7 +113,7 @@ CREATOR_NOTEPLACETYPEBODY7|Tap Right
 CREATOR_NOTEPLACETYPEHELP|* Hold <color="yellow">Left Ctrl/Cmd</color>, and <color="yellow">left-click</color> on the chart to <color="cyan">place notes</color> or <color="yellow">right-click</color> to <color=#ff2222>delete placed notes</color>.
 ** Additionally, <color="yellow">hold Left Shift</color> to <color=#00ff00>ignore horizontal position grid snap note placement</color>.
 CREATOR_NOTELENGTHHEADER|Note Length
-CREATOR_NOTELENGTHHELP|* Must be <color=yellow>a valid number above 0.01</color> to place valid long notes.
+CREATOR_NOTELENGTHHELP|* Must be <color=yellow>a valid number above 0.01</color> to place valid long notes.|** Additionally, you can directly edit an already placed note's length by dragging it while <color=yellow>holding Left Shift</color>.
 CREATOR_NOTESPEEDHEADER|Note Scroll Speed Multiplier
 CREATOR_NOTEHITSOUNDHEADER|Note Hit Sound ID
 CREATOR_VIEWZOOM|View Zoom
