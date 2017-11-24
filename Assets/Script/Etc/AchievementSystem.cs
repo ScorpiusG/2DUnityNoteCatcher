@@ -226,6 +226,13 @@ public class AchievementSystem : MonoBehaviour
                 yield return new WaitUntil(() => boolAnimatorAchievementGetFinish);
             }
 
+            if (listAchievementDisplay.Count > 0 && textAchievementGetName != null)
+            {
+                string aCode = listAchievementDisplay[0];
+                listAchievementDisplay.RemoveAt(0);
+                Notification.Display("Achievement unlocked!\n" + instance.GetAchievementItem(aCode).achievementName, Color.white);
+            }
+
             yield return null;
         }
     }

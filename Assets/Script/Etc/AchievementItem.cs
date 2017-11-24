@@ -9,7 +9,7 @@ public class AchievementItem : ScriptableObject
 
     public string achievementCode = "CODE";
     public string achievementName = "Name";
-    public string achievementDescription = "Description";
+    [TextArea] public string achievementDescription = "Description";
     public int achievementValue = 0;
     public Sprite achievementIcon;
 }

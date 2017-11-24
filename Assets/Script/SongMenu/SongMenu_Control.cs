@@ -94,6 +94,8 @@ public class SongMenu_Control : MonoBehaviour
 
     public float floatHighscoreDeleteTimer = 0f;
 
+    private bool isStartup = true;
+
     void Start()
     {
         // Variable initialization
@@ -222,7 +224,7 @@ public class SongMenu_Control : MonoBehaviour
             // Official songs
             else if (!isLoadCustomSongs)
             {
-                TextAsset text = (TextAsset)Resources.Load(listStringSongDirectory[i] + "_customname", typeof(TextAsset));
+                TextAsset text = (TextAsset)Resources.Load("Songs/" + listStringSongDirectory[i] + "/_customname", typeof(TextAsset));
                 if (text != null)
                 {
                     newBtn.GetComponentInChildren<Text>().text = text.text;
@@ -461,6 +463,9 @@ public class SongMenu_Control : MonoBehaviour
 #if UNITY_EDITOR
         Debug.Log("Clicked on \"" + folder.name + "\" folder.");
 #endif
+        if (!isStartup && stringSongSelectedCurrent == folder.name) return;
+
+        isStartup = false;
         stringSongSelectedCurrent = folder.name;
         //intGameType = -1;
         //intGameChart = -1;
@@ -523,7 +528,7 @@ public class SongMenu_Control : MonoBehaviour
                 }
                 else
                 {
-                    string path = folder.name + "-" + gameModeID.ToString() + "-" + chartID.ToString();
+                    string path = "Songs/" + folder.name + "/" + folder.name + "-" + gameModeID.ToString() + "-" + chartID.ToString();
                     TextAsset text = (TextAsset)Resources.Load(path, typeof(TextAsset));
                     if (text != null)
                     {
@@ -646,7 +651,7 @@ public class SongMenu_Control : MonoBehaviour
             }
             else
             {
-                string path = "Songs/" + folder.name + "_background";
+                string path = "Songs/" + folder.name + "/" + "background";
                 textureBackground = Resources.Load(path) as Texture;
             }
             if (textureBackground != null)
@@ -716,8 +721,12 @@ public class SongMenu_Control : MonoBehaviour
             string url = "Songs/" + name + "/preview.ogg";
             if (!File.Exists(url))
             {
-                Debug.LogError("ERROR: " + url + " does not exist.");
-                yield break;
+                url = "Songs/" + name + "/name.ogg";
+
+                if (!File.Exists(url))
+                {
+                    yield break;
+                }
             }
 
             WWW www = new WWW("file://" + Application.dataPath.Substring(0, Application.dataPath.LastIndexOf("/")) + "/" + url);
@@ -733,7 +742,7 @@ public class SongMenu_Control : MonoBehaviour
         // Official song
         else
         {
-            newClip = (AudioClip)Resources.Load(name + "_preview", typeof(AudioClip));
+            newClip = (AudioClip)Resources.Load("Songs/" + name + "/preview", typeof(AudioClip));
             if (newClip == null)
             {
                 Debug.LogError("ERROR: " + name + "_preview resource does not exist.");
@@ -771,7 +780,7 @@ public class SongMenu_Control : MonoBehaviour
         }
         else
         {
-            string path = stringSongSelectedCurrent + "-" + intGameType.ToString() + "-" + intGameChart.ToString();
+            string path = "Songs/" + stringSongSelectedCurrent + "/" + stringSongSelectedCurrent + "-" + intGameType.ToString() + "-" + intGameChart.ToString();
             TextAsset text = (TextAsset)Resources.Load(path, typeof(TextAsset));
             input = text.text;
         }

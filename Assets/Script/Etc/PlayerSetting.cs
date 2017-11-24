@@ -8,6 +8,11 @@ public class PlayerSetting : MonoBehaviour
 
     // Player in-game level maxed out. If true, prevent calculations.
     public bool boolPlayerLevelMax = false;
+    // Player total play count for each respective game mode
+    public int intPlayerTotalPlayCountLN = 0;
+    public int intPlayerTotalPlayCountDB = 0;
+    public int intPlayerTotalPlayCountQD = 0;
+    public int intPlayerTotalPlayCountND = 0;
     // Player accumulated score.
     public List<int> intPlayerTotalScore = new List<int>();
 
@@ -256,7 +261,7 @@ public class PlayerSetting : MonoBehaviour
     /// <returns></returns>
     public int GetLevelScoreRequirement(int level)
     {
-        return (((level + 1) * level) / 2) * ((level * 6) + 94);
+        return (((level + 1) * level) / 2) * ((level * 6) + 94) * 10;
     }
 
     /// <summary>

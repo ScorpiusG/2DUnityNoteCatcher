@@ -677,7 +677,7 @@ public class Game_Control : MonoBehaviour
         // Chart is built-in
         else
         {
-            string chartFileName = stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString();
+            string chartFileName = "Songs/" + stringSongFileName + "/" + stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString();
             //string path = "Songs/" + chartFileName + ".txt";
             TextAsset info = Resources.Load(chartFileName) as TextAsset;
             input = info.text;
@@ -708,7 +708,7 @@ public class Game_Control : MonoBehaviour
         }
         else
         {
-            string path = stringSongFileName + "_background";
+            string path = "Songs/" + stringSongFileName + "/background";
             textureBackground = Resources.Load(path) as Texture;
         }
         if (textureBackground != null)
@@ -1983,9 +1983,21 @@ public class Game_Control : MonoBehaviour
             int songPlayCount = PlayerPrefs.GetInt(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-playcount", 0);
             songPlayCount++;
             PlayerPrefs.SetInt(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-playcount", songPlayCount);
+            PlayerSetting.setting.intPlayerTotalPlayCountND++;
+            PlayerPrefs.Save();
 
             ExitGameScene();
             yield break;
+        }
+        else if (!isForcedEnd)
+        {
+            switch (intChartGameType)
+            {
+                case 0: PlayerSetting.setting.intPlayerTotalPlayCountLN++; break;
+                case 1: PlayerSetting.setting.intPlayerTotalPlayCountDB++; break;
+                case 2: PlayerSetting.setting.intPlayerTotalPlayCountQD++; break;
+                case 3: PlayerSetting.setting.intPlayerTotalPlayCountND++; break;
+            }
         }
 
         // Check score validity
