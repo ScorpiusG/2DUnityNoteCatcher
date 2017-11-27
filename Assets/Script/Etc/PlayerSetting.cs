@@ -28,7 +28,7 @@ public class PlayerSetting : MonoBehaviour
     // Affects note scroll speed.
     public int intScrollSpeed = 10;
     // Affects song force end on being unable to achieve a certain accuracy percentage.
-    public int intAccuracyTolerance = 0;
+    public int intAccuracyThreshold = 0;
     // Music volume
     public float floatVolumeMusic = 1f;
     // Sound effect volume

@@ -601,9 +601,9 @@ public class Game_Control : MonoBehaviour
         rendererPlaneBackground.gameObject.SetActive(false);
         objectAutoplayIndicator.SetActive(boolAutoplay);
         imageSongProgressGauge.fillAmount = 0f;
-        if (PlayerSetting.setting.intAccuracyTolerance > 0)
+        if (PlayerSetting.setting.intAccuracyThreshold > 0)
         {
-            imageAccuracyTolerance.transform.localPosition += Vector3.right * floatAccuracyGaugeWidth * 0.01f * PlayerSetting.setting.intAccuracyTolerance;
+            imageAccuracyTolerance.transform.localPosition += Vector3.right * floatAccuracyGaugeWidth * 0.01f * PlayerSetting.setting.intAccuracyThreshold;
         }
         else
         {
@@ -1870,11 +1870,11 @@ public class Game_Control : MonoBehaviour
                 }
             }
 
-            // Force end condition: Current negative accuracy is below tolerance
+            // Force end condition: Current negative accuracy is below player-set threshold
             if (intChartGameType != 3)
             {
                 if (1f * currentAccuracyNegative / (4f * chartTotalNotes) >
-                    1f - (0.01f * PlayerSetting.setting.intAccuracyTolerance))
+                    1f - (0.01f * PlayerSetting.setting.intAccuracyThreshold))
                 {
                     isForcedEnd = true;
                 }
@@ -1882,7 +1882,7 @@ public class Game_Control : MonoBehaviour
             else
             {
                 if (1f * currentAccuracyNegative / 1000000 >
-                    1000000f - (10000f * PlayerSetting.setting.intAccuracyTolerance))
+                    1000000f - (10000f * PlayerSetting.setting.intAccuracyThreshold))
                 {
                     isForcedEnd = true;
                 }
@@ -2106,7 +2106,7 @@ public class Game_Control : MonoBehaviour
             PlaySoundEffect(clipGameEndPerfect);
             imageSongProgressGauge.fillAmount = 1f;
         }
-        else if (finalAccuracy >= 0.01f * PlayerSetting.setting.intAccuracyTolerance)
+        else if (finalAccuracy >= 0.01f * PlayerSetting.setting.intAccuracyThreshold)
         {
             textResultHeader.text = Translator.GetStringTranslation("GAME_RESULTPLAYCLEAR", "COMPLETE RHYTHM");
             textResultHeader.color = colorResultHeaderPass;

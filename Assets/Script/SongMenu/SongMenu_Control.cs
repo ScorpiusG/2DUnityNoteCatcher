@@ -63,7 +63,7 @@ public class SongMenu_Control : MonoBehaviour
     public GameObject[] groupOptionsMenuPage;
     private int intOptionsMenuPage = 0;
     public Text textOptionsAccuracyTolerance;
-    public Slider sliderOptionsAccuracyTolerance;
+    public Slider sliderOptionsAccuracyThreshold;
     public Text textOptionsBackgroundBrightness;
     public Slider sliderOptionsBackgroundBrightness;
     public Slider sliderOptionsMouseSensitivity;
@@ -138,7 +138,7 @@ public class SongMenu_Control : MonoBehaviour
             imageScoreGauge.fillAmount = 1f * (currentScore - prevLevelScore) / (nextLevelScore - prevLevelScore);
         }
         sliderScrollSpeed.value = PlayerSetting.setting.intScrollSpeed;
-        sliderOptionsAccuracyTolerance.value = PlayerSetting.setting.intAccuracyTolerance;
+        sliderOptionsAccuracyThreshold.value = PlayerSetting.setting.intAccuracyThreshold;
         sliderOptionsBackgroundBrightness.value = PlayerSetting.setting.floatBackgroundBrightness;
         sliderOptionsMouseSensitivity.value = PlayerSetting.setting.floatMouseSensitivity;
         sliderOptionsVolumeMusic.value = PlayerSetting.setting.floatVolumeMusic;
@@ -353,7 +353,7 @@ public class SongMenu_Control : MonoBehaviour
     {
         isHighscoreDisabledByMods = false;
         textDisplayScrollSpeed.text = Translator.GetStringTranslation("SONGMENU_SCROLLSPEED", "Note Scroll Speed:") + " x" + (0.1f * PlayerSetting.setting.intScrollSpeed).ToString("f1");
-        textDisplayAccuracy.text = Translator.GetStringTranslation("SONGMENU_ACCURACYTOLERANCE", "Accuracy Tolerance:") + " " + PlayerSetting.setting.intAccuracyTolerance.ToString() + "%";
+        textDisplayAccuracy.text = Translator.GetStringTranslation("SONGMENU_ACCURACYTHRESHOLD", "Accuracy Threshold:") + " " + PlayerSetting.setting.intAccuracyThreshold.ToString() + "%";
         if (PlayerSetting.setting.intGameOffset != 0)
         {
             textDisplayAccuracy.text += " | " + Translator.GetStringTranslation("SONGMENU_GAMEOFFSET", "Offset:") + " " + PlayerSetting.setting.intGameOffset.ToString() + "ms";
@@ -432,7 +432,7 @@ public class SongMenu_Control : MonoBehaviour
             isHighscoreDisabledByMods = true;
         }
 
-        textOptionsAccuracyTolerance.text = PlayerSetting.setting.intAccuracyTolerance.ToString() + "%";
+        textOptionsAccuracyTolerance.text = PlayerSetting.setting.intAccuracyThreshold.ToString() + "%";
         textOptionsBackgroundBrightness.text = (PlayerSetting.setting.floatBackgroundBrightness * 100f).ToString("f2") + "%";
         textOptionsMouseSensitivity.text = (PlayerSetting.setting.floatMouseSensitivity * 100f).ToString("f2") + "%";
         textOptionsGameOffset.text = PlayerSetting.setting.intGameOffset.ToString() + " ms";
@@ -905,11 +905,11 @@ public class SongMenu_Control : MonoBehaviour
     }
     public void AdjustAccuracyTolerance(int mod)
     {
-        sliderOptionsAccuracyTolerance.value = PlayerSetting.setting.intAccuracyTolerance = Mathf.Clamp(PlayerSetting.setting.intAccuracyTolerance + mod, 0, 100);
+        sliderOptionsAccuracyThreshold.value = PlayerSetting.setting.intAccuracyThreshold = Mathf.Clamp(PlayerSetting.setting.intAccuracyThreshold + mod, 0, 100);
     }
     public void AdjustAccuracyToleranceAlt()
     {
-        PlayerSetting.setting.intAccuracyTolerance = Mathf.RoundToInt(sliderOptionsAccuracyTolerance.value);
+        PlayerSetting.setting.intAccuracyThreshold = Mathf.RoundToInt(sliderOptionsAccuracyThreshold.value);
     }
     public void AdjustBackgroundBrightness()
     {

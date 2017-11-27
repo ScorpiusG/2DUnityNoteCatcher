@@ -14,7 +14,7 @@ SONGMENU_PLAYERLEVEL|Level
 SONGMENU_PLAYERSCORE|Score
 SONGMENU_PLAYERNEXTLEVELSCORE|Next Level:
 SONGMENU_SCROLLSPEED|Note Scroll Speed:
-SONGMENU_ACCURACYTOLERANCE|Accuracy Tolerance:
+SONGMENU_ACCURACYTHRESHOLD|Accuracy Threshold:
 SONGMENU_GAMEOFFSET|Offset:
 SONGMENU_CHARTNONEXISTS|There are no map charts in|this song folder's contents.||Please make sure your map|chart files are named in the|correct format.
 SONGMENU_CHARTDEV|Mapchart Producer:
@@ -41,8 +41,8 @@ SONGMENU_BUTTONSETTINGSPAGE2|[Page 2]
 SONGMENU_BUTTONSETTINGSPAGE3|[Page 3]
 SONGMENU_BUTTONSETTINGSMODSHEADER|Game Modifiers
 SONGMENU_BUTTONSETTINGSMODSBODY|Fun modifiers to play the game in unusual ways. Will disable scoring.
-SONGMENU_BUTTONSETTINGSACCURACYTOLERANCEHEADER|Accuracy Tolerance
-SONGMENU_BUTTONSETTINGSACCURACYTOLERANCEBODY|The required accuracy to clear a chart. If it becomes impossible|to achieve this number, the game will forcefully end.
+SONGMENU_BUTTONSETTINGSACCURACYTHRESHOLDHEADER|Accuracy Threshold
+SONGMENU_BUTTONSETTINGSACCURACYTHRESHOLDBODY|The required accuracy to clear a chart. If it becomes impossible|to achieve this number, the game will forcefully end.
 SONGMENU_BUTTONSETTINGSBACKGROUNDBRIGHTNESSHEADER|Background Brightness
 SONGMENU_BUTTONSETTINGSBACKGROUNDBRIGHTNESSBODY|Adjust the brightness of the in-game background.
 SONGMENU_BUTTONSETTINGSMOUSESENSITIVITYHEADER|Mouse Sensitivity
