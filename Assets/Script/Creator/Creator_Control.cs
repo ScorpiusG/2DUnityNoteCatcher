@@ -44,6 +44,7 @@ public class Creator_Control : MonoBehaviour
     public Text textChartGameType;
     public Text textNotePlacementType;
     public Image[] imageNotePlacementHighlight;
+    public Image[] imageNotePlacementInvalidDarken;
     public InputField textNoteLength;
     public Toggle toggleNoteLengthEnable;
     public InputField textNoteSpeed;
@@ -407,7 +408,6 @@ public class Creator_Control : MonoBehaviour
     /// </summary>
     public void ClearChart()
     {
-        PlaySound(clipSelect);
         floatCursorPosition = 0;
 
         //textFileName.text = "";
@@ -434,6 +434,8 @@ public class Creator_Control : MonoBehaviour
     /// </summary>
     public void ClearNotesOnly()
     {
+        floatCursorPosition = 0;
+
         Creator_Note[] listNoteC = FindObjectsOfType<Creator_Note>();
         foreach (Creator_Note x in listNoteC)
         {
@@ -774,6 +776,8 @@ public class Creator_Control : MonoBehaviour
     {
         if (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.LeftCommand)) return;
 
+        PlaySound(clipTick);
+
         bool boolChangeTypeValidity = true;
         foreach (Creator_Note x in listNoteCatchPool)
         {
@@ -805,7 +809,6 @@ public class Creator_Control : MonoBehaviour
             return;
         }
 
-        PlaySound(clipTick);
         intChartGameType += modifier;
         if (intChartGameType < 0)
         {
@@ -815,6 +818,8 @@ public class Creator_Control : MonoBehaviour
         {
             intChartGameType = 0;
         }
+
+        intNotePlacementType = 0;
     }
 
     public void AddNoteEffect(Text text)
@@ -875,6 +880,13 @@ public class Creator_Control : MonoBehaviour
         if (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.LeftCommand)) return;
 
         PlaySound(clipTick);
+
+        if ((intChartGameType == 0 && modifier % 4 != 0) ||
+            (intChartGameType == 1 && modifier % 4 > 1))
+        {
+            Notification.Display("Unable to place that note in this game mode.", Color.white);
+            return;
+        }
         intNotePlacementType = modifier;
     }
 
@@ -1343,7 +1355,29 @@ public class Creator_Control : MonoBehaviour
         {
             for (int i = 0; i < imageNotePlacementHighlight.Length; i++)
             {
-                imageNotePlacementHighlight[i].gameObject.SetActive(i == intNotePlacementType);
+                if (!imageNotePlacementHighlight[i].gameObject.activeSelf && i == intNotePlacementType)
+                {
+                    imageNotePlacementHighlight[i].gameObject.SetActive(true);
+                }
+                else if (imageNotePlacementHighlight[i].gameObject.activeSelf && i != intNotePlacementType)
+                {
+                    imageNotePlacementHighlight[i].gameObject.SetActive(false);
+                }
+            }
+        }
+        // Darken disabled note types
+        if (imageNotePlacementInvalidDarken.Length > 0)
+        {
+            for (int i = 0; i < imageNotePlacementInvalidDarken.Length; i++)
+            {
+                if (!imageNotePlacementInvalidDarken[i].gameObject.activeSelf && intChartGameType == i)
+                {
+                    imageNotePlacementInvalidDarken[i].gameObject.SetActive(true);
+                }
+                else if (imageNotePlacementInvalidDarken[i].gameObject.activeSelf && intChartGameType != i)
+                {
+                    imageNotePlacementInvalidDarken[i].gameObject.SetActive(false);
+                }
             }
         }
     }
@@ -1471,7 +1505,7 @@ public class Creator_Control : MonoBehaviour
             Creator_SongPreview.mSongPreview.PreviewAll();
         }
 
-        // Left-click to place a note
+        // Left-click
 //#if UNITY_EDITOR
         if (Input.GetMouseButtonDown(0))
 //#else
@@ -1489,6 +1523,7 @@ public class Creator_Control : MonoBehaviour
 
             if (Physics.Raycast(ray, out hit, 15f))
             {
+                // Hold Left Alt - Create note
 #if UNITY_EDITOR
                 if ((hit.collider.tag == "Creator_ChartBack" || hit.collider.tag == "Creator_Note") &&
                     Input.GetKey(KeyCode.LeftAlt))
@@ -1498,6 +1533,14 @@ public class Creator_Control : MonoBehaviour
 #endif
                 {
                     objectNoteSelected = null;
+
+                    // Restrict certain note types from being placed in wrong game modes.
+                    if ((intChartGameType == 0 && intNotePlacementType % 4 != 0) ||
+                        (intChartGameType == 1 && intNotePlacementType % 4 > 1))
+                    {
+                        Notification.Display("Unable to place that note in this game mode.", Color.white);
+                        return;
+                    }
 
                     // Possible to create note only if note is at or above song start
                     if (hit.point.y > -Mathf.Epsilon)
@@ -1518,7 +1561,7 @@ public class Creator_Control : MonoBehaviour
                             int intSoundID = -1;
                             if (int.TryParse(textNoteHitsound.text, out intSoundID))
                             {
-                                listStringNoteOther.Add("sound|" + intSoundID.ToString());
+                                listStringNoteOther.Add("sound:" + intSoundID.ToString());
                             }
                         }
                         float.TryParse(textNoteSpeed.text, out speed);
@@ -1631,6 +1674,8 @@ public class Creator_Control : MonoBehaviour
                         }
                     }
                 }
+                // No key held - Move note
+                // Hold Left Shift - Alter note's length
                 else if (hit.collider.tag == "Creator_Note" && !Input.GetKey(KeyCode.LeftControl) && !Input.GetKey(KeyCode.LeftCommand) && !Input.GetKey(KeyCode.LeftAlt))
                 {
                     // Drag start - keep the on-clicked note in memory
