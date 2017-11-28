@@ -311,6 +311,7 @@ public class Creator_Control : MonoBehaviour
     /// </summary>
     public void LoadChart()
     {
+        PlaySound(clipSelect);
         string input = textFileName.text + "-" + intChartGameType.ToString() + "-" + textFileChart.text;
 
         ClearChart();

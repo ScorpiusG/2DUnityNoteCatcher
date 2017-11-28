@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using System.Collections;
 using System.Collections.Generic;
+using System.Security.Cryptography;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
@@ -768,6 +769,7 @@ public class SongMenu_Control : MonoBehaviour
         intGameChart = button.intChart;
         string input = "";
         ChartData chartData = ScriptableObject.CreateInstance(typeof(ChartData)) as ChartData;
+        string chartChecksum = "";
         if (isLoadCustomSongs)
         {
             string path = Directory.GetCurrentDirectory() + stringSongDirectoryPath + "/" + stringSongSelectedCurrent + "/" +
@@ -776,6 +778,15 @@ public class SongMenu_Control : MonoBehaviour
             StreamReader reader = new StreamReader(path);
 
             input = reader.ReadToEnd();
+            reader.Close();
+
+            reader = new StreamReader(path);
+            MD5 md5checksum = MD5.Create();
+            byte[] byteChecksum = md5checksum.ComputeHash(reader.BaseStream);
+            foreach (byte x in byteChecksum)
+            {
+                chartChecksum += x;
+            }
             reader.Close();
         }
         else
@@ -814,6 +825,11 @@ public class SongMenu_Control : MonoBehaviour
             Translator.GetStringTranslation("SONGMENU_CHARTLENGTH", "Length:") + " " + Mathf.Floor(actualLength / 60f).ToString() + ":" + (actualLength % 60f).ToString("f2") + "\n" +
             Translator.GetStringTranslation("SONGMENU_CHARTBPM", "BPM:") + " " + chartData.songTempo.ToString("f0") + "\n" +
             Translator.GetStringTranslation("SONGMENU_CHARTJUDGELEVEL", "Judge Level:") + " " + (chartData.chartJudge + 1).ToString();
+
+        if (chartChecksum.Length > 0)
+        {
+            textDetailsBody.text += "\n" + Translator.GetStringTranslation("SONGMENU_CHARTCHECKSUM", "MD5 Checksum:") + " " + chartChecksum;
+        }
 
         float floatRecordAccuracy = 0f;
         int intRecordPlays = 0;

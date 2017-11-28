@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using System.Collections;
 using System.Collections.Generic;
+using System.Security.Cryptography;
 using UnityEngine;
 //using UnityEngine.Networking;
 using UnityEngine.UI;
@@ -85,6 +86,7 @@ public class Game_Control : MonoBehaviour
     public Text textNoteJudgeCount;
     public Image imageAccuracyTolerance;
     public float floatAccuracyGaugeWidth = 928f;
+    public Text textChartChecksum;
 
     public Animator animatorFullCombo;
 
@@ -595,6 +597,8 @@ public class Game_Control : MonoBehaviour
         colorRecordGhostBetter.a = textAlpha;
         colorRecordGhostNeutral.a = textAlpha;
         colorRecordGhostWorse.a = textAlpha;
+        audioSourceMusic.volume = PlayerSetting.setting.floatVolumeMusic;
+        //audioSourceEffect.volume = PlayerSetting.setting.floatVolumeEffect;
 
         // Object initialization
         textDebug.gameObject.SetActive(Debug.isDebugBuild || Application.isEditor);
@@ -650,8 +654,7 @@ public class Game_Control : MonoBehaviour
         {
             x.SetActive(intChartGameType == 3);
         }
-        audioSourceMusic.volume = PlayerSetting.setting.floatVolumeMusic;
-        //audioSourceEffect.volume = PlayerSetting.setting.floatVolumeEffect;
+        textChartChecksum.gameObject.SetActive(false);
 
         // Read chart from the text file
         string input = "";
@@ -673,6 +676,17 @@ public class Game_Control : MonoBehaviour
 #if UNITY_EDITOR
             Debug.Log(input);
 #endif
+
+            reader = new StreamReader(path);
+            MD5 md5checksum = MD5.Create();
+            byte[] byteChecksum = md5checksum.ComputeHash(reader.BaseStream);
+            textChartChecksum.gameObject.SetActive(true);
+            textChartChecksum.text = Translator.GetStringTranslation("GAME_CHARTCHECKSUM", "Chart MD5 Checksum:") + "\n";
+            foreach (byte x in byteChecksum)
+            {
+                textChartChecksum.text += x;
+            }
+            reader.Close();
         }
         // Chart is built-in
         else
@@ -681,6 +695,8 @@ public class Game_Control : MonoBehaviour
             //string path = "Songs/" + chartFileName + ".txt";
             TextAsset info = Resources.Load(chartFileName) as TextAsset;
             input = info.text;
+
+            textChartChecksum.gameObject.SetActive(false);
         }
 
         chartData = ScriptableObject.CreateInstance<ChartData>();
@@ -975,7 +991,7 @@ public class Game_Control : MonoBehaviour
 
         chartCurrentTempo = chartData.songTempo;
         floatMusicPositionEnd = chartData.songLength / chartCurrentTempo * 60f;
-        floatMusicPositionEnd -= (chartData.chartOffset + PlayerSetting.setting.intGameOffset) * 0.001f;
+        floatMusicPositionEnd += (chartData.chartOffset + PlayerSetting.setting.intGameOffset) * 0.001f;
         //timeItemLastSpawn = -4f;
         //itemQuantityTotal = Mathf.FloorToInt((chartData.gameplayLength - ((floatNoteDodgeItemSpawnFrequency * 4f) + Mathf.Epsilon)) / 4f) * 1000;
 
