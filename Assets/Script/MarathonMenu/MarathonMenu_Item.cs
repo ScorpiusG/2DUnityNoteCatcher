@@ -16,6 +16,11 @@ public class MarathonMenu_Item : ScriptableObject
     public float itemScoreMultiplier = 1.5f;
 
     /// <summary>
+    /// Sprite of the item displayed in the menu.
+    /// </summary>
+    public Sprite itemSpriteIcon;
+
+    /// <summary>
     /// Name of the item to be displayed.
     /// </summary>
     public string itemName = "Name";
@@ -26,15 +31,15 @@ public class MarathonMenu_Item : ScriptableObject
     public string itemDescription = "Description";
 
     /// <summary>
-    /// Custom accuracy tolerance as set by the item. Overwrites player's set accuracy tolerance.
+    /// Custom accuracy threshold as set by the item. Overwrites player's set accuracy threshold.
     /// </summary>
-    public int itemAccuracyTolerance = 0;
+    public int itemAccuracyThreshold = 0;
 
     /// <summary>
     /// Number of missed notes (total) allowed in a marathon before a forced exit.
     /// Set to zero to turn it off.
     /// </summary>
-    public int itemNoteMissTolerance = 0;
+    public int itemNoteMissThreshold = 0;
 
     /// <summary>
     /// A string array containing the charts to be played in order.
