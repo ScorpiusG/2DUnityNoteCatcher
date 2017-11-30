@@ -8,10 +8,11 @@ public class Title_Control : MonoBehaviour
     public Color colorCameraMainBGColor = Color.black;
     public float floatDurationBetweenColor = 4f;
 
-    public string stringSceneNameTranslationMenu = "TranslationMenu";
     public string stringSceneNameSongMenuOfficial = "SongMenuOfficial";
     public string stringSceneNameSongMenuCustom = "SongMenuCustom";
     public string stringSceneNameChartEditor = "Creator";
+    public string stringSceneNameTranslationMenu = "TranslationMenu";
+    public string stringSceneNameMarathonMenu = "MarathonMenu";
     public string stringSceneNameTutorial = "Tutorial";
 
     void Start()
@@ -33,6 +34,16 @@ public class Title_Control : MonoBehaviour
     {
         yield return null;
         SceneTransition.LoadScene(stringSceneNameTranslationMenu);
+    }
+
+    public void ButtonSceneTransferMarathonMenu()
+    {
+        StartCoroutine("_ButtonSceneTransferMarathonMenu");
+    }
+    private IEnumerator _ButtonSceneTransferMarathonMenu()
+    {
+        yield return null;
+        SceneTransition.LoadScene(stringSceneNameMarathonMenu);
     }
 
     public void ButtonSceneTransferSongMenuOfficial()

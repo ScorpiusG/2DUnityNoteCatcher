@@ -1,11 +1,12 @@
-﻿using System.Collections;
+﻿using System.Linq;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class MarathonMenu_Control : MonoBehaviour
 {
-    private static int intMarathonItemLast = 0;
+    private static int intMarathonItemLast = -1;
     public MarathonMenu_Button buttonTemplate;
     public Transform transformButtonParent;
 
@@ -16,17 +17,25 @@ public class MarathonMenu_Control : MonoBehaviour
     public Image imageScoreGauge;
 
     public Text textItemName;
+    public RawImage imageItemSprite;
     public Text textItemLevel;
     public Text textItemDescription;
     public Text textItemWinCondition;
     public Text textItemSongList;
     public Text textItemModList;
 
+    public Slider sliderScrollSpeed;
+    public Text textDisplayScrollSpeed;
+
     public MarathonMenu_Item[] arrayMarathonItem;
     public List<MarathonMenu_Item> listMarathonItem = new List<MarathonMenu_Item>();
 
     private void Start ()
     {
+        // Variable initialization
+        sliderScrollSpeed.value = PlayerSetting.setting.intScrollSpeed;
+        textDisplayScrollSpeed.text = Translator.GetStringTranslation("SONGMENU_SCROLLSPEED", "Note Scroll Speed:") + " x" + (0.1f * PlayerSetting.setting.intScrollSpeed).ToString("f1");
+
         // Player level and score display
         textPlayerScore.text = PlayerSetting.setting.GetScore();
         // Has already reached maximum level (100), display score only.
@@ -53,59 +62,117 @@ public class MarathonMenu_Control : MonoBehaviour
             imageScoreGauge.fillAmount = 1f * (currentScore - prevLevelScore) / (nextLevelScore - prevLevelScore);
         }
 
-        // Get marathon items and create button list
-        arrayMarathonItem = Resources.LoadAll("MarathonItem", typeof(MarathonMenu_Item)) as MarathonMenu_Item[];
+        // Get marathon items, sort them, and create button list
+        arrayMarathonItem = Resources.FindObjectsOfTypeAll<MarathonMenu_Item>();
         foreach (MarathonMenu_Item x in arrayMarathonItem)
         {
             listMarathonItem.Add(x);
         }
-        listMarathonItem.Sort();
+        listMarathonItem.Sort(
+            delegate (MarathonMenu_Item a, MarathonMenu_Item b)
+            {
+                return (a.name.CompareTo(b.name));
+            }
+            );
         
         buttonTemplate.gameObject.SetActive(false);
-        int itemValue = 0;
-        foreach (MarathonMenu_Item x in listMarathonItem)
+        MarathonMenu_Button autoselectButton = null;
+        for (int i = 0; i < listMarathonItem.Count; i++)
         {
             MarathonMenu_Button button = Instantiate(buttonTemplate);
-            button.name = itemValue.ToString() + " " + x.itemName;
-            button.itemID = itemValue;
-            button.imageButton.sprite = x.itemSpriteIcon;
-            button.textItem.text = x.itemName + " (" + x.itemLevel.ToString() + ")";
+            button.name = i.ToString() + " " + listMarathonItem[i].itemName;
+            button.itemID = i;
+            if (listMarathonItem[i].itemSpriteIcon != null)
+            {
+                button.imageButton.sprite = listMarathonItem[i].itemSpriteIcon;
+            }
+            else
+            {
+                button.imageButton.gameObject.SetActive(false);
+            }
+            button.textItem.text = listMarathonItem[i].itemName + " (*" + listMarathonItem[i].itemLevel.ToString() + ")";
+            button.marathonItem = listMarathonItem[i];
 
             button.transform.SetParent(transformButtonParent);
             button.transform.localScale = Vector3.one;
 
             button.gameObject.SetActive(true);
 
-            itemValue++;
+            if (i == intMarathonItemLast || (intMarathonItemLast == -1 && autoselectButton == null))
+            {
+                autoselectButton = button;
+            }
         }
+        if (autoselectButton != null)
+        {
+            intMarathonItemLast = -1;
+            ViewItemDetails(autoselectButton);
+        }
+        Destroy(buttonTemplate.gameObject);
     }
 
     public void ViewItemDetails (MarathonMenu_Button button)
     {
-        MarathonMenu_Item item = arrayMarathonItem[button.itemID];
+        // Do nothing if current button is the same
+        if (button.itemID == intMarathonItemLast)
+        {
+            return;
+        }
+
+        // Reset all button colors and darken selected one
+        MarathonMenu_Button[] buttonAll = FindObjectsOfType<MarathonMenu_Button>();
+        foreach (MarathonMenu_Button x in buttonAll)
+        {
+            x.GetComponent<Image>().color = Color.white;
+        }
+        button.GetComponent<Image>().color = Color.grey;
+
+        // Get the Scriptable Object
+        MarathonMenu_Item item = button.marathonItem;
+        intMarathonItemLast = button.itemID;
 
         // General
         textItemName.text = item.itemName;
-        textItemLevel.text = item.itemLevel.ToString();
+        if (item.itemSpriteIcon != null)
+        {
+            imageItemSprite.gameObject.SetActive(true);
+            imageItemSprite.texture = item.itemSpriteIcon.texture;
+        }
+        else
+        {
+            imageItemSprite.gameObject.SetActive(false);
+        }
+        textItemLevel.text = "*" + item.itemLevel.ToString();
         textItemDescription.text = item.itemDescription;
         textItemWinCondition.text = "";
-        textItemSongList.text = "";
-        textItemModList.text = "";
+        textItemSongList.text = "Chart List: ";
+        textItemModList.text = "Mods: ";
 
         // Win condition
-        if (item.itemAccuracyThreshold > 0)
+        if (item.itemAccuracyThreshold == 0 && item.itemNoteMissThreshold == 0)
         {
-            textItemWinCondition.text += "Accuracy Threshold: " + item.itemAccuracyThreshold.ToString() + "%\n";
+            textItemWinCondition.text = "No win condition.";
         }
-        if (item.itemNoteMissThreshold > 0)
+        else
         {
-            textItemWinCondition.text += "Note Miss Threshold: " + item.itemNoteMissThreshold.ToString() + "\n";
+            if (item.itemAccuracyThreshold > 0)
+            {
+                textItemWinCondition.text = "Accuracy Threshold: " + item.itemAccuracyThreshold.ToString() + "%";
+            }
+            if (item.itemNoteMissThreshold > 0)
+            {
+                if (textItemWinCondition.text.Length > 0)
+                {
+                    textItemWinCondition.text += "\n";
+                }
+                textItemWinCondition.text += "Note Miss Threshold: " + item.itemNoteMissThreshold.ToString();
+            }
         }
 
         // Song list
         if (item.itemChartList.Length == 0)
         {
-            textItemModList.text += "None";
+            textItemSongList.text += "None";
         }
         else
         {
@@ -134,7 +201,7 @@ public class MarathonMenu_Control : MonoBehaviour
                 }
                 stringMode = Translator.GetStringTranslation("SONGMENU_CHARTGAMETYPEBODY" + tempChart.chartGameType, stringMode);
 
-                textItemSongList.text += tempChart.songName + " / " + stringMode + " Chart " + y[2] + "\n";
+                textItemSongList.text += "\n   " + tempChart.songName + " / " + stringMode + " #" + (int.Parse(y[2]) + 1).ToString() + " (*" + tempChart.chartLevel.ToString() + ")";
             }
         }
 
@@ -165,6 +232,12 @@ public class MarathonMenu_Control : MonoBehaviour
         Game_Control.boolCustomSong = false;
 
         SceneTransition.LoadScene("Game");
+    }
+
+    public void AdjustScrollSpeed()
+    {
+        PlayerSetting.setting.intScrollSpeed = Mathf.RoundToInt(sliderScrollSpeed.value);
+        textDisplayScrollSpeed.text = Translator.GetStringTranslation("SONGMENU_SCROLLSPEED", "Note Scroll Speed:") + " x" + (0.1f * PlayerSetting.setting.intScrollSpeed).ToString("f1");
     }
 
     public void ExitMenu ()

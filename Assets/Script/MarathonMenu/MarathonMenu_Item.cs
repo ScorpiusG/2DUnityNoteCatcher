@@ -28,7 +28,7 @@ public class MarathonMenu_Item : ScriptableObject
     /// <summary>
     /// Description of the item to be displayed.
     /// </summary>
-    public string itemDescription = "Description";
+    [TextArea] public string itemDescription = "Description";
 
     /// <summary>
     /// Custom accuracy threshold as set by the item. Overwrites player's set accuracy threshold.
