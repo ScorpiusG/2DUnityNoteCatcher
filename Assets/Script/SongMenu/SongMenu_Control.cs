@@ -455,6 +455,9 @@ public class SongMenu_Control : MonoBehaviour
 
         Game_Control.boolAutoplay = isAutoplay;
 
+        // Make sure it isn't from marathon mode
+        Game_Control.marathonItem = null;
+
         //SceneManager.LoadScene(stringSceneNameGame);
         LoadGameScene();
     }

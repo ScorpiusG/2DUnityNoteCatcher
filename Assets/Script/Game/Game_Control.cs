@@ -14,8 +14,15 @@ public class Game_Control : MonoBehaviour
     public static int intChartGameType = 0;
     public static int intChartGameChart = 0;
     public static string stringModList = "";
+
     public static MarathonMenu_Item marathonItem = null;
     public static int intMarathonItem = 0;
+    private static int marathonAccuracyBest = 0;
+    private static int marathonAccuracyGreat = 0;
+    private static int marathonAccuracyFine = 0;
+    private static int marathonAccuracyMiss = 0;
+    private static int marathonComboCurrent = 0;
+    private static int marathonComboBest = 0;
 
     public static bool boolAutoplay = false;
 
@@ -175,8 +182,18 @@ public class Game_Control : MonoBehaviour
 
     private const float NOTE_LERP_RATE_MULTIPLIER = 4f;
 
+    public void RestartGameScene()
+    {
+        PlaySoundEffect(clipGameButtonPress);
+        if (marathonItem != null)
+        {
+            intMarathonItem = 0;
+        }
+        LoadScene("Game");
+    }
     public void ExitGameScene()
     {
+        PlaySoundEffect(clipGameButtonPress);
         if (boolCustomSong)
         {
             LoadScene("SongMenuCustom");
@@ -188,9 +205,6 @@ public class Game_Control : MonoBehaviour
     }
     public void LoadScene(string sceneName)
     {
-        PlaySoundEffect(clipGameButtonPress);
-
-        //SceneManager.LoadScene(sceneName);
         SceneTransition.LoadScene(sceneName);
     }
 
@@ -545,6 +559,33 @@ public class Game_Control : MonoBehaviour
     public void PauseMenuForceEnd()
     {
         boolPauseMenuForceEnd = true;
+    }
+
+    void Awake()
+    {
+        // Check marathon item
+        if (marathonItem != null)
+        {
+            string[] x = marathonItem.itemChartList[intMarathonItem].Split('|');
+            stringSongFileName = x[0];
+            intChartGameType = int.Parse(x[1]);
+            intChartGameChart = int.Parse(x[2]);
+
+            // Reset all variables
+            if (intMarathonItem == 0)
+            {
+                marathonAccuracyBest = 0;
+                marathonAccuracyGreat = 0;
+                marathonAccuracyFine = 0;
+                marathonAccuracyMiss = 0;
+                marathonComboCurrent = 0;
+                marathonComboBest = 0;
+            }
+            else
+            {
+                playerComboCurrent = marathonComboCurrent;
+            }
+        }
     }
 
     void Start()
@@ -1988,211 +2029,238 @@ public class Game_Control : MonoBehaviour
         textMeshComboCurrent.gameObject.SetActive(false);
         yield return null;
 
-        // If the game was being autoplayed, skip result screen.
-        if (boolAutoplay)
+        // Traditional game mode - single song
+        if (marathonItem == null)
         {
-            ExitGameScene();
-            yield break;
-        }
-        else if (intChartGameType == 3 && isForcedEnd)
-        {
-            int songPlayCount = PlayerPrefs.GetInt(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-playcount", 0);
-            songPlayCount++;
-            PlayerPrefs.SetInt(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-playcount", songPlayCount);
-            PlayerSetting.setting.intPlayerTotalPlayCountND++;
-            PlayerPrefs.Save();
-
-            ExitGameScene();
-            yield break;
-        }
-        else if (!isForcedEnd)
-        {
-            switch (intChartGameType)
+            // If the game was being autoplayed, skip result screen.
+            if (boolAutoplay)
             {
-                case 0: PlayerSetting.setting.intPlayerTotalPlayCountLN++; break;
-                case 1: PlayerSetting.setting.intPlayerTotalPlayCountDB++; break;
-                case 2: PlayerSetting.setting.intPlayerTotalPlayCountQD++; break;
-                case 3: PlayerSetting.setting.intPlayerTotalPlayCountND++; break;
+                ExitGameScene();
+                yield break;
             }
-        }
-
-        // Check score validity
-        isScoringDisabled =
-            // No mods enabled
-            PlayerSetting.setting.modChartBerserk ||
-            PlayerSetting.setting.modChartCluster ||
-            PlayerSetting.setting.modChartFlip ||
-            PlayerSetting.setting.modChartHell ||
-            PlayerSetting.setting.modChartMirror ||
-            PlayerSetting.setting.modChartRandom ||
-            PlayerSetting.setting.modDisableScore ||
-            PlayerSetting.setting.modScreenFlip ||
-            PlayerSetting.setting.modScreenMirror ||
-            // Actual gameplay length is over a minute (from first to last note)
-            chartData.gameplayLength < 60f ||
-            // 25 or more notes present in chart
-            chartTotalNotes < 25;
-
-        // Add and record score
-        textScoreDisabled.gameObject.SetActive(isScoringDisabled);
-        int finalScore = 0;
-        float oldRecordAccuracy = 0f;
-        //int initialPlayerLevel = PlayerSetting.setting.GetPlayerLevel();
-        if (!isScoringDisabled)
-        {
-            float gameModeScoreMultiplier = 1f;
-            if (boolCustomSong)
+            else if (intChartGameType == 3 && isForcedEnd)
             {
-                // Accuracy record
-                oldRecordAccuracy = PlayerPrefs.GetFloat(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-recordaccuracy", 0f);
-                if (finalAccuracy > oldRecordAccuracy)
-                {
-                    PlayerPrefs.SetFloat(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-recordaccuracy", finalAccuracy);
-                }
-
-                // Mapchart play count increase
                 int songPlayCount = PlayerPrefs.GetInt(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-playcount", 0);
                 songPlayCount++;
                 PlayerPrefs.SetInt(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-playcount", songPlayCount);
+                PlayerSetting.setting.intPlayerTotalPlayCountND++;
+                PlayerPrefs.Save();
+
+                ExitGameScene();
+                yield break;
+            }
+            else if (!isForcedEnd)
+            {
+                switch (intChartGameType)
+                {
+                    case 0: PlayerSetting.setting.intPlayerTotalPlayCountLN++; break;
+                    case 1: PlayerSetting.setting.intPlayerTotalPlayCountDB++; break;
+                    case 2: PlayerSetting.setting.intPlayerTotalPlayCountQD++; break;
+                    case 3: PlayerSetting.setting.intPlayerTotalPlayCountND++; break;
+                }
+            }
+
+            // Check score validity
+            isScoringDisabled =
+                // No mods enabled
+                PlayerSetting.setting.modChartBerserk ||
+                PlayerSetting.setting.modChartCluster ||
+                PlayerSetting.setting.modChartFlip ||
+                PlayerSetting.setting.modChartHell ||
+                PlayerSetting.setting.modChartMirror ||
+                PlayerSetting.setting.modChartRandom ||
+                PlayerSetting.setting.modDisableScore ||
+                PlayerSetting.setting.modScreenFlip ||
+                PlayerSetting.setting.modScreenMirror ||
+                // Actual gameplay length is over a minute (from first to last note)
+                chartData.gameplayLength < 60f ||
+                // 25 or more notes present in chart
+                chartTotalNotes < 25;
+
+            // Add and record score
+            textScoreDisabled.gameObject.SetActive(isScoringDisabled);
+            int finalScore = 0;
+            float oldRecordAccuracy = 0f;
+            //int initialPlayerLevel = PlayerSetting.setting.GetPlayerLevel();
+            if (!isScoringDisabled)
+            {
+                float gameModeScoreMultiplier = 1f;
+                if (boolCustomSong)
+                {
+                    // Accuracy record
+                    oldRecordAccuracy = PlayerPrefs.GetFloat(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-recordaccuracy", 0f);
+                    if (finalAccuracy > oldRecordAccuracy)
+                    {
+                        PlayerPrefs.SetFloat(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-recordaccuracy", finalAccuracy);
+                    }
+
+                    // Mapchart play count increase
+                    int songPlayCount = PlayerPrefs.GetInt(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-playcount", 0);
+                    songPlayCount++;
+                    PlayerPrefs.SetInt(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-playcount", songPlayCount);
+                }
+                else
+                {
+                    // Score based on accuracy, best combo, chart level, and game mode.
+                    finalScore = Mathf.FloorToInt(
+                        (1f * playerComboBest / chartTotalNotes) * finalAccuracy *  // Base accuracy
+                        Mathf.Pow(4 + chartData.chartLevel, 2f) *                   // Chart level
+                        10 * gameModeScoreMultiplier *                              // Game mode
+                        chartData.gameplayLength / 60f                              // Chart gameplay length
+                        );
+                    // Additional score gained by achieving perfect accuracy or full combo respectively.
+                    int additionalScore = 0;
+                    if (playerAccuracyBest == chartTotalNotes)
+                    {
+                        additionalScore += finalScore / 4;
+                    }
+                    else if (playerAccuracyBest + playerAccuracyGreat + playerAccuracyFine == chartTotalNotes)
+                    {
+                        additionalScore += finalScore / 10;
+                    }
+                    finalScore += additionalScore;
+                    PlayerSetting.setting.ScoreAdd(finalScore);
+
+                    // Accuracy record
+                    oldRecordAccuracy = PlayerPrefs.GetFloat(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-recordaccuracy_official", 0f);
+                    if (finalAccuracy > oldRecordAccuracy)
+                    {
+                        PlayerPrefs.SetFloat(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-recordaccuracy_official", finalAccuracy);
+                    }
+
+                    // Mapchart play count increase
+                    int songPlayCount = PlayerPrefs.GetInt(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-playcount_official", 0);
+                    songPlayCount++;
+                    PlayerPrefs.SetInt(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-playcount_official", songPlayCount);
+                }
+                switch (chartData.chartGameType)
+                {
+                    case 0: gameModeScoreMultiplier = 1.0f; break;
+                    case 1: gameModeScoreMultiplier = 1.4f; break;
+                    case 2: gameModeScoreMultiplier = 1.8f; break;
+                    case 3: gameModeScoreMultiplier = 0.0f; break;
+                    case 4: gameModeScoreMultiplier = 2.2f; break;
+                    case 5: gameModeScoreMultiplier = 3.0f; break;
+                    case 6: gameModeScoreMultiplier = 5.0f; break;
+                    case 7: gameModeScoreMultiplier = 0.0f; break;
+                }
+
+                // Display old record
+                textRecordAccuracy.gameObject.SetActive(true);
+                textRecordAccuracy.text = (oldRecordAccuracy * 100f).ToString("f2") + "%";
+
+                PlayerSetting.setting.Save();
             }
             else
             {
-                // Score based on accuracy, best combo, chart level, and game mode.
-                finalScore = Mathf.FloorToInt(
-                    (1f * playerComboBest / chartTotalNotes) * finalAccuracy *  // Base accuracy
-                    Mathf.Pow(4 + chartData.chartLevel, 2f) *                   // Chart level
-                    10 * gameModeScoreMultiplier *                              // Game mode
-                    chartData.gameplayLength / 60f                              // Chart gameplay length
-                    );
-                // Additional score gained by achieving perfect accuracy or full combo respectively.
-                int additionalScore = 0;
-                if (playerAccuracyBest == chartTotalNotes)
+                textRecordAccuracy.gameObject.SetActive(false);
+            }
+            yield return null;
+
+            // Update texts
+            if ((intChartGameType != 3 && playerAccuracyFine == 0 && playerAccuracyGreat == 0 && playerAccuracyMiss == 0) ||
+                (intChartGameType == 3 && intNoteDodgeHit == 0))
+            {
+                textResultHeader.text = Translator.GetStringTranslation("GAME_RESULTPLAYPERFECT", "PERFECT RHYTHM");
+                textResultHeader.color = colorResultHeaderPerfect;
+                PlaySoundEffect(clipGameEndPerfect);
+                imageSongProgressGauge.fillAmount = 1f;
+            }
+            else if (finalAccuracy >= 0.01f * PlayerSetting.setting.intAccuracyThreshold)
+            {
+                textResultHeader.text = Translator.GetStringTranslation("GAME_RESULTPLAYCLEAR", "COMPLETE RHYTHM");
+                textResultHeader.color = colorResultHeaderPass;
+                PlaySoundEffect(clipGameEndPass);
+                imageSongProgressGauge.fillAmount = 1f;
+            }
+            else
+            {
+                textResultHeader.text = Translator.GetStringTranslation("GAME_RESULTPLAYFAIL", "UNDESIRED RHYTHM");
+                textResultHeader.color = colorResultHeaderFail;
+
+                if (isForcedEnd)
                 {
-                    additionalScore += finalScore / 4;
+                    PlaySoundEffect(clipGameForceEnd);
                 }
-                else if (playerAccuracyBest + playerAccuracyGreat + playerAccuracyFine == chartTotalNotes)
+                else
                 {
-                    additionalScore += finalScore / 10;
+                    PlaySoundEffect(clipGameEndFail);
                 }
-                finalScore += additionalScore;
-                PlayerSetting.setting.ScoreAdd(finalScore);
-                
-                // Accuracy record
-                oldRecordAccuracy = PlayerPrefs.GetFloat(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-recordaccuracy_official", 0f);
+            }
+            if (isScoringDisabled)
+            {
+                textResultOther.text = stringModList;
+            }
+
+            // Show result screen
+            animatorResults.gameObject.SetActive(true);
+            animatorResults.Play("clip");
+
+            // Click a mouse button or hold space to speed up animation
+            StartCoroutine(AnimatorResultsSpeedUp());
+
+            for (float f = 0; f < 0.5f; f += Time.deltaTime * animatorResults.speed) yield return null;
+            StartCoroutine(TextFloatGradualIncrease(textResultAccuracy, finalAccuracy * 100f, 0.8f));
+            if (intChartGameType != 3)
+            {
+                StartCoroutine(TextIntGradualIncrease(textResultBestCombo, playerComboBest, 0.8f));
+                for (float f = 0; f < 0.5f; f += Time.deltaTime * animatorResults.speed) yield return null;
+                StartCoroutine(TextIntGradualIncrease(textResultJudgeBest, playerAccuracyBest, 0.6f));
+                for (float f = 0; f < 0.3f; f += Time.deltaTime * animatorResults.speed) yield return null;
+                StartCoroutine(TextIntGradualIncrease(textResultJudgeGreat, playerAccuracyGreat, 0.5f));
+                for (float f = 0; f < 0.3f; f += Time.deltaTime * animatorResults.speed) yield return null;
+                StartCoroutine(TextIntGradualIncrease(textResultJudgeFine, playerAccuracyFine, 0.4f));
+                for (float f = 0; f < 0.3f; f += Time.deltaTime * animatorResults.speed) yield return null;
+                StartCoroutine(TextIntGradualIncrease(textResultJudgeMiss, playerAccuracyMiss, 0.3f));
+            }
+            else
+            {
+                textResultBestCombo.text = "0";
+                StartCoroutine(TextIntGradualIncrease(textResultJudgeBest, intNoteDodgeHit, 1.0f));
+                for (float f = 0; f < 1.4f; f += Time.deltaTime * animatorResults.speed) yield return null;
+            }
+
+            for (float f = 0; f < 1.2f; f += Time.deltaTime * animatorResults.speed) yield return null;
+            if (!isScoringDisabled)
+            {
                 if (finalAccuracy > oldRecordAccuracy)
                 {
-                    PlayerPrefs.SetFloat(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-recordaccuracy_official", finalAccuracy);
+                    animatorNewRecord.gameObject.SetActive(true);
+                    animatorNewRecord.Play("clip");
                 }
-
-                // Mapchart play count increase
-                int songPlayCount = PlayerPrefs.GetInt(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-playcount_official", 0);
-                songPlayCount++;
-                PlayerPrefs.SetInt(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-playcount_official", songPlayCount);
+                textResultOther.text = Translator.GetStringTranslation("GAME_RESULTSCOREADD", "Score:") + " " + finalScore.ToString();
             }
-            switch (chartData.chartGameType)
+            /*
+            int newPlayerLevel = PlayerSetting.setting.GetPlayerLevel();
+            if (initialPlayerLevel < newPlayerLevel)
             {
-                case 0: gameModeScoreMultiplier = 1.0f; break;
-                case 1: gameModeScoreMultiplier = 1.4f; break;
-                case 2: gameModeScoreMultiplier = 1.8f; break;
-                case 3: gameModeScoreMultiplier = 0.0f; break;
-                case 4: gameModeScoreMultiplier = 2.2f; break;
-                case 5: gameModeScoreMultiplier = 3.0f; break;
-                case 6: gameModeScoreMultiplier = 5.0f; break;
-                case 7: gameModeScoreMultiplier = 0.0f; break;
+                Notification.Display(Translator.GetStringTranslation("GAME_RESULTLEVELUP", "LEVEL UP!\nYour Play Level has rose to") + " " + newPlayerLevel.ToString(), Color.cyan);
             }
-
-            // Display old record
-            textRecordAccuracy.gameObject.SetActive(true);
-            textRecordAccuracy.text = (oldRecordAccuracy * 100f).ToString("f2") + "%";
-
-            PlayerSetting.setting.Save();
+            */
         }
+        // Marathon mode - play charts consecutively
         else
         {
-            textRecordAccuracy.gameObject.SetActive(false);
-        }
-        yield return null;
+            intMarathonItem++;
 
-        // Update texts
-        if ((intChartGameType != 3 && playerAccuracyFine == 0 && playerAccuracyGreat == 0 && playerAccuracyMiss == 0) ||
-            (intChartGameType == 3 && intNoteDodgeHit == 0))
-        {
-            textResultHeader.text = Translator.GetStringTranslation("GAME_RESULTPLAYPERFECT", "PERFECT RHYTHM");
-            textResultHeader.color = colorResultHeaderPerfect;
-            PlaySoundEffect(clipGameEndPerfect);
-            imageSongProgressGauge.fillAmount = 1f;
-        }
-        else if (finalAccuracy >= 0.01f * PlayerSetting.setting.intAccuracyThreshold)
-        {
-            textResultHeader.text = Translator.GetStringTranslation("GAME_RESULTPLAYCLEAR", "COMPLETE RHYTHM");
-            textResultHeader.color = colorResultHeaderPass;
-            PlaySoundEffect(clipGameEndPass);
-            imageSongProgressGauge.fillAmount = 1f;
-        }
-        else
-        {
-            textResultHeader.text = Translator.GetStringTranslation("GAME_RESULTPLAYFAIL", "UNDESIRED RHYTHM");
-            textResultHeader.color = colorResultHeaderFail;
+            marathonAccuracyBest += playerAccuracyBest;
+            marathonAccuracyGreat += playerAccuracyGreat;
+            marathonAccuracyFine += playerAccuracyFine;
+            marathonAccuracyMiss += playerAccuracyMiss;
+            marathonComboCurrent = playerComboCurrent;
+            marathonComboBest = playerComboBest;
 
-            if (isForcedEnd)
+            // Next chart in list
+            if (intMarathonItem < marathonItem.itemChartList.Length)
             {
-                PlaySoundEffect(clipGameForceEnd);
+                LoadScene("Game");
             }
+            // End of marathon
             else
             {
-                PlaySoundEffect(clipGameEndFail);
+
             }
         }
-        if (isScoringDisabled)
-        {
-            textResultOther.text = stringModList;
-        }
-
-        // Show result screen
-        animatorResults.gameObject.SetActive(true);
-        animatorResults.Play("clip");
-
-        // Click a mouse button or hold space to speed up animation
-        StartCoroutine(AnimatorResultsSpeedUp());
-
-        for (float f = 0; f < 0.5f; f += Time.deltaTime * animatorResults.speed) yield return null;
-        StartCoroutine(TextFloatGradualIncrease(textResultAccuracy, finalAccuracy * 100f, 0.8f));
-        if (intChartGameType != 3)
-        {
-            StartCoroutine(TextIntGradualIncrease(textResultBestCombo, playerComboBest, 0.8f));
-            for (float f = 0; f < 0.5f; f += Time.deltaTime * animatorResults.speed) yield return null;
-            StartCoroutine(TextIntGradualIncrease(textResultJudgeBest, playerAccuracyBest, 0.6f));
-            for (float f = 0; f < 0.3f; f += Time.deltaTime * animatorResults.speed) yield return null;
-            StartCoroutine(TextIntGradualIncrease(textResultJudgeGreat, playerAccuracyGreat, 0.5f));
-            for (float f = 0; f < 0.3f; f += Time.deltaTime * animatorResults.speed) yield return null;
-            StartCoroutine(TextIntGradualIncrease(textResultJudgeFine, playerAccuracyFine, 0.4f));
-            for (float f = 0; f < 0.3f; f += Time.deltaTime * animatorResults.speed) yield return null;
-            StartCoroutine(TextIntGradualIncrease(textResultJudgeMiss, playerAccuracyMiss, 0.3f));
-        }
-        else
-        {
-            textResultBestCombo.text = "0";
-            StartCoroutine(TextIntGradualIncrease(textResultJudgeBest, intNoteDodgeHit, 1.0f));
-            for (float f = 0; f < 1.4f; f += Time.deltaTime * animatorResults.speed) yield return null;
-        }
-
-        for (float f = 0; f < 1.2f; f += Time.deltaTime * animatorResults.speed) yield return null;
-        if (!isScoringDisabled)
-        {
-            if (finalAccuracy > oldRecordAccuracy)
-            {
-                animatorNewRecord.gameObject.SetActive(true);
-                animatorNewRecord.Play("clip");
-            }
-            textResultOther.text = Translator.GetStringTranslation("GAME_RESULTSCOREADD", "Score:") + " " + finalScore.ToString();
-        }
-        /*
-        int newPlayerLevel = PlayerSetting.setting.GetPlayerLevel();
-        if (initialPlayerLevel < newPlayerLevel)
-        {
-            Notification.Display(Translator.GetStringTranslation("GAME_RESULTLEVELUP", "LEVEL UP!\nYour Play Level has rose to") + " " + newPlayerLevel.ToString(), Color.cyan);
-        }
-        */
     }
     IEnumerator AnimatorResultsSpeedUp()
     {

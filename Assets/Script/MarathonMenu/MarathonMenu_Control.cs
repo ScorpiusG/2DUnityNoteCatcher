@@ -16,6 +16,8 @@ public class MarathonMenu_Control : MonoBehaviour
     public Text textPlayerScoreNextLevel;
     public Image imageScoreGauge;
 
+    public GameObject objectGroupDetails;
+    public Vector3 positionGroupDetailsInit;
     public Text textItemName;
     public RawImage imageItemSprite;
     public Text textItemLevel;
@@ -35,6 +37,16 @@ public class MarathonMenu_Control : MonoBehaviour
         // Variable initialization
         sliderScrollSpeed.value = PlayerSetting.setting.intScrollSpeed;
         textDisplayScrollSpeed.text = Translator.GetStringTranslation("SONGMENU_SCROLLSPEED", "Note Scroll Speed:") + " x" + (0.1f * PlayerSetting.setting.intScrollSpeed).ToString("f1");
+        positionGroupDetailsInit = objectGroupDetails.transform.position;
+
+        // Object initialization
+        textItemName.text = "";
+        imageItemSprite.gameObject.SetActive(false);
+        textItemLevel.text = "";
+        textItemDescription.text = "";
+        textItemWinCondition.text = "";
+        textItemSongList.text = "";
+        textItemModList.text = "";
 
         // Player level and score display
         textPlayerScore.text = PlayerSetting.setting.GetScore();
@@ -172,7 +184,11 @@ public class MarathonMenu_Control : MonoBehaviour
         // Song list
         if (item.itemChartList.Length == 0)
         {
-            textItemSongList.text += "None";
+            textItemSongList.text += "\n   None.";
+        }
+        else if (item.itemChartList.Length > 5)
+        {
+            textItemSongList.text += "\n   A lot!";
         }
         else
         {
@@ -222,6 +238,12 @@ public class MarathonMenu_Control : MonoBehaviour
                 textItemModList.text += "\n";
             }
         }
+
+        // iTween window tween effect
+        float tweenDuration = 0.31f;
+        objectGroupDetails.SetActive(true);
+        objectGroupDetails.transform.position = positionGroupDetailsInit + Vector3.right * 1000f;
+        iTween.MoveTo(objectGroupDetails, positionGroupDetailsInit, tweenDuration);
     }
 
     public void PlayMarathon ()
