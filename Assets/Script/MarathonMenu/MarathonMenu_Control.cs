@@ -25,6 +25,7 @@ public class MarathonMenu_Control : MonoBehaviour
     public Text textItemWinCondition;
     public Text textItemSongList;
     public Text textItemModList;
+    public Text textItemRecord;
 
     public Slider sliderScrollSpeed;
     public Text textDisplayScrollSpeed;
@@ -47,6 +48,7 @@ public class MarathonMenu_Control : MonoBehaviour
         textItemWinCondition.text = "";
         textItemSongList.text = "";
         textItemModList.text = "";
+        textItemRecord.text = "";
 
         // Player level and score display
         textPlayerScore.text = PlayerSetting.setting.GetScore();
@@ -92,7 +94,7 @@ public class MarathonMenu_Control : MonoBehaviour
         for (int i = 0; i < listMarathonItem.Count; i++)
         {
             MarathonMenu_Button button = Instantiate(buttonTemplate);
-            button.name = i.ToString() + " " + listMarathonItem[i].itemName;
+            button.name = listMarathonItem[i].itemName;
             button.itemID = i;
             if (listMarathonItem[i].itemSpriteIcon != null)
             {
@@ -159,6 +161,7 @@ public class MarathonMenu_Control : MonoBehaviour
         textItemWinCondition.text = "";
         textItemSongList.text = "Chart List: ";
         textItemModList.text = "Mods: ";
+        textItemRecord.text = "Best Accuracy: " + (PlayerPrefs.GetFloat(button.name + "-marathon-accuracy", 0f) * 100f).ToString("f2") + "% | Attempts: " + PlayerPrefs.GetInt(button.name + "-marathon-attempts", 0).ToString();
 
         // Win condition
         if (item.itemAccuracyThreshold == 0 && item.itemNoteMissThreshold == 0)
@@ -244,11 +247,14 @@ public class MarathonMenu_Control : MonoBehaviour
         objectGroupDetails.SetActive(true);
         objectGroupDetails.transform.position = positionGroupDetailsInit + Vector3.right * 1000f;
         iTween.MoveTo(objectGroupDetails, positionGroupDetailsInit, tweenDuration);
+
+        // For use in game
+        Game_Control.marathonItem = item;
     }
 
     public void PlayMarathon ()
     {
-        Game_Control.marathonItem = arrayMarathonItem[intMarathonItemLast];
+        //Game_Control.marathonItem = arrayMarathonItem[intMarathonItemLast];
         Game_Control.intMarathonItem = 0;
         Game_Control.boolAutoplay = false;
         Game_Control.boolCustomSong = false;

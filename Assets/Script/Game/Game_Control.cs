@@ -21,8 +21,10 @@ public class Game_Control : MonoBehaviour
     private static int marathonAccuracyGreat = 0;
     private static int marathonAccuracyFine = 0;
     private static int marathonAccuracyMiss = 0;
+    private static int marathonNoteDodgeHit = 0;
     private static int marathonComboCurrent = 0;
     private static int marathonComboBest = 0;
+    private static float marathonLength = 0f;
 
     public static bool boolAutoplay = false;
 
@@ -194,13 +196,20 @@ public class Game_Control : MonoBehaviour
     public void ExitGameScene()
     {
         PlaySoundEffect(clipGameButtonPress);
-        if (boolCustomSong)
+        if (marathonItem != null)
         {
-            LoadScene("SongMenuCustom");
+            LoadScene("MarathonMenu");
         }
         else
         {
-            LoadScene("SongMenuOfficial");
+            if (boolCustomSong)
+            {
+                LoadScene("SongMenuCustom");
+            }
+            else
+            {
+                LoadScene("SongMenuOfficial");
+            }
         }
     }
     public void LoadScene(string sceneName)
@@ -574,12 +583,18 @@ public class Game_Control : MonoBehaviour
             // Reset all variables
             if (intMarathonItem == 0)
             {
+                int marathonAttempts = PlayerPrefs.GetInt(marathonItem.name + "-marathon-attempts", 0);
+                marathonAttempts++;
+                PlayerPrefs.SetInt(marathonItem.name + "-marathon-attempts", marathonAttempts);
+                PlayerPrefs.Save();
+
                 marathonAccuracyBest = 0;
                 marathonAccuracyGreat = 0;
                 marathonAccuracyFine = 0;
                 marathonAccuracyMiss = 0;
                 marathonComboCurrent = 0;
                 marathonComboBest = 0;
+                marathonLength = 0f;
             }
             else
             {
@@ -646,9 +661,13 @@ public class Game_Control : MonoBehaviour
         rendererPlaneBackground.gameObject.SetActive(false);
         objectAutoplayIndicator.SetActive(boolAutoplay);
         imageSongProgressGauge.fillAmount = 0f;
-        if (PlayerSetting.setting.intAccuracyThreshold > 0)
+        if (marathonItem == null && PlayerSetting.setting.intAccuracyThreshold > 0)
         {
             imageAccuracyTolerance.transform.localPosition += Vector3.right * floatAccuracyGaugeWidth * 0.01f * PlayerSetting.setting.intAccuracyThreshold;
+        }
+        else if (marathonItem != null && marathonItem.itemAccuracyThreshold > 0)
+        {
+            imageAccuracyTolerance.transform.localPosition += Vector3.right * floatAccuracyGaugeWidth * 0.01f * marathonItem.itemAccuracyThreshold;
         }
         else
         {
@@ -1930,16 +1949,47 @@ public class Game_Control : MonoBehaviour
             // Force end condition: Current negative accuracy is below player-set threshold
             if (intChartGameType != 3)
             {
-                if (1f * currentAccuracyNegative / (4f * chartTotalNotes) >
-                    1f - (0.01f * PlayerSetting.setting.intAccuracyThreshold))
+                if (marathonItem == null)
                 {
-                    isForcedEnd = true;
+                    if (1f * currentAccuracyNegative / (4f * chartTotalNotes) >
+                        1f - (0.01f * PlayerSetting.setting.intAccuracyThreshold))
+                    {
+                        isForcedEnd = true;
+                    }
+                }
+                else
+                {
+                    if (1f * currentAccuracyNegative / (4f * chartTotalNotes) >
+                        1f - (0.01f * marathonItem.itemAccuracyThreshold))
+                    {
+                        isForcedEnd = true;
+                    }
                 }
             }
             else
             {
-                if (1f * currentAccuracyNegative / 1000000 >
-                    1000000f - (10000f * PlayerSetting.setting.intAccuracyThreshold))
+                if (marathonItem == null)
+                {
+                    if (1f * currentAccuracyNegative / 1000000 >
+                        1000000f - (10000f * PlayerSetting.setting.intAccuracyThreshold))
+                    {
+                        isForcedEnd = true;
+                    }
+                }
+                else
+                {
+                    if (1f * currentAccuracyNegative / 1000000 >
+                        1000000f - (10000f * marathonItem.itemAccuracyThreshold))
+                    {
+                        isForcedEnd = true;
+                    }
+                }
+            }
+
+            // Force end condition: Miss enough notes in a marathon
+            if (marathonItem != null && marathonItem.itemNoteMissThreshold > 0)
+            {
+                if (playerAccuracyMiss + marathonAccuracyMiss + intNoteDodgeHit + marathonNoteDodgeHit >= marathonItem.itemNoteMissThreshold)
                 {
                     isForcedEnd = true;
                 }
@@ -2085,6 +2135,17 @@ public class Game_Control : MonoBehaviour
             if (!isScoringDisabled)
             {
                 float gameModeScoreMultiplier = 1f;
+                switch (chartData.chartGameType)
+                {
+                    case 0: gameModeScoreMultiplier = 1.0f; break;
+                    case 1: gameModeScoreMultiplier = 1.4f; break;
+                    case 2: gameModeScoreMultiplier = 1.8f; break;
+                    case 3: gameModeScoreMultiplier = 0.0f; break;
+                    case 4: gameModeScoreMultiplier = 2.2f; break;
+                    case 5: gameModeScoreMultiplier = 3.0f; break;
+                    case 6: gameModeScoreMultiplier = 5.0f; break;
+                    case 7: gameModeScoreMultiplier = 0.0f; break;
+                }
                 if (boolCustomSong)
                 {
                     // Accuracy record
@@ -2132,17 +2193,6 @@ public class Game_Control : MonoBehaviour
                     int songPlayCount = PlayerPrefs.GetInt(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-playcount_official", 0);
                     songPlayCount++;
                     PlayerPrefs.SetInt(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-playcount_official", songPlayCount);
-                }
-                switch (chartData.chartGameType)
-                {
-                    case 0: gameModeScoreMultiplier = 1.0f; break;
-                    case 1: gameModeScoreMultiplier = 1.4f; break;
-                    case 2: gameModeScoreMultiplier = 1.8f; break;
-                    case 3: gameModeScoreMultiplier = 0.0f; break;
-                    case 4: gameModeScoreMultiplier = 2.2f; break;
-                    case 5: gameModeScoreMultiplier = 3.0f; break;
-                    case 6: gameModeScoreMultiplier = 5.0f; break;
-                    case 7: gameModeScoreMultiplier = 0.0f; break;
                 }
 
                 // Display old record
@@ -2241,14 +2291,23 @@ public class Game_Control : MonoBehaviour
         // Marathon mode - play charts consecutively
         else
         {
+            // Force end = Go back to menu
+            if (isForcedEnd)
+            {
+                LoadScene("MarathonMenu");
+                yield break;
+            }
+
             intMarathonItem++;
 
             marathonAccuracyBest += playerAccuracyBest;
             marathonAccuracyGreat += playerAccuracyGreat;
             marathonAccuracyFine += playerAccuracyFine;
             marathonAccuracyMiss += playerAccuracyMiss;
+            marathonNoteDodgeHit += intNoteDodgeHit;
             marathonComboCurrent = playerComboCurrent;
             marathonComboBest = playerComboBest;
+            marathonLength += chartData.gameplayLength;
 
             // Next chart in list
             if (intMarathonItem < marathonItem.itemChartList.Length)
@@ -2258,7 +2317,64 @@ public class Game_Control : MonoBehaviour
             // End of marathon
             else
             {
+                int marathonTotalNotes = marathonAccuracyBest + marathonAccuracyGreat + marathonAccuracyFine + marathonAccuracyMiss;
+                float marathonAccuracy = 1f * ((marathonAccuracyBest * 4) + (marathonAccuracyGreat * 2) + marathonAccuracyFine) / marathonTotalNotes;
+                marathonAccuracy *= Mathf.Pow(0.95f, 1f * marathonNoteDodgeHit / marathonItem.itemChartList.Length);
+                int finalScore = Mathf.FloorToInt(
+                    finalAccuracy *                                             // Base accuracy
+                    Mathf.Pow(4 + marathonItem.itemLevel, 2f) *                 // Marathon level
+                    10 * marathonItem.itemScoreMultiplier *                     // Multiplier
+                    marathonLength / 60f                                        // Chart gameplay length
+                    );
+                PlayerSetting.setting.ScoreAdd(finalScore);
+                float oldRecordAccuracy = PlayerPrefs.GetFloat(marathonItem.name + "-marathon-accuracy", 0f);
+                if (finalAccuracy > oldRecordAccuracy)
+                {
+                    PlayerPrefs.SetFloat(marathonItem.name + "-marathon-accuracy", marathonAccuracy);
+                    PlayerPrefs.Save();
+                }
 
+                textResultHeader.text = Translator.GetStringTranslation("GAME_RESULTPLAYMARATHONCOMPLETE", "MARATHON COMPLETE");
+                textResultHeader.color = colorResultHeaderPass;
+                PlaySoundEffect(clipGameEndPass);
+                imageSongProgressGauge.fillAmount = 1f;
+                
+                // Show result screen
+                animatorResults.gameObject.SetActive(true);
+                animatorResults.Play("clip");
+
+                // Click a mouse button or hold space to speed up animation
+                StartCoroutine(AnimatorResultsSpeedUp());
+
+                for (float f = 0; f < 0.5f; f += Time.deltaTime * animatorResults.speed) yield return null;
+                StartCoroutine(TextFloatGradualIncrease(textResultAccuracy, finalAccuracy * 100f, 0.8f));
+                if (intChartGameType != 3)
+                {
+                    StartCoroutine(TextIntGradualIncrease(textResultBestCombo, marathonComboBest, 0.8f));
+                    for (float f = 0; f < 0.5f; f += Time.deltaTime * animatorResults.speed) yield return null;
+                    StartCoroutine(TextIntGradualIncrease(textResultJudgeBest, marathonAccuracyBest, 0.6f));
+                    for (float f = 0; f < 0.3f; f += Time.deltaTime * animatorResults.speed) yield return null;
+                    StartCoroutine(TextIntGradualIncrease(textResultJudgeGreat, marathonAccuracyGreat, 0.5f));
+                    for (float f = 0; f < 0.3f; f += Time.deltaTime * animatorResults.speed) yield return null;
+                    StartCoroutine(TextIntGradualIncrease(textResultJudgeFine, marathonAccuracyFine, 0.4f));
+                    for (float f = 0; f < 0.3f; f += Time.deltaTime * animatorResults.speed) yield return null;
+                    StartCoroutine(TextIntGradualIncrease(textResultJudgeMiss, marathonAccuracyMiss, 0.3f));
+                }
+                else
+                {
+                    textResultBestCombo.text = "0";
+                    StartCoroutine(TextIntGradualIncrease(textResultJudgeBest, marathonNoteDodgeHit, 1.0f));
+                    for (float f = 0; f < 1.4f; f += Time.deltaTime * animatorResults.speed) yield return null;
+                }
+
+                for (float f = 0; f < 1.2f; f += Time.deltaTime * animatorResults.speed) yield return null;
+
+                if (finalAccuracy > oldRecordAccuracy)
+                {
+                    animatorNewRecord.gameObject.SetActive(true);
+                    animatorNewRecord.Play("clip");
+                }
+                textResultOther.text = Translator.GetStringTranslation("GAME_RESULTSCOREADD", "Score:") + " " + finalScore.ToString();
             }
         }
     }
