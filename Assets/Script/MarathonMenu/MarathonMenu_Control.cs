@@ -143,7 +143,7 @@ public class MarathonMenu_Control : MonoBehaviour
 
         // Get the Scriptable Object
         MarathonMenu_Item item = button.marathonItem;
-        intMarathonItemLast = button.itemID;
+        Game_Control.marathonItemID = intMarathonItemLast = button.itemID;
 
         // General
         textItemName.text = item.itemName;
@@ -161,7 +161,7 @@ public class MarathonMenu_Control : MonoBehaviour
         textItemWinCondition.text = "";
         textItemSongList.text = "Chart List: ";
         textItemModList.text = "Mods: ";
-        textItemRecord.text = "Best Accuracy: " + (PlayerPrefs.GetFloat(button.name + "-marathon-accuracy", 0f) * 100f).ToString("f2") + "% | Attempts: " + PlayerPrefs.GetInt(button.name + "-marathon-attempts", 0).ToString();
+        textItemRecord.text = "Best Accuracy: " + (PlayerPrefs.GetFloat("marathon-" + button.itemID.ToString() + "-accuracy", 0f) * 100f).ToString("f2") + "% | Attempts: " + PlayerPrefs.GetInt("marathon-" + button.itemID.ToString() + "-attempts", 0).ToString();
 
         // Win condition
         if (item.itemAccuracyThreshold == 0 && item.itemNoteMissThreshold == 0)

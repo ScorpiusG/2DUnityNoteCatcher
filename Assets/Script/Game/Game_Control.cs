@@ -16,6 +16,7 @@ public class Game_Control : MonoBehaviour
     public static string stringModList = "";
 
     public static MarathonMenu_Item marathonItem = null;
+    public static int marathonItemID = 0;
     public static int intMarathonItem = 0;
     private static int marathonAccuracyBest = 0;
     private static int marathonAccuracyGreat = 0;
@@ -701,19 +702,32 @@ public class Game_Control : MonoBehaviour
         animatorNewRecord.gameObject.SetActive(false);
         textMeshComboCurrent.gameObject.SetActive(false);
         textMeshComboCurrent.text = "";
-        textMeshRecordGhost.gameObject.SetActive(PlayerSetting.setting.enableDisplayRecordGhost && floatPreviousRecord > Mathf.Epsilon && !boolAutoplay);
-        if (PlayerSetting.setting.enableDisplayRecordGhost && !PlayerSetting.setting.enableDisplayCombo)
+
+        // Ghost accuracy display
+        if (marathonItem == null)
         {
-            textMeshRecordGhost.transform.position = Vector3.zero;
+            // Normal
+            textMeshRecordGhost.gameObject.SetActive(PlayerSetting.setting.enableDisplayRecordGhost && floatPreviousRecord > Mathf.Epsilon && !boolAutoplay);
+            if (PlayerSetting.setting.enableDisplayRecordGhost && !PlayerSetting.setting.enableDisplayCombo)
+            {
+                textMeshRecordGhost.transform.position = Vector3.zero;
+            }
+            foreach (GameObject x in objectEnableGameModeAllCatchAndTap)
+            {
+                x.SetActive(intChartGameType != 3);
+            }
+            foreach (GameObject x in objectEnableGameModeNoteDodge)
+            {
+                x.SetActive(intChartGameType == 3);
+            }
         }
-        foreach (GameObject x in objectEnableGameModeAllCatchAndTap)
+        else
         {
-            x.SetActive(intChartGameType != 3);
+            // Marathon - Show MISS count
+            textMeshRecordGhost.gameObject.SetActive(marathonItem.itemNoteMissThreshold > 0);
+            textMeshRecordGhost.color = colorRecordGhostWorse;
         }
-        foreach (GameObject x in objectEnableGameModeNoteDodge)
-        {
-            x.SetActive(intChartGameType == 3);
-        }
+
         textChartChecksum.gameObject.SetActive(false);
 
         // Read chart from the text file
@@ -1293,34 +1307,43 @@ public class Game_Control : MonoBehaviour
             }
             if (textMeshRecordGhost.gameObject.activeSelf)
             {
-                float currentAccuracyPercentage = 0f;
-                float ghostAccuracy = 0f;
-
-                if (intChartGameType != 3)
+                if (marathonItem == null)
                 {
-                    currentAccuracyPercentage = 1f * currentAccuracy / (chartTotalNotes * 4);
-                    ghostAccuracy = 1f * floatPreviousRecord * (playerAccuracyBest + playerAccuracyGreat + playerAccuracyFine + playerAccuracyMiss) / chartTotalNotes;
+                    // Show ghost accuracy
+                    float currentAccuracyPercentage = 0f;
+                    float ghostAccuracy = 0f;
+
+                    if (intChartGameType != 3)
+                    {
+                        currentAccuracyPercentage = 1f * currentAccuracy / (chartTotalNotes * 4);
+                        ghostAccuracy = 1f * floatPreviousRecord * (playerAccuracyBest + playerAccuracyGreat + playerAccuracyFine + playerAccuracyMiss) / chartTotalNotes;
+                    }
+                    else
+                    {
+                        currentAccuracyPercentage = 1f * currentAccuracy / 1000000;
+                        ghostAccuracy = 1f - ((1f - floatPreviousRecord) * (floatMusicPosition / floatMusicPositionEnd));
+                    }
+
+                    if (currentAccuracyPercentage > ghostAccuracy + Mathf.Epsilon)
+                    {
+                        textMeshRecordGhost.color = colorRecordGhostBetter;
+                        textMeshRecordGhost.text = "+" + (100f * (currentAccuracyPercentage - ghostAccuracy)).ToString("f2") + "%";
+                    }
+                    else if (currentAccuracyPercentage < ghostAccuracy - Mathf.Epsilon)
+                    {
+                        textMeshRecordGhost.color = colorRecordGhostWorse;
+                        textMeshRecordGhost.text = (100f * (currentAccuracyPercentage - ghostAccuracy)).ToString("f2") + "%";
+                    }
+                    else
+                    {
+                        textMeshRecordGhost.color = colorRecordGhostNeutral;
+                        textMeshRecordGhost.text = "+" + (100f * (currentAccuracyPercentage - ghostAccuracy)).ToString("f2") + "%";
+                    }
                 }
                 else
                 {
-                    currentAccuracyPercentage = 1f * currentAccuracy / 1000000;
-                    ghostAccuracy = 1f - ((1f - floatPreviousRecord) * (floatMusicPosition / floatMusicPositionEnd));
-                }
-
-                if (currentAccuracyPercentage > ghostAccuracy + Mathf.Epsilon)
-                {
-                    textMeshRecordGhost.color = colorRecordGhostBetter;
-                    textMeshRecordGhost.text = "+" + (100f * (currentAccuracyPercentage - ghostAccuracy)).ToString("f2") + "%";
-                }
-                else if (currentAccuracyPercentage < ghostAccuracy - Mathf.Epsilon)
-                {
-                    textMeshRecordGhost.color = colorRecordGhostWorse;
-                    textMeshRecordGhost.text = (100f * (currentAccuracyPercentage - ghostAccuracy)).ToString("f2") + "%";
-                }
-                else
-                {
-                    textMeshRecordGhost.color = colorRecordGhostNeutral;
-                    textMeshRecordGhost.text = "+" + (100f * (currentAccuracyPercentage - ghostAccuracy)).ToString("f2") + "%";
+                    // Show MISS count
+                    textMeshRecordGhost.text = "MISS  " + (playerAccuracyMiss + marathonAccuracyMiss).ToString() + " / " + marathonItem.itemNoteMissThreshold.ToString();
                 }
             }
 
@@ -2291,13 +2314,6 @@ public class Game_Control : MonoBehaviour
         // Marathon mode - play charts consecutively
         else
         {
-            // Force end = Go back to menu
-            if (isForcedEnd)
-            {
-                LoadScene("MarathonMenu");
-                yield break;
-            }
-
             intMarathonItem++;
 
             marathonAccuracyBest += playerAccuracyBest;
@@ -2326,19 +2342,29 @@ public class Game_Control : MonoBehaviour
                     10 * marathonItem.itemScoreMultiplier *                     // Multiplier
                     marathonLength / 60f                                        // Chart gameplay length
                     );
-                PlayerSetting.setting.ScoreAdd(finalScore);
-                float oldRecordAccuracy = PlayerPrefs.GetFloat(marathonItem.name + "-marathon-accuracy", 0f);
-                if (finalAccuracy > oldRecordAccuracy)
+                float oldRecordAccuracy = PlayerPrefs.GetFloat("marathon-" + marathonItemID.ToString() + "-accuracy", 0f);
+
+                if (!isForcedEnd)
                 {
-                    PlayerPrefs.SetFloat(marathonItem.name + "-marathon-accuracy", marathonAccuracy);
-                    PlayerPrefs.Save();
+                    if (finalAccuracy > oldRecordAccuracy)
+                    {
+                        PlayerPrefs.SetFloat("marathon-" + marathonItemID.ToString() + "-accuracy", marathonAccuracy);
+                    }
+
+                    textResultHeader.text = Translator.GetStringTranslation("GAME_RESULTPLAYMARATHONCOMPLETE", "MARATHON COMPLETE");
+                    textResultHeader.color = colorResultHeaderPass;
+                    PlaySoundEffect(clipGameEndPass);
+                    imageSongProgressGauge.fillAmount = 1f;
+                    PlayerSetting.setting.ScoreAdd(finalScore);
+                }
+                else
+                {
+                    textResultHeader.text = Translator.GetStringTranslation("GAME_RESULTPLAYMARATHONFAILURE", "MARATHON INCOMPLETE");
+                    textResultHeader.color = colorResultHeaderPass;
+                    PlaySoundEffect(clipGameEndFail);
+                    finalScore = 0;
                 }
 
-                textResultHeader.text = Translator.GetStringTranslation("GAME_RESULTPLAYMARATHONCOMPLETE", "MARATHON COMPLETE");
-                textResultHeader.color = colorResultHeaderPass;
-                PlaySoundEffect(clipGameEndPass);
-                imageSongProgressGauge.fillAmount = 1f;
-                
                 // Show result screen
                 animatorResults.gameObject.SetActive(true);
                 animatorResults.Play("clip");
