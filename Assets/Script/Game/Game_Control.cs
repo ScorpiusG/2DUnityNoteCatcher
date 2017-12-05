@@ -584,9 +584,9 @@ public class Game_Control : MonoBehaviour
             // Reset all variables
             if (intMarathonItem == 0)
             {
-                int marathonAttempts = PlayerPrefs.GetInt(marathonItem.name + "-marathon-attempts", 0);
+                int marathonAttempts = PlayerPrefs.GetInt("marathon-" + marathonItemID + "-attempts", 0);
                 marathonAttempts++;
-                PlayerPrefs.SetInt(marathonItem.name + "-marathon-attempts", marathonAttempts);
+                PlayerPrefs.SetInt("marathon-" + marathonItemID + "-attempts", marathonAttempts);
                 PlayerPrefs.Save();
 
                 marathonAccuracyBest = 0;
@@ -600,6 +600,7 @@ public class Game_Control : MonoBehaviour
             else
             {
                 playerComboCurrent = marathonComboCurrent;
+                playerComboBest = marathonComboBest;
             }
         }
     }
@@ -650,6 +651,7 @@ public class Game_Control : MonoBehaviour
             floatPreviousRecord = PlayerPrefs.GetFloat(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-recordaccuracy_official", 0f);
         }
 
+        textMeshRecordGhost.text = "";
         float textAlpha = textMeshRecordGhost.color.a;
         colorRecordGhostBetter.a = textAlpha;
         colorRecordGhostNeutral.a = textAlpha;
@@ -708,10 +710,6 @@ public class Game_Control : MonoBehaviour
         {
             // Normal
             textMeshRecordGhost.gameObject.SetActive(PlayerSetting.setting.enableDisplayRecordGhost && floatPreviousRecord > Mathf.Epsilon && !boolAutoplay);
-            if (PlayerSetting.setting.enableDisplayRecordGhost && !PlayerSetting.setting.enableDisplayCombo)
-            {
-                textMeshRecordGhost.transform.position = Vector3.zero;
-            }
             foreach (GameObject x in objectEnableGameModeAllCatchAndTap)
             {
                 x.SetActive(intChartGameType != 3);
@@ -726,6 +724,19 @@ public class Game_Control : MonoBehaviour
             // Marathon - Show MISS count
             textMeshRecordGhost.gameObject.SetActive(marathonItem.itemNoteMissThreshold > 0);
             textMeshRecordGhost.color = colorRecordGhostWorse;
+
+            foreach (GameObject x in objectEnableGameModeAllCatchAndTap)
+            {
+                x.SetActive(true);
+            }
+            foreach (GameObject x in objectEnableGameModeNoteDodge)
+            {
+                x.SetActive(false);
+            }
+        }
+        if (PlayerSetting.setting.enableDisplayRecordGhost && !PlayerSetting.setting.enableDisplayCombo)
+        {
+            textMeshRecordGhost.transform.position = Vector3.zero;
         }
 
         textChartChecksum.gameObject.SetActive(false);
@@ -1343,7 +1354,7 @@ public class Game_Control : MonoBehaviour
                 else
                 {
                     // Show MISS count
-                    textMeshRecordGhost.text = "MISS  " + (playerAccuracyMiss + marathonAccuracyMiss).ToString() + " / " + marathonItem.itemNoteMissThreshold.ToString();
+                    textMeshRecordGhost.text = "MISS  " + (playerAccuracyMiss + intNoteDodgeHit + marathonAccuracyMiss + marathonNoteDodgeHit).ToString() + " / " + marathonItem.itemNoteMissThreshold.ToString();
                 }
             }
 
@@ -2326,18 +2337,58 @@ public class Game_Control : MonoBehaviour
             marathonLength += chartData.gameplayLength;
 
             // Next chart in list
-            if (intMarathonItem < marathonItem.itemChartList.Length)
+            if (intMarathonItem < marathonItem.itemChartList.Length && !isForcedEnd)
             {
+                // Reload scene to play next song
                 LoadScene("Game");
             }
             // End of marathon
             else
             {
-                int marathonTotalNotes = marathonAccuracyBest + marathonAccuracyGreat + marathonAccuracyFine + marathonAccuracyMiss;
+                // If forced end with incomplete songs
+                if (intMarathonItem < marathonItem.itemChartList.Length)
+                {
+                    // Add each incomplete chart's notes to the MISS counter (for all modes except Note Dodge)
+                    for (int i = intMarathonItem; i < marathonItem.itemChartList.Length; i++)
+                    {
+                        string[] x = marathonItem.itemChartList[intMarathonItem].Split('|');
+                        stringSongFileName = x[0];
+                        intChartGameType = int.Parse(x[1]);
+                        intChartGameChart = int.Parse(x[2]);
+
+                        if (intChartGameType != 3)
+                        {
+                            string chartFileName = "Songs/" + stringSongFileName + "/" + stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString();
+                            TextAsset info = Resources.Load(chartFileName) as TextAsset;
+                            string input = info.text;
+
+                            chartData = ScriptableObject.CreateInstance<ChartData>();
+                            JsonUtility.FromJsonOverwrite(input, chartData);
+
+                            foreach (string s in chartData.listNoteCatchInfo)
+                            {
+                                marathonAccuracyMiss++;
+
+                                // If it is a long note, it counts as two notes.
+                                x = s.Split('|');
+                                if (float.Parse(x[4]) > 0.01f)
+                                {
+                                    marathonAccuracyMiss++;
+                                }
+                            }
+                            marathonAccuracyMiss += chartData.listNoteTapInfo.Count;
+                        }
+                    }
+                }
+
+                textScoreDisabled.gameObject.SetActive(false);
+
+                int marathonTotalNotes = 4 * (marathonAccuracyBest + marathonAccuracyGreat + marathonAccuracyFine + marathonAccuracyMiss);
                 float marathonAccuracy = 1f * ((marathonAccuracyBest * 4) + (marathonAccuracyGreat * 2) + marathonAccuracyFine) / marathonTotalNotes;
+                if (marathonTotalNotes == 0) marathonAccuracy = 1f;
                 marathonAccuracy *= Mathf.Pow(0.95f, 1f * marathonNoteDodgeHit / marathonItem.itemChartList.Length);
                 int finalScore = Mathf.FloorToInt(
-                    finalAccuracy *                                             // Base accuracy
+                    marathonAccuracy *                                          // Base accuracy
                     Mathf.Pow(4 + marathonItem.itemLevel, 2f) *                 // Marathon level
                     10 * marathonItem.itemScoreMultiplier *                     // Multiplier
                     marathonLength / 60f                                        // Chart gameplay length
@@ -2346,9 +2397,10 @@ public class Game_Control : MonoBehaviour
 
                 if (!isForcedEnd)
                 {
-                    if (finalAccuracy > oldRecordAccuracy)
+                    if (marathonAccuracy > oldRecordAccuracy)
                     {
                         PlayerPrefs.SetFloat("marathon-" + marathonItemID.ToString() + "-accuracy", marathonAccuracy);
+                        PlayerPrefs.Save();
                     }
 
                     textResultHeader.text = Translator.GetStringTranslation("GAME_RESULTPLAYMARATHONCOMPLETE", "MARATHON COMPLETE");
@@ -2360,10 +2412,11 @@ public class Game_Control : MonoBehaviour
                 else
                 {
                     textResultHeader.text = Translator.GetStringTranslation("GAME_RESULTPLAYMARATHONFAILURE", "MARATHON INCOMPLETE");
-                    textResultHeader.color = colorResultHeaderPass;
+                    textResultHeader.color = colorResultHeaderFail;
                     PlaySoundEffect(clipGameEndFail);
                     finalScore = 0;
                 }
+                PlayerSetting.setting.Save();
 
                 // Show result screen
                 animatorResults.gameObject.SetActive(true);
@@ -2373,29 +2426,21 @@ public class Game_Control : MonoBehaviour
                 StartCoroutine(AnimatorResultsSpeedUp());
 
                 for (float f = 0; f < 0.5f; f += Time.deltaTime * animatorResults.speed) yield return null;
-                StartCoroutine(TextFloatGradualIncrease(textResultAccuracy, finalAccuracy * 100f, 0.8f));
-                if (intChartGameType != 3)
-                {
-                    StartCoroutine(TextIntGradualIncrease(textResultBestCombo, marathonComboBest, 0.8f));
-                    for (float f = 0; f < 0.5f; f += Time.deltaTime * animatorResults.speed) yield return null;
-                    StartCoroutine(TextIntGradualIncrease(textResultJudgeBest, marathonAccuracyBest, 0.6f));
-                    for (float f = 0; f < 0.3f; f += Time.deltaTime * animatorResults.speed) yield return null;
-                    StartCoroutine(TextIntGradualIncrease(textResultJudgeGreat, marathonAccuracyGreat, 0.5f));
-                    for (float f = 0; f < 0.3f; f += Time.deltaTime * animatorResults.speed) yield return null;
-                    StartCoroutine(TextIntGradualIncrease(textResultJudgeFine, marathonAccuracyFine, 0.4f));
-                    for (float f = 0; f < 0.3f; f += Time.deltaTime * animatorResults.speed) yield return null;
-                    StartCoroutine(TextIntGradualIncrease(textResultJudgeMiss, marathonAccuracyMiss, 0.3f));
-                }
-                else
-                {
-                    textResultBestCombo.text = "0";
-                    StartCoroutine(TextIntGradualIncrease(textResultJudgeBest, marathonNoteDodgeHit, 1.0f));
-                    for (float f = 0; f < 1.4f; f += Time.deltaTime * animatorResults.speed) yield return null;
-                }
+                StartCoroutine(TextFloatGradualIncrease(textResultAccuracy, marathonAccuracy * 100f, 0.8f));
+
+                StartCoroutine(TextIntGradualIncrease(textResultBestCombo, marathonComboBest, 0.8f));
+                for (float f = 0; f < 0.5f; f += Time.deltaTime * animatorResults.speed) yield return null;
+                StartCoroutine(TextIntGradualIncrease(textResultJudgeBest, marathonAccuracyBest, 0.6f));
+                for (float f = 0; f < 0.3f; f += Time.deltaTime * animatorResults.speed) yield return null;
+                StartCoroutine(TextIntGradualIncrease(textResultJudgeGreat, marathonAccuracyGreat, 0.5f));
+                for (float f = 0; f < 0.3f; f += Time.deltaTime * animatorResults.speed) yield return null;
+                StartCoroutine(TextIntGradualIncrease(textResultJudgeFine, marathonAccuracyFine, 0.4f));
+                for (float f = 0; f < 0.3f; f += Time.deltaTime * animatorResults.speed) yield return null;
+                StartCoroutine(TextIntGradualIncrease(textResultJudgeMiss, marathonAccuracyMiss + marathonNoteDodgeHit, 0.3f));
 
                 for (float f = 0; f < 1.2f; f += Time.deltaTime * animatorResults.speed) yield return null;
 
-                if (finalAccuracy > oldRecordAccuracy)
+                if (!isForcedEnd && marathonAccuracy > oldRecordAccuracy)
                 {
                     animatorNewRecord.gameObject.SetActive(true);
                     animatorNewRecord.Play("clip");

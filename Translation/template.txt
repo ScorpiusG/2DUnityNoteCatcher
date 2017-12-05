@@ -70,7 +70,7 @@ SONGMENU_BUTTONSETTINGSSHOWCOUNTJUDGMENTBODY|Display each judgment hit count on 
 SONGMENU_BUTTONSETTINGSENABLEOBJECTBEATPULSEHEADER|Enable Object Pulse On Beat
 SONGMENU_BUTTONSETTINGSENABLEOBJECTBEATPULSEBODY|When enabled, all notes and catchers have an outline that pulses on each beat.
 SONGMENU_BUTTONSETTINGSENABLEASSISTTICKHEADER|Enable Assist Tick Sound
-SONGMENU_BUTTONSETTINGSENABLEASSISTTICKBODY|Toggle total note hit per judgment on the bottom-right corner of the screen.
+SONGMENU_BUTTONSETTINGSENABLEASSISTTICKBODY|Toggle sound tick on each note you hit.
 GAME_CHARTDEV|Mapchart by
 GAME_CHARTLEVEL|Level
 GAME_CHARTCHECKSUM|Chart MD5 Checksum:

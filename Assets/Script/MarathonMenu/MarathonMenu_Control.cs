@@ -30,7 +30,7 @@ public class MarathonMenu_Control : MonoBehaviour
     public Slider sliderScrollSpeed;
     public Text textDisplayScrollSpeed;
 
-    public MarathonMenu_Item[] arrayMarathonItem;
+    //public MarathonMenu_Item[] arrayMarathonItem;
     public List<MarathonMenu_Item> listMarathonItem = new List<MarathonMenu_Item>();
 
     private void Start ()
@@ -77,17 +77,17 @@ public class MarathonMenu_Control : MonoBehaviour
         }
 
         // Get marathon items, sort them, and create button list
-        arrayMarathonItem = Resources.FindObjectsOfTypeAll<MarathonMenu_Item>();
-        foreach (MarathonMenu_Item x in arrayMarathonItem)
-        {
-            listMarathonItem.Add(x);
-        }
-        listMarathonItem.Sort(
-            delegate (MarathonMenu_Item a, MarathonMenu_Item b)
-            {
-                return (a.name.CompareTo(b.name));
-            }
-            );
+        //arrayMarathonItem = Resources.FindObjectsOfTypeAll<MarathonMenu_Item>();
+        //foreach (MarathonMenu_Item x in arrayMarathonItem)
+        //{
+        //    listMarathonItem.Add(x);
+        //}
+        //listMarathonItem.Sort(
+        //    delegate (MarathonMenu_Item a, MarathonMenu_Item b)
+        //    {
+        //        return (a.name.CompareTo(b.name));
+        //    }
+        //    );
         
         buttonTemplate.gameObject.SetActive(false);
         MarathonMenu_Button autoselectButton = null;

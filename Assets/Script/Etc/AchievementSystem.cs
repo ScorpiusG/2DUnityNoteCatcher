@@ -66,7 +66,7 @@ public class AchievementSystem : MonoBehaviour
         }
     }
 
-    private AchievementItem[] listItem;
+    public AchievementItem[] listItem;
     public List<string> listItemGet = new List<string>();
 
     public Animator animatorAchievementGet;
@@ -88,7 +88,7 @@ public class AchievementSystem : MonoBehaviour
         }
 
         // Get all achievements from resources folder.
-        listItem = Resources.FindObjectsOfTypeAll<AchievementItem>();
+        //listItem = Resources.FindObjectsOfTypeAll<AchievementItem>();
 
         // Load any existing achievements acquired.
         Load();
