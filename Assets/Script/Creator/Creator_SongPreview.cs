@@ -126,7 +126,10 @@ public class Creator_SongPreview : MonoBehaviour
         int.TryParse(Creator_Control.control.textChartOffset.text, out chartOffset);
         float cursorPos = Creator_Control.control.floatCursorPosition;
         float songBPM = float.Parse(Creator_Control.control.textSongTempo.text);
-        float currentSecond = ((60f / songBPM) * cursorPos) + (0.001f * chartOffset);
+        float currentSecond = Creator_Control.control.GetCurrentPos() + (0.001f * chartOffset);
+        //float currentSecond = ((60f / songBPM) * cursorPos) + (0.001f * chartOffset);
+
+        Vector3 lastChange = new Vector3(0f, songBPM, 0f);
 
         yield return null;
 
@@ -140,7 +143,23 @@ public class Creator_SongPreview : MonoBehaviour
         // Preview area
         while (mAudioSource.isPlaying)
         {
-            Creator_Control.control.floatCursorPosition = (mAudioSource.time - (0.001f * chartOffset)) * songBPM / 60f;
+            if (Creator_Control.control.listTempoChange.Count > 0)
+            {
+                foreach (Vector3 x in Creator_Control.control.listTempoChange)
+                {
+                    if (Creator_Control.control.floatCursorPosition >= x.x - Mathf.Epsilon)
+                    {
+                        lastChange = x;
+                    }
+                }
+            }
+
+            if (lastChange.y > 0.01f)
+            {
+                songBPM = lastChange.y;
+            }
+
+            Creator_Control.control.floatCursorPosition = ((mAudioSource.time - (0.001f * chartOffset) - lastChange.z) * songBPM / 60f) + lastChange.x;
             if (Input.GetKeyDown(KeyCode.Space)) break;
             yield return null;
         }

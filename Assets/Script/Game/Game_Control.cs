@@ -1075,10 +1075,25 @@ public class Game_Control : MonoBehaviour
         mSongLoader.audioSourceMusic.Play();
 
         chartCurrentTempo = chartData.songTempo;
-        floatMusicPositionEnd = chartData.songLength / chartCurrentTempo * 60f;
+        floatMusicPositionEnd = (chartData.songLength * 60f / chartData.songTempo);
+        if (chartData.listTempoChanges.Count > 0)
+        {
+            Vector3 lastChange = new Vector3(0f, chartData.songTempo, 0f);
+            foreach (Vector3 x in chartData.listTempoChanges)
+            {
+                if (lastChange.x < x.x)
+                {
+                    lastChange = x;
+                }
+            }
+
+            floatMusicPositionEnd = ((chartData.songLength - lastChange.x) * 60f / lastChange.y) + lastChange.z;
+        }
         floatMusicPositionEnd += (chartData.chartOffset + PlayerSetting.setting.intGameOffset) * 0.001f;
         //timeItemLastSpawn = -4f;
         //itemQuantityTotal = Mathf.FloorToInt((chartData.gameplayLength - ((floatNoteDodgeItemSpawnFrequency * 4f) + Mathf.Epsilon)) / 4f) * 1000;
+
+        Vector3 currentTempoChange = new Vector3(0f, chartCurrentTempo, 0f);
 
         yield return null;
         yield return new WaitUntil(() => mSongLoader.audioSourceMusic.isPlaying);
@@ -1093,11 +1108,23 @@ public class Game_Control : MonoBehaviour
                 yield return null;
                 continue;
             }
-
+            
             // Time update
+            if (chartData.listTempoChanges.Count > 0)
+            {
+                foreach (Vector3 x in chartData.listTempoChanges)
+                {
+                    if (floatMusicPosition > x.z)
+                    {
+                        currentTempoChange = x;
+                    }
+                }
+            }
+
             floatMusicPosition = mSongLoader.audioSourceMusic.time - ((chartData.chartOffset + PlayerSetting.setting.intGameOffset) * 0.001f);
             //floatMusicPosition = audioSourceMusic.time - ((chartData.chartOffset + PlayerSetting.setting.intGameOffset) * 0.001f);
-            floatMusicBeat = floatMusicPosition * chartCurrentTempo / 60f;
+            chartCurrentTempo = currentTempoChange.y;
+            floatMusicBeat = ((floatMusicPosition - currentTempoChange.z) * chartCurrentTempo / 60f) + currentTempoChange.x;
 
             // Invincibility timer for Note Dodge
             floatNoteDodgeInvincibilityPeriodCurrent -= Time.deltaTime;
@@ -1252,7 +1279,7 @@ public class Game_Control : MonoBehaviour
             {
                 textSongProgressTime.text =
                     Mathf.Floor(mSongLoader.audioSourceMusic.time / 60f).ToString() + ":" + Mathf.Floor(mSongLoader.audioSourceMusic.time % 60f).ToString("00") + " / " +
-                    Mathf.Floor(chartData.songLength / chartCurrentTempo).ToString() + ":" + Mathf.Floor((chartData.songLength / chartCurrentTempo * 60f) % 60f).ToString("00");
+                    Mathf.Floor(floatMusicPositionEnd / 60f).ToString() + ":" + Mathf.Floor((floatMusicPositionEnd * 60f) % 60f).ToString("00");
             }
             if (imageSongProgressGauge.gameObject.activeSelf)
             {
@@ -1375,6 +1402,14 @@ public class Game_Control : MonoBehaviour
                     Game_Note note = SpawnNoteCatch();
                     note.health = 1f;
                     note.type = int.Parse(noteInfo[0]);
+                    if (intChartGameType == 0 && note.type > 0)
+                    {
+                        note.type = 0;
+                    }
+                    else if (intChartGameType == 1 && note.type > 1)
+                    {
+                        note.type %= 2;
+                    }
                     note.size = int.Parse(noteInfo[1]);
                     note.time = time;
                     note.position = Mathf.Clamp(float.Parse(noteInfo[3]), -1f, 1f);
@@ -1447,6 +1482,14 @@ public class Game_Control : MonoBehaviour
                     Game_Note note = SpawnNoteTap();
                     note.health = 1f;
                     note.type = int.Parse(noteInfo[0]);
+                    if (intChartGameType == 0 && note.type > 0)
+                    {
+                        note.type = 0;
+                    }
+                    else if (intChartGameType == 1 && note.type > 1)
+                    {
+                        note.type %= 2;
+                    }
                     note.size = int.Parse(noteInfo[1]);
                     note.time = time;
                     note.position = Mathf.Clamp(float.Parse(noteInfo[3]), -1f, 1f);

@@ -34,6 +34,12 @@ public class Creator_Control : MonoBehaviour
     public Text textChartJudge;
     private int intChartJudge = 0;
 
+    public InputField inputTempoChange;
+    public List<Vector3> listTempoChange = new List<Vector3>();
+    public Transform transformItemTempoChangeParent;
+    public Creator_ItemTempoChange itemTempoChangeTemplate;
+    private List<Creator_ItemTempoChange> listItemTempoChange = new List<Creator_ItemTempoChange>();
+
     public Text textChartLevel;
     public Text textTimeCurrentMeasure;
     public Text textTimeCurrentLength;
@@ -133,6 +139,7 @@ public class Creator_Control : MonoBehaviour
 
         RefreshGridSnapDivisorGuide();
         CalculateChartLevel();
+        TempoChangeRefreshList();
     }
 
     /// <summary>
@@ -170,7 +177,7 @@ public class Creator_Control : MonoBehaviour
         chartData.listNoteTapInfo = new List<string>();
         chartData.listSpecialEffectInfo = new List<string>();
 
-        chartData.listTempoChanges = new List<Vector3>();
+        chartData.listTempoChanges = listTempoChange;
 
         chartData.chartVersion = INT_CHART_VERSION;
         chartData.songName = textSongName.text;
@@ -352,6 +359,7 @@ public class Creator_Control : MonoBehaviour
         textChartDescription.text = chartData.chartDescription;
         textSongLength.text = chartData.songLength.ToString();
         textSongTempo.text = chartData.songTempo.ToString("f2");
+        listTempoChange = chartData.listTempoChanges;
         intChartJudge = chartData.chartJudge;
         //intChartGameType = chartData.chartGameType;
         textChartOffset.text = chartData.chartOffset.ToString();
@@ -429,6 +437,7 @@ public class Creator_Control : MonoBehaviour
 
         CalculateChartLevel();
         Creator_SongPreview.mSongPreview.ClearClip();
+        TempoChangeRefreshList();
     }
     /// <summary>
     /// Wipes chart of note data only.
@@ -855,6 +864,103 @@ public class Creator_Control : MonoBehaviour
 
         PlaySound(clipTick);
         listStringNoteOther.Clear();
+    }
+
+    public float GetCurrentPos()
+    {
+        float songTempo = 0f;
+        float.TryParse(textSongTempo.text, out songTempo);
+        float pos = 60f / songTempo * floatCursorPosition;
+        Vector3 lastChange = new Vector3(0f, songTempo, 0f);
+
+        if (listTempoChange.Count > 0)
+        {
+            foreach (Vector3 x in listTempoChange)
+            {
+                if (floatCursorPosition >= x.x - Mathf.Epsilon)
+                {
+                    lastChange = x;
+                }
+            }
+
+            /*
+             *  x = Beat Position
+             *  y = BPM
+             *  z = Offset
+             */
+            pos = ((floatCursorPosition - lastChange.x) * (60f / lastChange.y)) + lastChange.z;
+        }
+
+        return pos;
+    }
+    public void TempoChangeAdd()
+    {
+        float floatTempoChange = 0f;
+        float.TryParse(inputTempoChange.text, out floatTempoChange);
+
+        if (floatTempoChange < 0.01f - Mathf.Epsilon)
+        {
+            return;
+        }
+
+        Vector3 newChange = new Vector3();
+        newChange.x = floatCursorPosition;
+        newChange.y = Mathf.Abs(floatTempoChange);
+        newChange.z = GetCurrentPos();
+        listTempoChange.Add(newChange);
+
+        TempoChangeRefreshList();
+    }
+    public void TempoChangeRefreshList()
+    {
+        foreach(Creator_ItemTempoChange x in listItemTempoChange)
+        {
+            Destroy(x.gameObject);
+        }
+        listItemTempoChange.Clear();
+
+        int itemID = 0;
+        itemTempoChangeTemplate.gameObject.SetActive(false);
+        foreach (Vector3 x in listTempoChange)
+        {
+            Creator_ItemTempoChange item = Instantiate(itemTempoChangeTemplate);
+            item.transform.SetParent(transformItemTempoChangeParent);
+            item.transform.localScale = Vector3.one;
+            item.name = item.textItem.text = x.x + " : " + x.y + " : " + x.z.ToString("f3");
+            item.itemID = itemID;
+            item.gameObject.SetActive(true);
+            listItemTempoChange.Add(item);
+
+            itemID++;
+        }
+
+        listTempoChange.Sort(
+            delegate (Vector3 a, Vector3 b)
+            {
+                return (a.x.CompareTo(b.x));
+            }
+            );
+    }
+    public void TempoChangeRemove(Creator_ItemTempoChange item)
+    {
+        listTempoChange.RemoveAt(item.itemID);
+        TempoChangeRefreshList();
+    }
+    public void TempoChangeEdit(Creator_ItemTempoChange item)
+    {
+        float floatTempoChange = 0f;
+        float.TryParse(inputTempoChange.text, out floatTempoChange);
+
+        if (floatTempoChange < 0.01f - Mathf.Epsilon)
+        {
+            return;
+        }
+
+        Vector3 newChange = listTempoChange[item.itemID];
+        newChange.y = floatTempoChange;
+        listTempoChange.RemoveAt(item.itemID);
+        listTempoChange.Add(newChange);
+        TempoChangeRefreshList();
     }
 
     /// <summary>
@@ -1318,9 +1424,13 @@ public class Creator_Control : MonoBehaviour
         textTimeCurrentMeasure.text =
             Translator.GetStringTranslation("CREATOR_CURRENTMEASURE", "Measure") + " " + (Mathf.Floor(floatCursorPosition / intBeatsPerMeasure) + 1).ToString() + " " +
             Translator.GetStringTranslation("CREATOR_CURRENTBEAT", "Beat") + " " + (Mathf.Floor(floatCursorPosition % intBeatsPerMeasure) + 1).ToString() + " (" + Mathf.Floor(floatCursorPosition + 1).ToString() + ")";
+        //if (float.TryParse(textSongTempo.text, out songTempo))
+        //{
+        //    textTimeCurrentLength.text = Translator.GetStringTranslation("CREATOR_CURRENTSONGPOSITION", "Song Pos") + " " + (Mathf.FloorToInt(60f / songTempo * floatCursorPosition / 60f)).ToString("0") + ":" + (60f / songTempo * floatCursorPosition % 60f).ToString("00.00");
+        //}
         if (float.TryParse(textSongTempo.text, out songTempo))
         {
-            textTimeCurrentLength.text = Translator.GetStringTranslation("CREATOR_CURRENTSONGPOSITION", "Song Pos") + " " + (Mathf.FloorToInt(60f / songTempo * floatCursorPosition / 60f)).ToString("0") + ":" + (60f / songTempo * floatCursorPosition % 60f).ToString("00.00");
+            textTimeCurrentLength.text = Translator.GetStringTranslation("CREATOR_CURRENTSONGPOSITION", "Song Pos") + " " + (Mathf.FloorToInt(GetCurrentPos() / 60f)).ToString("0") + ":" + (GetCurrentPos() % 60f).ToString("00.00");
         }
         else
         {

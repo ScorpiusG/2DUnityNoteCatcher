@@ -817,6 +817,30 @@ public class SongMenu_Control : MonoBehaviour
         }
         stringMode = Translator.GetStringTranslation("SONGMENU_CHARTGAMETYPEBODY" + chartData.chartGameType, stringMode);
         float actualLength = chartData.songLength * 60f / chartData.songTempo;
+        float tempoLow = chartData.songTempo;
+        float tempoHigh = chartData.songTempo;
+        if (chartData.listTempoChanges.Count > 0)
+        {
+            Vector3 lastChange = new Vector3(0f, chartData.songTempo, 0f);
+            foreach (Vector3 x in chartData.listTempoChanges)
+            {
+                if (tempoHigh < x.y)
+                {
+                    tempoHigh = x.y;
+                }
+                else if (tempoLow > x.y)
+                {
+                    tempoLow = x.y;
+                }
+
+                if (lastChange.x < x.x)
+                {
+                    lastChange = x;
+                }
+            }
+
+            actualLength = ((chartData.songLength - lastChange.x) * 60f / lastChange.y) + lastChange.z;
+        }
 
         // Display song details
         textDetailsHeader.text = chartData.songName;
@@ -825,8 +849,20 @@ public class SongMenu_Control : MonoBehaviour
             Translator.GetStringTranslation("SONGMENU_CHARTDEV", "Mapchart Producer:") + " " + chartData.chartDeveloper + "\n" +
             Translator.GetStringTranslation("SONGMENU_CHARTGAMETYPEBODY", "Mapchart Mode:") + " " + stringMode + "\n" +
             Translator.GetStringTranslation("SONGMENU_CHARTLEVEL", "Mapchart Level:") + " " + chartData.chartLevel.ToString() + "\n" +
-            Translator.GetStringTranslation("SONGMENU_CHARTLENGTH", "Length:") + " " + Mathf.Floor(actualLength / 60f).ToString() + ":" + (actualLength % 60f).ToString("f2") + "\n" +
-            Translator.GetStringTranslation("SONGMENU_CHARTBPM", "BPM:") + " " + chartData.songTempo.ToString("f0") + "\n" +
+            Translator.GetStringTranslation("SONGMENU_CHARTLENGTH", "Length:") + " " + Mathf.Floor(actualLength / 60f).ToString() + ":" + (actualLength % 60f).ToString("00.00") + "\n";
+
+        if (chartData.listTempoChanges.Count > 0)
+        {
+            textDetailsBody.text +=
+                Translator.GetStringTranslation("SONGMENU_CHARTBPM", "BPM:") + " " + tempoLow.ToString("f2") + " - " + tempoHigh.ToString("f2") + "\n";
+        }
+        else
+        {
+            textDetailsBody.text +=
+                Translator.GetStringTranslation("SONGMENU_CHARTBPM", "BPM:") + " " + chartData.songTempo.ToString("f2") + "\n";
+        }
+
+        textDetailsBody.text +=
             Translator.GetStringTranslation("SONGMENU_CHARTJUDGELEVEL", "Judge Level:") + " " + (chartData.chartJudge + 1).ToString();
 
         if (chartChecksum.Length > 0)
