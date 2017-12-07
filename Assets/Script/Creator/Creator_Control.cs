@@ -34,7 +34,9 @@ public class Creator_Control : MonoBehaviour
     public Text textChartJudge;
     private int intChartJudge = 0;
 
-    public InputField inputTempoChange;
+    public InputField inputTempoChangeAdd;
+    public InputField[] inputTempoChangeEdit;
+    public int intTempoChangeEdit = 0;
     public List<Vector3> listTempoChange = new List<Vector3>();
     public Transform transformItemTempoChangeParent;
     public Creator_ItemTempoChange itemTempoChangeTemplate;
@@ -408,6 +410,7 @@ public class Creator_Control : MonoBehaviour
 
         CalculateChartLevel();
         ShortcutKeysEnable();
+        TempoChangeRefreshList();
 
         Notification.Display(Translator.GetStringTranslation("CREATOR_LOADSUCCESS", "Chart loaded successfully."), Color.white);
     }
@@ -896,7 +899,7 @@ public class Creator_Control : MonoBehaviour
     public void TempoChangeAdd()
     {
         float floatTempoChange = 0f;
-        float.TryParse(inputTempoChange.text, out floatTempoChange);
+        float.TryParse(inputTempoChangeAdd.text, out floatTempoChange);
 
         if (floatTempoChange < 0.01f - Mathf.Epsilon)
         {
@@ -919,27 +922,25 @@ public class Creator_Control : MonoBehaviour
         }
         listItemTempoChange.Clear();
 
-        int itemID = 0;
+        listTempoChange.Sort((a, b) => a.x.CompareTo(b.x));
+
         itemTempoChangeTemplate.gameObject.SetActive(false);
-        foreach (Vector3 x in listTempoChange)
+        for (int i = 0; i < listTempoChange.Count; i++)
         {
             Creator_ItemTempoChange item = Instantiate(itemTempoChangeTemplate);
             item.transform.SetParent(transformItemTempoChangeParent);
             item.transform.localScale = Vector3.one;
-            item.name = item.textItem.text = x.x + " : " + x.y + " : " + x.z.ToString("f3");
-            item.itemID = itemID;
+            item.name = item.textItem.text = listTempoChange[i].x + " : " + listTempoChange[i].y + " : " + listTempoChange[i].z.ToString("f3");
+            item.itemID = i;
             item.gameObject.SetActive(true);
             listItemTempoChange.Add(item);
-
-            itemID++;
         }
-
-        listTempoChange.Sort(
-            delegate (Vector3 a, Vector3 b)
-            {
-                return (a.x.CompareTo(b.x));
-            }
-            );
+        //listTempoChange.Sort(
+        //    delegate (Vector3 a, Vector3 b)
+        //    {
+        //        return (a.x.CompareTo(b.x));
+        //    }
+        //    );
     }
     public void TempoChangeRemove(Creator_ItemTempoChange item)
     {
@@ -948,17 +949,32 @@ public class Creator_Control : MonoBehaviour
     }
     public void TempoChangeEdit(Creator_ItemTempoChange item)
     {
-        float floatTempoChange = 0f;
-        float.TryParse(inputTempoChange.text, out floatTempoChange);
+        inputTempoChangeEdit[0].text = listTempoChange[item.itemID].x.ToString();
+        inputTempoChangeEdit[1].text = listTempoChange[item.itemID].y.ToString();
+        inputTempoChangeEdit[2].text = listTempoChange[item.itemID].z.ToString();
+        intTempoChangeEdit = item.itemID;
+    }
+    public void TempoChangeEditAttempt()
+    {
+        float floatTempoChangeBeat = 0f;
+        float floatTempoChangeBPM = 0f;
+        float floatTempoChangeTime = 0f;
+        float.TryParse(inputTempoChangeEdit[0].text, out floatTempoChangeBeat);
+        float.TryParse(inputTempoChangeEdit[1].text, out floatTempoChangeBPM);
+        float.TryParse(inputTempoChangeEdit[2].text, out floatTempoChangeTime);
 
-        if (floatTempoChange < 0.01f - Mathf.Epsilon)
+        if (floatTempoChangeBeat < -Mathf.Epsilon || floatTempoChangeBPM < 0.01f - Mathf.Epsilon || floatTempoChangeTime < -Mathf.Epsilon)
         {
+            Notification.Display("Failed to edit the BPM change. At least one of the input fields has an invalid value.", new Color(1f, 0.4f, 0.4f));
             return;
         }
 
-        Vector3 newChange = listTempoChange[item.itemID];
-        newChange.y = floatTempoChange;
-        listTempoChange.RemoveAt(item.itemID);
+        Vector3 newChange = new Vector3();
+        //Vector3 newChange = listTempoChange[item.itemID];
+        newChange.x = floatTempoChangeBeat;
+        newChange.y = floatTempoChangeBPM;
+        newChange.z = floatTempoChangeTime;
+        listTempoChange.RemoveAt(intTempoChangeEdit);
         listTempoChange.Add(newChange);
         TempoChangeRefreshList();
     }
