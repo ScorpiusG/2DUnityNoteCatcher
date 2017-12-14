@@ -168,6 +168,7 @@ public class Game_Control : MonoBehaviour
     private bool isForcedEnd = false;
     private bool isScoringDisabled = false;
     private float floatTimeEscapeHeld = 0f;
+    private int currentScrollSpeed = 0;
     private int currentAccuracy = 0;
     private int currentAccuracyNegative = 0;
     private int playerAccuracyBest = 0;
@@ -657,7 +658,23 @@ public class Game_Control : MonoBehaviour
         colorRecordGhostNeutral.a = textAlpha;
         colorRecordGhostWorse.a = textAlpha;
         audioSourceMusic.volume = PlayerSetting.setting.floatVolumeMusic;
+        currentScrollSpeed = PlayerSetting.setting.intScrollSpeed;
         //audioSourceEffect.volume = PlayerSetting.setting.floatVolumeEffect;
+
+        // Set certain variables based modifiers
+        if (marathonItem != null && marathonItem.itemModList.Length > 0)
+        {
+            foreach (string x in marathonItem.itemModList)
+            {
+                string[] y = x.Split(':');
+                switch (y[0])
+                {
+                    case "scrollspeed":
+                        currentScrollSpeed = int.Parse(y[1]);
+                        break;
+                }
+            }
+        }
 
         // Object initialization
         textDebug.gameObject.SetActive(Debug.isDebugBuild || Application.isEditor);
@@ -1279,7 +1296,7 @@ public class Game_Control : MonoBehaviour
             {
                 textSongProgressTime.text =
                     Mathf.Floor(mSongLoader.audioSourceMusic.time / 60f).ToString() + ":" + Mathf.Floor(mSongLoader.audioSourceMusic.time % 60f).ToString("00") + " / " +
-                    Mathf.Floor(floatMusicPositionEnd / 60f).ToString() + ":" + Mathf.Floor((floatMusicPositionEnd * 60f) % 60f).ToString("00");
+                    Mathf.Floor(floatMusicPositionEnd / 60f).ToString() + ":" + Mathf.Floor(floatMusicPositionEnd % 60f).ToString("00");
             }
             if (imageSongProgressGauge.gameObject.activeSelf)
             {
@@ -1397,7 +1414,7 @@ public class Game_Control : MonoBehaviour
                     speed = 1f;
                 }
                 // Spawn note if position of note < current beat pos / FOV (scroll speed)
-                if (time < floatMusicBeat + (floatNoteDistanceSpawn / floatNoteScrollMultiplier / PlayerSetting.setting.intScrollSpeed / speed))
+                if (time < floatMusicBeat + (floatNoteDistanceSpawn / floatNoteScrollMultiplier / currentScrollSpeed / speed))
                 {
                     Game_Note note = SpawnNoteCatch();
                     note.health = 1f;
@@ -1429,7 +1446,7 @@ public class Game_Control : MonoBehaviour
                     note.gameObject.SetActive(true);
                     note.spriteRendererLength.gameObject.SetActive(false);
 
-                    Vector3 notePos = new Vector3(note.position, (note.time - floatMusicBeat) * floatNoteScrollMultiplier * PlayerSetting.setting.intScrollSpeed * note.speed);
+                    Vector3 notePos = new Vector3(note.position, (note.time - floatMusicBeat) * floatNoteScrollMultiplier * currentScrollSpeed * note.speed);
                     note.transform.position = notePos;
 
                     // If note has length, create a second note with a line below it
@@ -1452,14 +1469,14 @@ public class Game_Control : MonoBehaviour
 
                         note.spriteRendererLength.gameObject.SetActive(true);
                         note.spriteRendererLength.gameObject.layer = 9 + note.type;
-                        note.spriteRendererLength.transform.localPosition = Vector3.down * longNoteLength * floatNoteScrollMultiplier * speed * PlayerSetting.setting.intScrollSpeed / 2f;
+                        note.spriteRendererLength.transform.localPosition = Vector3.down * longNoteLength * floatNoteScrollMultiplier * speed * currentScrollSpeed / 2f;
                         note.spriteRendererLength.transform.localScale = new Vector3(
                             note.spriteRendererLength.transform.localScale.x,
-                            longNoteLength * floatNoteScrollMultiplier * PlayerSetting.setting.intScrollSpeed * speed,
+                            longNoteLength * floatNoteScrollMultiplier * currentScrollSpeed * speed,
                             1f);
                         note.spriteRendererLength.color = noteColor[note.type];
 
-                        notePos = new Vector3(note.position, (note.time - floatMusicBeat) * floatNoteScrollMultiplier * PlayerSetting.setting.intScrollSpeed * note.speed);
+                        notePos = new Vector3(note.position, (note.time - floatMusicBeat) * floatNoteScrollMultiplier * currentScrollSpeed * note.speed);
                         note.transform.position = notePos;
                     }
 
@@ -1477,7 +1494,7 @@ public class Game_Control : MonoBehaviour
                 {
                     speed = 1f;
                 }
-                if (time < floatMusicBeat + (floatNoteDistanceSpawn / floatNoteScrollMultiplier / PlayerSetting.setting.intScrollSpeed / speed))
+                if (time < floatMusicBeat + (floatNoteDistanceSpawn / floatNoteScrollMultiplier / currentScrollSpeed / speed))
                 {
                     Game_Note note = SpawnNoteTap();
                     note.health = 1f;
@@ -1508,7 +1525,7 @@ public class Game_Control : MonoBehaviour
                     note.gameObject.SetActive(true);
                     note.spriteRendererLength.gameObject.SetActive(false);
 
-                    Vector3 notePos = new Vector3(note.position, (note.time - floatMusicBeat) * floatNoteScrollMultiplier * PlayerSetting.setting.intScrollSpeed * note.speed);
+                    Vector3 notePos = new Vector3(note.position, (note.time - floatMusicBeat) * floatNoteScrollMultiplier * currentScrollSpeed * note.speed);
                     note.transform.position = notePos;
 
                     float longNoteLength = float.Parse(noteInfo[4]);
@@ -1528,14 +1545,14 @@ public class Game_Control : MonoBehaviour
                         note.gameObject.SetActive(true);
 
                         note.spriteRendererLength.gameObject.SetActive(true);
-                        note.spriteRendererLength.transform.localPosition = Vector3.down * longNoteLength * floatNoteScrollMultiplier * PlayerSetting.setting.intScrollSpeed * speed / 2f;
+                        note.spriteRendererLength.transform.localPosition = Vector3.down * longNoteLength * floatNoteScrollMultiplier * currentScrollSpeed * speed / 2f;
                         note.spriteRendererLength.transform.localScale = new Vector3(
                             note.spriteRendererLength.transform.localScale.x,
-                            longNoteLength * floatNoteScrollMultiplier * PlayerSetting.setting.intScrollSpeed * speed,
+                            longNoteLength * floatNoteScrollMultiplier * currentScrollSpeed * speed,
                             1f);
                         note.spriteRendererLength.color = noteColor[note.type];
 
-                        notePos = new Vector3(note.position, (note.time - floatMusicBeat) * floatNoteScrollMultiplier * PlayerSetting.setting.intScrollSpeed * note.speed);
+                        notePos = new Vector3(note.position, (note.time - floatMusicBeat) * floatNoteScrollMultiplier * currentScrollSpeed * note.speed);
                         note.transform.position = notePos;
                     }
 
@@ -1585,10 +1602,10 @@ public class Game_Control : MonoBehaviour
             {
                 if (x.gameObject.activeInHierarchy)
                 {
-                    Vector3 notePos = new Vector3(x.position, (x.time - floatMusicBeat) * floatNoteScrollMultiplier * PlayerSetting.setting.intScrollSpeed * x.speed);
+                    Vector3 notePos = new Vector3(x.position, (x.time - floatMusicBeat) * floatNoteScrollMultiplier * currentScrollSpeed * x.speed);
                     if (Vector3.Distance(x.transform.position, notePos) < chartCurrentTempo / 24f)
                     {
-                        x.transform.position = Vector3.Lerp(x.transform.position, notePos, Time.deltaTime * NOTE_LERP_RATE_MULTIPLIER * PlayerSetting.setting.intScrollSpeed * chartCurrentTempo / 600f);
+                        x.transform.position = Vector3.Lerp(x.transform.position, notePos, Time.deltaTime * NOTE_LERP_RATE_MULTIPLIER * currentScrollSpeed * chartCurrentTempo / 600f);
                     }
                     else
                     {
@@ -1737,10 +1754,10 @@ public class Game_Control : MonoBehaviour
             {
                 if (x.gameObject.activeInHierarchy)
                 {
-                    Vector3 notePos = new Vector3(x.position, (x.time - floatMusicBeat) * floatNoteScrollMultiplier * PlayerSetting.setting.intScrollSpeed * x.speed);
+                    Vector3 notePos = new Vector3(x.position, (x.time - floatMusicBeat) * floatNoteScrollMultiplier * currentScrollSpeed * x.speed);
                     if (Vector3.Distance(x.transform.position, notePos) < chartCurrentTempo / 240f)
                     {
-                        x.transform.position = Vector3.Lerp(x.transform.position, notePos, Time.deltaTime * NOTE_LERP_RATE_MULTIPLIER * PlayerSetting.setting.intScrollSpeed * chartCurrentTempo / 600f);
+                        x.transform.position = Vector3.Lerp(x.transform.position, notePos, Time.deltaTime * NOTE_LERP_RATE_MULTIPLIER * currentScrollSpeed * chartCurrentTempo / 600f);
                     }
                     else
                     {
@@ -2241,7 +2258,8 @@ public class Game_Control : MonoBehaviour
                 {
                     // Score based on accuracy, best combo, chart level, and game mode.
                     finalScore = Mathf.FloorToInt(
-                        (1f * playerComboBest / chartTotalNotes) * finalAccuracy *  // Base accuracy
+                        //(1f * playerComboBest / chartTotalNotes) * finalAccuracy *  // Base accuracy (with best combo)
+                        finalAccuracy *                                             // Base accuracy
                         Mathf.Pow(4 + chartData.chartLevel, 2f) *                   // Chart level
                         10 * gameModeScoreMultiplier *                              // Game mode
                         chartData.gameplayLength / 60f                              // Chart gameplay length

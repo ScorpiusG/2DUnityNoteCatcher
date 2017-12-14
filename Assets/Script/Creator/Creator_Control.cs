@@ -465,18 +465,16 @@ public class Creator_Control : MonoBehaviour
     public void CreateNoteCatch(ChartData.NoteInfo note)
     {
         // Object pooling - try to get an unused object from the pool, and make a new object if there are no unused ones
-        bool createNote = true;
         Creator_Note newNote = null;
         foreach (Creator_Note x in listNoteCatchPool)
         {
             if (!x.gameObject.activeSelf)
             {
                 newNote = x;
-                createNote = false;
                 break;
             }
         }
-        if (createNote)
+        if (newNote == null)
         {
             newNote = Instantiate(objectNoteCatchPrefab);
             listNoteCatchPool.Add(newNote);
@@ -488,6 +486,7 @@ public class Creator_Control : MonoBehaviour
         newNote.type = note.type % 4;
         newNote.size = note.size;
         newNote.speed = note.speed;
+        newNote.gameObject.layer = 9 + newNote.type;
         if (note.speed < 0.01f)
         {
             newNote.speed = 1f;
@@ -497,12 +496,14 @@ public class Creator_Control : MonoBehaviour
         {
             newNote.length = note.length;
             newNote.spriteRendererLength.gameObject.SetActive(true);
+            newNote.spriteRendererLength.gameObject.layer = 13 + newNote.type;
             newNote.spriteRendererLength.transform.localPosition = Vector3.up * note.length * 0.5f;
             newNote.spriteRendererLength.transform.localScale = new Vector3(
                 newNote.spriteRendererLength.transform.localScale.x,
                 25f * note.length,
                 newNote.spriteRendererLength.transform.localScale.z);
             newNote.spriteRendererLengthEndNote.gameObject.SetActive(true);
+            newNote.spriteRendererLengthEndNote.gameObject.layer = 13 + newNote.type;
             newNote.spriteRendererLengthEndNote.transform.localPosition = Vector3.up * note.length;
         }
         else
@@ -623,6 +624,7 @@ public class Creator_Control : MonoBehaviour
         newNote.type = note.type % 4;
         newNote.size = note.size;
         newNote.speed = note.speed;
+        newNote.gameObject.layer = 9 + newNote.type;
         if (note.speed < 0.01f)
         {
             newNote.speed = 1f;
@@ -631,12 +633,14 @@ public class Creator_Control : MonoBehaviour
         {
             newNote.length = note.length;
             newNote.spriteRendererLength.gameObject.SetActive(true);
+            newNote.spriteRendererLength.gameObject.layer = 13 + newNote.type;
             newNote.spriteRendererLength.transform.localPosition = Vector3.up * note.length * 0.5f;
             newNote.spriteRendererLength.transform.localScale = new Vector3(
                 newNote.spriteRendererLength.transform.localScale.x,
                 25f * note.length,
                 newNote.spriteRendererLength.transform.localScale.z);
             newNote.spriteRendererLengthEndNote.gameObject.SetActive(true);
+            newNote.spriteRendererLengthEndNote.gameObject.layer = 13 + newNote.type;
             newNote.spriteRendererLengthEndNote.transform.localPosition = Vector3.up * note.length;
         }
         else
@@ -1672,7 +1676,7 @@ public class Creator_Control : MonoBehaviour
                     // Possible to create note only if note is at or above song start
                     if (hit.point.y > -Mathf.Epsilon)
                     {
-                        float pos = hit.point.x;
+                        float pos = Mathf.Clamp(hit.point.x, -1f, 1f);
                         float time = hit.point.y;
                         int type = intNotePlacementType;
                         float length = 0f;

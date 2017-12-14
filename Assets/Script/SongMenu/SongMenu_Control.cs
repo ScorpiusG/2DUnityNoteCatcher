@@ -213,10 +213,10 @@ public class SongMenu_Control : MonoBehaviour
         {
             Button newBtn = Instantiate(buttonSongIndividual);
             newBtn.name = listStringSongDirectory[i];
-            // Use custom name via _customname.txt
-            if (isLoadCustomSongs && File.Exists(path + "/" + listStringSongDirectory[i] + "/_customname.txt"))
+            // Use custom name via text file
+            if (isLoadCustomSongs && File.Exists(path + "/" + listStringSongDirectory[i] + "/name.txt"))
             {
-                StreamReader reader = new StreamReader(path + "/" + listStringSongDirectory[i] + "/_customname.txt");
+                StreamReader reader = new StreamReader(path + "/" + listStringSongDirectory[i] + "/name.txt");
                 string buttonName = reader.ReadLine();
                 reader.Close();
 
@@ -225,7 +225,7 @@ public class SongMenu_Control : MonoBehaviour
             // Official songs
             else if (!isLoadCustomSongs)
             {
-                TextAsset text = (TextAsset)Resources.Load("Songs/" + listStringSongDirectory[i] + "/_customname", typeof(TextAsset));
+                TextAsset text = (TextAsset)Resources.Load("Songs/" + listStringSongDirectory[i] + "/name", typeof(TextAsset));
                 if (text != null)
                 {
                     newBtn.GetComponentInChildren<Text>().text = text.text;
@@ -854,7 +854,7 @@ public class SongMenu_Control : MonoBehaviour
         if (chartData.listTempoChanges.Count > 0)
         {
             textDetailsBody.text +=
-                Translator.GetStringTranslation("SONGMENU_CHARTBPM", "BPM:") + " " + tempoLow.ToString("f2") + " - " + tempoHigh.ToString("f2") + "\n";
+                Translator.GetStringTranslation("SONGMENU_CHARTBPM", "BPM:") + " " + chartData.songTempo.ToString("f2") + " (" + tempoLow.ToString("f2") + " - " + tempoHigh.ToString("f2") + ")\n";
         }
         else
         {
