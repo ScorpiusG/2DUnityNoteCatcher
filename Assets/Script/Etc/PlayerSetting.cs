@@ -53,6 +53,10 @@ public class PlayerSetting : MonoBehaviour
     public bool enableNoteAndCatcherHighlightBeatPulse = true;
     // Play a tick sound effect upon hitting a note.
     public bool enableAssistTickSound = false;
+    // Shows the crosshair in the middle of the screen. Regardless of setting, this does not affect the dodger.
+    public bool enableMouseCrosshair = true;
+    // Shows visual effects of the audio on the sides outside the play area.
+    public bool enableAudioVisualizer = true;
 
     // Game modifiers. Enabling certain ones will disable scoring (record for highest accuracy and total score). As of now, these are not implemented yet.
     // Does nothing while disabling high score.

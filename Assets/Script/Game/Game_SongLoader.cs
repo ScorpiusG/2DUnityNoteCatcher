@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class Game_SongLoader : MonoBehaviour
 {
@@ -13,9 +14,26 @@ public class Game_SongLoader : MonoBehaviour
     public AudioClip clipSong = null;
     public List<AudioClip> listClipEffect = new List<AudioClip>();
 
+    public FFTWindow audioSpectrumType = FFTWindow.Blackman;
+    public Image[] imageAudioVisualLeft;
+    public Image[] imageAudioVisualRight;
+    public float[] floatAudioVisualMusic;
+    public float[] floatAudioVisualEffect;
+
     private void Start()
     {
         audioSourceMusic.volume = PlayerSetting.setting.floatVolumeMusic;
+
+        foreach (Image x in imageAudioVisualLeft)
+        {
+            x.gameObject.SetActive(PlayerSetting.setting.enableAudioVisualizer);
+            x.fillAmount = 0f;
+        }
+        foreach (Image x in imageAudioVisualRight)
+        {
+            x.gameObject.SetActive(PlayerSetting.setting.enableAudioVisualizer);
+            x.fillAmount = 0f;
+        }
 
         StartCoroutine("LoadClipMusic", true);
         StartCoroutine("LoadClipEffect", true);
@@ -29,6 +47,33 @@ public class Game_SongLoader : MonoBehaviour
     public void ManualLoadClipEffect()
     {
         StartCoroutine("LoadClipEffect");
+    }
+
+    private void FixedUpdate()
+    {
+        if (!PlayerSetting.setting.enableAudioVisualizer)
+        {
+            return;
+        }
+
+        audioSourceMusic.GetSpectrumData(floatAudioVisualMusic, 0, audioSpectrumType);
+        audioSourceEffect.GetSpectrumData(floatAudioVisualEffect, 0, audioSpectrumType);
+        for (int i = 0; i < imageAudioVisualLeft.Length; i++)
+        {
+            float fill = (floatAudioVisualMusic[Mathf.CeilToInt(1f * i * floatAudioVisualMusic.Length / imageAudioVisualLeft.Length) + 1]
+                + floatAudioVisualEffect[Mathf.CeilToInt(1f * i * floatAudioVisualEffect.Length / imageAudioVisualLeft.Length) + 1])
+                * Mathf.Pow(i + 1, 2) * 3f;
+            if (fill > imageAudioVisualLeft[i].fillAmount)
+            {
+                imageAudioVisualLeft[i].fillAmount = fill;
+                imageAudioVisualRight[i].fillAmount = fill;
+            }
+            else
+            {
+                imageAudioVisualLeft[i].fillAmount = Mathf.Lerp(imageAudioVisualLeft[i].fillAmount, 0f, Time.fixedDeltaTime * 8f);
+                imageAudioVisualRight[i].fillAmount = Mathf.Lerp(imageAudioVisualRight[i].fillAmount, 0f, Time.fixedDeltaTime * 8f);
+            }
+        }
     }
 
     private IEnumerator LoadClipMusic(bool isDelayed = false)

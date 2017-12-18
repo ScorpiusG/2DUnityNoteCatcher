@@ -134,6 +134,7 @@ public class Game_Control : MonoBehaviour
     public float floatHighlightAlpha = 0.5f;
     private float movementHoriAlpha = 0f;
     private float movementVertAlpha = 0f;
+    private const float movementAlphaMultiplier = 0.5f;
 
     public Game_SongLoader mSongLoader;
     public AudioSource audioSourceMusic;
@@ -632,6 +633,7 @@ public class Game_Control : MonoBehaviour
         objectGroupType[2].SetActive(intChartGameType >= 2);
         objectGroupType[3].SetActive(intChartGameType >= 2);
         objectMouseCursorCrosshair.SetActive(intChartGameType != 3);
+        objectMouseCursorCrosshair.GetComponent<SpriteRenderer>().enabled = PlayerSetting.setting.enableMouseCrosshair;
         objectMouseCursorDodger.SetActive(intChartGameType == 3);
 
         if (intChartGameType == 3)
@@ -1172,8 +1174,8 @@ public class Game_Control : MonoBehaviour
                     movementVertAlpha = Input.GetAxis("MouseY");
                 }
 
-                mouseCursorPos.x += movementHoriAlpha * PlayerSetting.setting.floatMouseSensitivity;
-                mouseCursorPos.y += movementVertAlpha * PlayerSetting.setting.floatMouseSensitivity;
+                mouseCursorPos.x += movementHoriAlpha * PlayerSetting.setting.floatMouseSensitivity * movementAlphaMultiplier;
+                mouseCursorPos.y += movementVertAlpha * PlayerSetting.setting.floatMouseSensitivity * movementAlphaMultiplier;
                 objectMouseCursor.transform.position = mouseCursorPos;
             }
             // Automatic play (always perfect)
