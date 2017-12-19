@@ -159,20 +159,21 @@ public class MarathonMenu_Control : MonoBehaviour
         textItemLevel.text = "*" + item.itemLevel.ToString();
         textItemDescription.text = item.itemDescription;
         textItemWinCondition.text = "";
-        textItemSongList.text = "Chart List: ";
-        textItemModList.text = "Mods: ";
-        textItemRecord.text = "Best Accuracy: " + (PlayerPrefs.GetFloat("marathon-" + button.itemID.ToString() + "-accuracy", 0f) * 100f).ToString("f2") + "% | Attempts: " + PlayerPrefs.GetInt("marathon-" + button.itemID.ToString() + "-attempts", 0).ToString();
+        textItemSongList.text = Translator.GetStringTranslation("MARATHONMENU_SONGLIST", "Chart List:") + " ";
+        textItemModList.text = Translator.GetStringTranslation("MARATHONMENU_MODIFIERS", "Modifiers:") + " ";
+        textItemRecord.text = Translator.GetStringTranslation("SONGMENU_RECORDACCURACY", "Best Accuracy:") + " " + (PlayerPrefs.GetFloat("marathon-" + button.itemID.ToString() + "-accuracy", 0f) * 100f).ToString("f2") + "% | " +
+            Translator.GetStringTranslation("SONGMENU_RECORDPLAYCOUNT", "Attempts:") + " " + PlayerPrefs.GetInt("marathon-" + button.itemID.ToString() + "-attempts", 0).ToString();
 
         // Win condition
-        if (item.itemAccuracyThreshold == 0 && item.itemNoteMissThreshold == 0)
+        if (item.itemAccuracyThreshold <= 0 && item.itemNoteMissThreshold <= 0)
         {
-            textItemWinCondition.text = "No win condition.";
+            textItemWinCondition.text = Translator.GetStringTranslation("MARATHONMENU_WINCONDITIONNULL", "No win condition.");
         }
         else
         {
             if (item.itemAccuracyThreshold > 0)
             {
-                textItemWinCondition.text = "Accuracy Threshold: " + item.itemAccuracyThreshold.ToString() + "%";
+                textItemWinCondition.text = Translator.GetStringTranslation("MARATHONMENU_WINCONDITIONACCURACY", "Accuracy Threshold:") + " " + item.itemAccuracyThreshold.ToString() + "%";
             }
             if (item.itemNoteMissThreshold > 0)
             {
@@ -180,18 +181,18 @@ public class MarathonMenu_Control : MonoBehaviour
                 {
                     textItemWinCondition.text += "\n";
                 }
-                textItemWinCondition.text += "Note Miss Threshold: " + item.itemNoteMissThreshold.ToString();
+                textItemWinCondition.text += Translator.GetStringTranslation("MARATHONMENU_WINCONDITIONMISS", "Note Miss Threshold:") + " " + item.itemNoteMissThreshold.ToString();
             }
         }
 
         // Song list
         if (item.itemChartList.Length == 0)
         {
-            textItemSongList.text += "\n   None.";
+            textItemSongList.text += "\n   " + Translator.GetStringTranslation("MARATHONMENU_SONGLISTEMPTY", "None.");
         }
         else if (item.itemChartList.Length > 5)
         {
-            textItemSongList.text += "\n   A lot!";
+            textItemSongList.text += "\n   " + Translator.GetStringTranslation("MARATHONMENU_SONGLISTMANY", "A lot!");
         }
         else
         {
@@ -227,7 +228,7 @@ public class MarathonMenu_Control : MonoBehaviour
         // Modifier list
         if (item.itemModList.Length == 0)
         {
-            textItemModList.text += "None";
+            textItemModList.text += Translator.GetStringTranslation("MARATHONMENU_MODIFIERSEMPTY", "None");
         }
         else
         {
@@ -254,6 +255,12 @@ public class MarathonMenu_Control : MonoBehaviour
 
     public void PlayMarathon ()
     {
+        if (Game_Control.marathonItem.itemChartList.Length <= 0)
+        {
+            Notification.Display("Oh no! This marathon item does not have songs in it!\nLITERALLY UNPLAYABLE.", Color.white);
+            return;
+        }
+
         //Game_Control.marathonItem = arrayMarathonItem[intMarathonItemLast];
         Game_Control.intMarathonItem = 0;
         Game_Control.boolAutoplay = false;

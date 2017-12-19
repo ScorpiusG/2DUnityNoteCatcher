@@ -2255,6 +2255,25 @@ public class Game_Control : MonoBehaviour
                     int songPlayCount = PlayerPrefs.GetInt(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-playcount", 0);
                     songPlayCount++;
                     PlayerPrefs.SetInt(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-playcount", songPlayCount);
+
+                    // Clear status
+                    int clearStatus = PlayerPrefs.GetInt(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-status", 0);
+                    if (!isForcedEnd)
+                    {
+                        if (playerAccuracyBest >= chartTotalNotes)
+                        {
+                            if (clearStatus < 3) clearStatus = 3;
+                        }
+                        else if (playerAccuracyMiss > 0)
+                        {
+                            if (clearStatus < 2) clearStatus = 2;
+                        }
+                        else
+                        {
+                            if (clearStatus < 1) clearStatus = 1;
+                        }
+                    }
+                    PlayerPrefs.SetInt(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-status", clearStatus);
                 }
                 else
                 {
@@ -2290,6 +2309,25 @@ public class Game_Control : MonoBehaviour
                     int songPlayCount = PlayerPrefs.GetInt(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-playcount_official", 0);
                     songPlayCount++;
                     PlayerPrefs.SetInt(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-playcount_official", songPlayCount);
+
+                    // Clear status
+                    int clearStatus = PlayerPrefs.GetInt(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-status_official", 0);
+                    if (!isForcedEnd)
+                    {
+                        if (playerAccuracyBest >= chartTotalNotes)
+                        {
+                            if (clearStatus < 3) clearStatus = 3;
+                        }
+                        else if (playerAccuracyMiss > 0)
+                        {
+                            if (clearStatus < 2) clearStatus = 2;
+                        }
+                        else
+                        {
+                            if (clearStatus < 1) clearStatus = 1;
+                        }
+                    }
+                    PlayerPrefs.SetInt(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-status_official", clearStatus);
                 }
 
                 // Display old record

@@ -265,7 +265,7 @@ public class PlayerSetting : MonoBehaviour
     /// <returns></returns>
     public int GetLevelScoreRequirement(int level)
     {
-        return (((level + 1) * level) / 2) * ((level * 6) + 94) * 10;
+        return (((level + 1) * level) / 2) * ((level * 8) + 92) * 100;
     }
 
     /// <summary>
