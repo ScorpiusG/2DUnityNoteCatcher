@@ -34,6 +34,10 @@ public class Creator_Control : MonoBehaviour
     public Text textChartJudge;
     private int intChartJudge = 0;
 
+    public Transform transformItemFolderParent;
+    public Creator_ItemFolder itemFolderTemplate;
+    private List<Creator_ItemFolder> listItemFolder = new List<Creator_ItemFolder>();
+
     public InputField inputTempoChangeAdd;
     public InputField[] inputTempoChangeEdit;
     public int intTempoChangeEdit = 0;
@@ -168,10 +172,12 @@ public class Creator_Control : MonoBehaviour
         }
         if (noteCount < 1)
         {
-#if UNITY_EDITOR
-            Debug.LogWarning("WARNING: There are no notes in this chart. Save cancelled.");
-#endif
             Notification.Display(Translator.GetStringTranslation("CREATOR_ERRORSAVECHARTEMPTY", "Save cancelled, the chart does not have at least one note."), Color.white);
+            return;
+        }
+        if (textFileChart.text.Length < 1)
+        {
+            Notification.Display(Translator.GetStringTranslation("CREATOR_ERRORLOADCHARTNONEXISTENT", "Cancelled. The file name field is empty.\nPlease input the name to proceed."), Color.white);
             return;
         }
 
@@ -323,6 +329,12 @@ public class Creator_Control : MonoBehaviour
         PlaySound(clipSelect);
         string input = textFileName.text + "-" + intChartGameType.ToString() + "-" + textFileChart.text;
 
+        if (textFileChart.text.Length < 1)
+        {
+            Notification.Display(Translator.GetStringTranslation("CREATOR_ERRORLOADCHARTNONEXISTENT", "Cancelled. The file name field is empty.\nPlease input the name to proceed."), Color.white);
+            return;
+        }
+
         ClearChart();
 
         // Load file
@@ -456,6 +468,60 @@ public class Creator_Control : MonoBehaviour
         }
 
         CalculateChartLevel();
+    }
+    
+    public void FileChartFieldEdit(string x)
+    {
+        textFileName.text = x;
+    }
+    /// <summary>
+    /// Refreshes folder list for folder selection window.
+    /// </summary>
+    public void FolderListRefresh()
+    {
+        // Remove previous list
+        foreach (Creator_ItemFolder x in listItemFolder)
+        {
+            Destroy(x.gameObject);
+        }
+        listItemFolder.Clear();
+
+        // Get the folder names
+        string path = Directory.GetCurrentDirectory() + "/Songs";
+        DirectoryInfo main = new DirectoryInfo(path);
+        DirectoryInfo[] sub = main.GetDirectories();
+        Creator_ItemFolder newFolder = null;
+
+        // Create folder buttons
+        itemFolderTemplate.gameObject.SetActive(false);
+        foreach (DirectoryInfo x in sub)
+        {
+            newFolder = Instantiate(itemFolderTemplate);
+            newFolder.transform.SetParent(transformItemFolderParent);
+            newFolder.transform.localScale = Vector3.one;
+            newFolder.name = newFolder.textFolderName.text = x.Name;
+
+            // Quantity detection
+            int[] quantity = new int[4];
+            // i = game mode
+            // j = chart number
+            for (int i = 0; i < quantity.Length; i++)
+            {
+                for (int j = 0; j < 1000; j++)
+                {
+                    path = Directory.GetCurrentDirectory() + "/Songs/" + newFolder.name + "/" + newFolder.name + "-" + i.ToString() + "-" + j.ToString() + ".txt";
+                    if (!File.Exists(path))
+                    {
+                        quantity[i] = j;
+                        break;
+                    }
+                }
+            }
+            newFolder.textFolderInfo.text = "LN" + quantity[0].ToString() + " DB" + quantity[1].ToString() + " QD" + quantity[2].ToString() + " ND" + quantity[3].ToString();
+
+            newFolder.gameObject.SetActive(true);
+            listItemFolder.Add(newFolder);
+        }
     }
 
     /// <summary>
@@ -910,10 +976,12 @@ public class Creator_Control : MonoBehaviour
             return;
         }
 
-        Vector3 newChange = new Vector3();
-        newChange.x = floatCursorPosition;
-        newChange.y = Mathf.Abs(floatTempoChange);
-        newChange.z = GetCurrentPos();
+        Vector3 newChange = new Vector3()
+        {
+            x = floatCursorPosition,
+            y = Mathf.Abs(floatTempoChange),
+            z = GetCurrentPos()
+        };
         listTempoChange.Add(newChange);
 
         TempoChangeRefreshList();
@@ -939,12 +1007,6 @@ public class Creator_Control : MonoBehaviour
             item.gameObject.SetActive(true);
             listItemTempoChange.Add(item);
         }
-        //listTempoChange.Sort(
-        //    delegate (Vector3 a, Vector3 b)
-        //    {
-        //        return (a.x.CompareTo(b.x));
-        //    }
-        //    );
     }
     public void TempoChangeRemove(Creator_ItemTempoChange item)
     {
@@ -973,11 +1035,12 @@ public class Creator_Control : MonoBehaviour
             return;
         }
 
-        Vector3 newChange = new Vector3();
-        //Vector3 newChange = listTempoChange[item.itemID];
-        newChange.x = floatTempoChangeBeat;
-        newChange.y = floatTempoChangeBPM;
-        newChange.z = floatTempoChangeTime;
+        Vector3 newChange = new Vector3()
+        {
+            x = floatTempoChangeBeat,
+            y = floatTempoChangeBPM,
+            z = floatTempoChangeTime
+        };
         listTempoChange.RemoveAt(intTempoChangeEdit);
         listTempoChange.Add(newChange);
         TempoChangeRefreshList();

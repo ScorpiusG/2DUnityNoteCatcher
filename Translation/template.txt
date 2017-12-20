@@ -155,6 +155,8 @@ CREATOR_TEMPOCHANGE1BUTTONCLOSE|Close
 CREATOR_TEMPOCHANGE2HEADER|Edit BPM Change
 CREATOR_TEMPOCHANGE2BUTTONEDIT|Finalize Change
 CREATOR_TEMPOCHANGE2BUTTONCLOSE|Cancel
+CREATOR_FOLDERSELECTHEADER|Existing Folder Select
+CREATOR_FOLDERSELECTBUTTONCLOSE|Close
 CREATOR_OPTIONSMANUAL|<color=yellow>[F1]</color>  Open <color=lime>Online Manual</color> (English)
 CREATOR_OPTIONSMANUALNOTIFICATION|Atempting to open the online chart editor manual with your default browser...
 CREATOR_OPTIONSMOUSESCROLLFUNCHEADER|Mouse Scroll Function
@@ -190,6 +192,7 @@ CREATOR_EXITCONFIRMHEADER|EXIT CONFIRMATION
 CREATOR_EXITCONFIRMBODY|You are about to return to the title screen.|Doing so WILL remove all work done.||<color=ff3030>This CANNOT be undone.</color>||Are you sure you want to exit?
 CREATOR_ERRORCHANGEGAMETYPE1|You must clear ALL notes from the chart|if you want to change game modes.
 CREATOR_ERRORCHANGEGAMETYPE2|To clear all notes, click the following buttons:|Editor Settings > Clear Chart > Clear Notes Only
+CREATOR_ERRORFILENAMEEMPTY|Cancelled. The file name field is empty.|Please input the name to proceed.
 CREATOR_ERRORLOADCHARTNONEXISTENT|The following chart file does not exist:
 CREATOR_ERRORSAVECHARTEMPTY|Save cancelled, the chart does not have at least one note.
 CREATOR_ERRORLOADCHARTNEWVERSION1|Failed to load the chart. The chart's version is somehow newer than the currently supported version.

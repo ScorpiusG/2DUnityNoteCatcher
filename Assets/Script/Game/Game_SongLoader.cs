@@ -6,6 +6,8 @@ using UnityEngine.UI;
 
 public class Game_SongLoader : MonoBehaviour
 {
+    public static Game_SongLoader loader;
+
     public AudioSource audioSourceMusic;
     public AudioSource audioSourceEffect;
 
@@ -17,8 +19,13 @@ public class Game_SongLoader : MonoBehaviour
     public FFTWindow audioSpectrumType = FFTWindow.Blackman;
     public Image[] imageAudioVisualLeft;
     public Image[] imageAudioVisualRight;
-    public float[] floatAudioVisualMusic;
-    public float[] floatAudioVisualEffect;
+    private float[] floatAudioVisualMusic = new float[64];
+    private float[] floatAudioVisualEffect = new float[64];
+
+    private void Awake()
+    {
+        loader = this;
+    }
 
     private void Start()
     {
@@ -56,8 +63,17 @@ public class Game_SongLoader : MonoBehaviour
             return;
         }
 
-        audioSourceMusic.GetSpectrumData(floatAudioVisualMusic, 0, audioSpectrumType);
-        audioSourceEffect.GetSpectrumData(floatAudioVisualEffect, 0, audioSpectrumType);
+        if (!Game_Control.control.isForcedEnd && !Game_Control.control.boolIsPaused && audioSourceMusic.isPlaying)
+        {
+            audioSourceMusic.GetSpectrumData(floatAudioVisualMusic, 0, audioSpectrumType);
+            audioSourceEffect.GetSpectrumData(floatAudioVisualEffect, 0, audioSpectrumType);
+        }
+        else
+        {
+            for (int i = 0; i < floatAudioVisualMusic.Length; i++) floatAudioVisualMusic[i] = 0f;
+            for (int i = 0; i < floatAudioVisualEffect.Length; i++) floatAudioVisualEffect[i] = 0f;
+        }
+
         for (int i = 0; i < imageAudioVisualLeft.Length; i++)
         {
             float fill = (floatAudioVisualMusic[Mathf.CeilToInt(1f * i * floatAudioVisualMusic.Length / imageAudioVisualLeft.Length) + 1]

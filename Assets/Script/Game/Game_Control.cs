@@ -9,6 +9,7 @@ using UnityEngine.UI;
 
 public class Game_Control : MonoBehaviour
 {
+    public static Game_Control control;
     public static bool boolCustomSong = true;
     public static string stringSongFileName = "test";
     public static int intChartGameType = 0;
@@ -117,7 +118,7 @@ public class Game_Control : MonoBehaviour
     public Animator animatorNewRecord;
 
     public Animator animatorPause;
-    private bool boolIsPaused = false;
+    [HideInInspector] public bool boolIsPaused = false;
     private bool boolPauseMenuForceEnd = false;
     private float floatLastPaused = -999f;
     private bool boolPauseNotification = false;
@@ -166,7 +167,8 @@ public class Game_Control : MonoBehaviour
     public int[] intNoteDodgeBulletRingSpawnQuantity = { 12, 14, 16, 18, 20, 22, 24, 26, 28, 30 };
     public float[] floatNoteDodgeBulletLongNoteSpawnFrequency = { 1f, 1f, 1f, 2f, 2f, 2f, 4f, 4f, 4f, 8f, 8f };
 
-    private bool isForcedEnd = false;
+    [HideInInspector] public bool isForcedEnd = false;
+    private bool boolIsTutorial = false;
     private bool isScoringDisabled = false;
     private float floatTimeEscapeHeld = 0f;
     private int currentScrollSpeed = 0;
@@ -199,7 +201,11 @@ public class Game_Control : MonoBehaviour
     public void ExitGameScene()
     {
         PlaySoundEffect(clipGameButtonPress);
-        if (marathonItem != null)
+        if (boolIsTutorial)
+        {
+            LoadScene("Title");
+        }
+        else if (marathonItem != null)
         {
             LoadScene("MarathonMenu");
         }
@@ -575,6 +581,8 @@ public class Game_Control : MonoBehaviour
 
     void Awake()
     {
+        control = this;
+
         // Check marathon item
         if (marathonItem != null)
         {
@@ -671,6 +679,10 @@ public class Game_Control : MonoBehaviour
                 string[] y = x.Split(':');
                 switch (y[0])
                 {
+                    case "tutorial":
+                        boolIsTutorial = true;
+                        Instantiate(Resources.Load("CanvasTutorial" + intMarathonItem, typeof(GameObject)) as GameObject);
+                        break;
                     case "scrollspeed":
                         currentScrollSpeed = int.Parse(y[1]);
                         break;
@@ -2446,6 +2458,12 @@ public class Game_Control : MonoBehaviour
             // End of marathon
             else
             {
+                // If it was a tutorial, go to title scene immediately
+                if (boolIsTutorial)
+                {
+                    ExitGameScene();
+                }
+
                 // If forced end with incomplete songs
                 if (intMarathonItem < marathonItem.itemChartList.Length)
                 {

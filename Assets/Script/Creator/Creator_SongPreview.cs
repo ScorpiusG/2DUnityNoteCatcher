@@ -124,7 +124,7 @@ public class Creator_SongPreview : MonoBehaviour
         // Get current song positions depending on where the cursor is at
         int chartOffset = 0;
         int.TryParse(Creator_Control.control.textChartOffset.text, out chartOffset);
-        float cursorPos = Creator_Control.control.floatCursorPosition;
+        //float cursorPos = Creator_Control.control.floatCursorPosition;
         float songBPM = float.Parse(Creator_Control.control.textSongTempo.text);
         float currentSecond = Creator_Control.control.GetCurrentPos() + (0.001f * chartOffset);
         //float currentSecond = ((60f / songBPM) * cursorPos) + (0.001f * chartOffset);
