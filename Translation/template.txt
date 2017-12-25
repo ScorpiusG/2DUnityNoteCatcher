@@ -197,4 +197,6 @@ CREATOR_ERRORLOADCHARTNONEXISTENT|The following chart file does not exist:
 CREATOR_ERRORSAVECHARTEMPTY|Save cancelled, the chart does not have at least one note.
 CREATOR_ERRORLOADCHARTNEWVERSION1|Failed to load the chart. The chart's version is somehow newer than the currently supported version.
 CREATOR_ERRORLOADCHARTNEWVERSION2|Please download the latest version of the game to be able to load this chart in the editor.
-TUTORIAL_BUTTONSKIP|Skip
+TUTORIAL_CONFIRMMESSAGE|Would you like to play the tutorial?
+TUTORIAL_BUTTONYES|Yes
+TUTORIAL_BUTTONNO|No

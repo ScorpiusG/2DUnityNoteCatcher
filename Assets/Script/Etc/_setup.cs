@@ -15,7 +15,11 @@ public class _setup : MonoBehaviour
     IEnumerator RunMe ()
     {
         yield return new WaitForSeconds(0.5f);
-        SceneTransition.LoadScene(stringNextScene);
+
+        if (PlayerPrefs.HasKey("PlayerSetting"))
+            SceneTransition.LoadScene(stringNextScene);
+        else
+            SceneTransition.LoadScene("Tutorial");
         //SceneManager.LoadScene(stringNextScene);
     }
 }

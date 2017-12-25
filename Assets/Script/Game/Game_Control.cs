@@ -191,7 +191,6 @@ public class Game_Control : MonoBehaviour
 
     public void RestartGameScene()
     {
-        PlaySoundEffect(clipGameButtonPress);
         if (marathonItem != null)
         {
             intMarathonItem = 0;
@@ -200,7 +199,6 @@ public class Game_Control : MonoBehaviour
     }
     public void ExitGameScene()
     {
-        PlaySoundEffect(clipGameButtonPress);
         if (boolIsTutorial)
         {
             LoadScene("Title");
@@ -2462,6 +2460,7 @@ public class Game_Control : MonoBehaviour
                 if (boolIsTutorial)
                 {
                     ExitGameScene();
+                    yield break;
                 }
 
                 // If forced end with incomplete songs

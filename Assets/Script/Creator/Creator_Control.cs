@@ -450,6 +450,8 @@ public class Creator_Control : MonoBehaviour
             DeleteNote(x);
         }
 
+        listTempoChange.Clear();
+
         CalculateChartLevel();
         Creator_SongPreview.mSongPreview.ClearClip();
         TempoChangeRefreshList();
