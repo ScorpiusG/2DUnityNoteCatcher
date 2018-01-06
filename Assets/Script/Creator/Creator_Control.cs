@@ -519,7 +519,8 @@ public class Creator_Control : MonoBehaviour
                     }
                 }
             }
-            newFolder.textFolderInfo.text = "LN" + quantity[0].ToString() + " DB" + quantity[1].ToString() + " QD" + quantity[2].ToString() + " ND" + quantity[3].ToString();
+            newFolder.textFolderInfo.text = quantity[0].ToString() + " : " + quantity[1].ToString() + " : " + quantity[2].ToString() + " : " + quantity[3].ToString();
+            //newFolder.textFolderInfo.text = "LN" + quantity[0].ToString() + " DB" + quantity[1].ToString() + " QD" + quantity[2].ToString() + " ND" + quantity[3].ToString();
 
             newFolder.gameObject.SetActive(true);
             listItemFolder.Add(newFolder);

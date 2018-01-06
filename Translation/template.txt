@@ -1,6 +1,7 @@
 TRANSLATION_NAME|Template Translation Text
 TRANSLATION_AUTHOR|PROGUY
 TRANSLATION_DESCRIPTION|Used as a template for translating/editing in-game texts without altering the game with 3rd-party measures.
+TRANSLATION_NOTE|Word wrap display is recommended for long texts like this one. Use either '`' or '|' as line breaks for various text here that would need it. If you don't want something translated/changed, you can delete the whole line. Default font is Liberty Sans, non-ASCII (Latin) characters may display undesired. If something cannot be changed and you wish to change it, please let me know. Some stuff like song data, however, cannot be translated and is recommended to be displayed in English.
 TRANSLATION_FONT|
 TRANSLATION_CONFIRM|Use translation
 TRANSLATION_DEFAULT|Use default
@@ -71,6 +72,10 @@ SONGMENU_BUTTONSETTINGSENABLEOBJECTBEATPULSEHEADER|Enable Object Pulse On Beat
 SONGMENU_BUTTONSETTINGSENABLEOBJECTBEATPULSEBODY|When enabled, all notes and catchers have an outline that pulses on each beat.
 SONGMENU_BUTTONSETTINGSENABLEASSISTTICKHEADER|Enable Assist Tick Sound
 SONGMENU_BUTTONSETTINGSENABLEASSISTTICKBODY|Toggle sound tick on each note you hit.
+SONGMENU_BUTTONSETTINGSENABLEMOUSECROSSHAIRHEADER|Enable Mouse Crosshair
+SONGMENU_BUTTONSETTINGSENABLEMOUSECROSSHAIRBODY|Toggle display of a crosshair to indicate position of catcher(s).
+SONGMENU_BUTTONSETTINGSENABLEAUDIOVISUALIZERHEADER|Enable Audio Visualizer
+SONGMENU_BUTTONSETTINGSENABLEAUDIOVISUALIZERBODY|Toggle bars responding to in-game audio played. Disable if experienced FPS drop.
 MARATHONMENU_SONGLIST|Chart List:
 MARATHONMENU_SONGLISTEMPTY|None.
 MARATHONMENU_SONGLISTMANY|A lot!

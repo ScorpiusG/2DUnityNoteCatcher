@@ -59,8 +59,6 @@ public class PlayerSetting : MonoBehaviour
     public bool enableAudioVisualizer = true;
 
     // Game modifiers. Enabling certain ones will disable scoring (record for highest accuracy and total score). As of now, these are not implemented yet.
-    // Does nothing while disabling high score.
-    public bool modDisableScore = false;
     // Flips the whole screen 180 degrees. Disables scoring.
     public bool modScreenFlip = false;
     // Mirrors the screen horizontally. Disables scoring.
@@ -139,7 +137,7 @@ public class PlayerSetting : MonoBehaviour
     public string GetScore()
     {
         // How it works: Score starts from last value in the list and ends at the first.
-        // Example list: { 789, 456, 123, 1 }   Will appear as: "1,123,456,789"
+        // Example list: { 890, 567, 234, 1 }   Will appear as: "1,234,567,890"
 
         string s = "";
         if (intPlayerTotalScore.Count > 0)
@@ -294,7 +292,11 @@ public class PlayerSetting : MonoBehaviour
         int value = 0;
         for (int i = 0; i < list.Count; i++)
         {
-            value += list[i] * (1000 * i);
+            int pos = Mathf.FloorToInt(Mathf.Pow(1000, i));
+            value += list[i] * pos;
+#if UNITY_EDITOR
+            Debug.Log("List Pos: " + pos.ToString() + " (=" + value.ToString() + ")");
+#endif
         }
         return value;
     }

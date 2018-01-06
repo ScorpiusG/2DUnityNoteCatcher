@@ -83,6 +83,8 @@ public class SongMenu_Control : MonoBehaviour
     public Toggle toggleOptionsDisplayJudgmentCounter;
     public Toggle toggleOptionsObjectBeatPulse;
     public Toggle toggleOptionsAssistTickSound;
+    public Toggle toggleOptionsMouseCrosshair;
+    public Toggle toggleOptionsAudioVisualizer;
 
     public AudioSource audioSourcePreview;
     public PlaySoundEffect mSoundPlayer;
@@ -154,6 +156,8 @@ public class SongMenu_Control : MonoBehaviour
         toggleOptionsDisplayJudgmentCounter.isOn = PlayerSetting.setting.enableDisplayNoteHitCounterSmall;
         toggleOptionsObjectBeatPulse.isOn = PlayerSetting.setting.enableNoteAndCatcherHighlightBeatPulse;
         toggleOptionsAssistTickSound.isOn = PlayerSetting.setting.enableAssistTickSound;
+        toggleOptionsMouseCrosshair.isOn = PlayerSetting.setting.enableMouseCrosshair;
+        toggleOptionsAudioVisualizer.isOn = PlayerSetting.setting.enableAudioVisualizer;
 
         string path = Directory.GetCurrentDirectory() + stringSongDirectoryPath;
 #if UNITY_EDITOR
@@ -360,15 +364,6 @@ public class SongMenu_Control : MonoBehaviour
             textDisplayAccuracy.text += " | " + Translator.GetStringTranslation("SONGMENU_GAMEOFFSET", "Offset:") + " " + PlayerSetting.setting.intGameOffset.ToString() + "ms";
         }
         textDisplayMods.text = "";
-        if (PlayerSetting.setting.modDisableScore)
-        {
-            if (textDisplayMods.text != "")
-            {
-                textDisplayMods.text += ", ";
-            }
-            textDisplayMods.text += "DisableScore";
-            isHighscoreDisabledByMods = true;
-        }
         if (PlayerSetting.setting.modChartCluster)
         {
             if (textDisplayMods.text != "")
@@ -1022,5 +1017,13 @@ public class SongMenu_Control : MonoBehaviour
     public void AdjustAssistTickSound()
     {
         PlayerSetting.setting.enableAssistTickSound = toggleOptionsAssistTickSound.isOn;
+    }
+    public void AdjustMouseCrosshair()
+    {
+        PlayerSetting.setting.enableMouseCrosshair = toggleOptionsMouseCrosshair.isOn;
+    }
+    public void AdjustAudioVisualizer()
+    {
+        PlayerSetting.setting.enableAudioVisualizer = toggleOptionsAudioVisualizer.isOn;
     }
 }

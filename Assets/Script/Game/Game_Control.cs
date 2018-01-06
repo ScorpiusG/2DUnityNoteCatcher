@@ -2225,7 +2225,6 @@ public class Game_Control : MonoBehaviour
                 PlayerSetting.setting.modChartHell ||
                 PlayerSetting.setting.modChartMirror ||
                 PlayerSetting.setting.modChartRandom ||
-                PlayerSetting.setting.modDisableScore ||
                 PlayerSetting.setting.modScreenFlip ||
                 PlayerSetting.setting.modScreenMirror ||
                 // Actual gameplay length is over a minute (from first to last note)
@@ -2315,6 +2314,13 @@ public class Game_Control : MonoBehaviour
                         PlayerPrefs.SetFloat(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-recordaccuracy_official", finalAccuracy);
                     }
 
+                    // Score record
+                    int oldRecordScore = PlayerPrefs.GetInt(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-recordscore_official", 0);
+                    if (finalScore > oldRecordScore)
+                    {
+                        PlayerPrefs.GetInt(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-recordscore_official", oldRecordScore);
+                    }
+
                     // Mapchart play count increase
                     int songPlayCount = PlayerPrefs.GetInt(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-playcount_official", 0);
                     songPlayCount++;
@@ -2353,15 +2359,16 @@ public class Game_Control : MonoBehaviour
             yield return null;
 
             // Update texts
-            if ((intChartGameType != 3 && playerAccuracyFine == 0 && playerAccuracyGreat == 0 && playerAccuracyMiss == 0) ||
-                (intChartGameType == 3 && intNoteDodgeHit == 0))
+            if (!isForcedEnd &&
+                ((intChartGameType != 3 && playerAccuracyFine == 0 && playerAccuracyGreat == 0 && playerAccuracyMiss == 0) ||
+                (intChartGameType == 3 && intNoteDodgeHit == 0)))
             {
                 textResultHeader.text = Translator.GetStringTranslation("GAME_RESULTPLAYPERFECT", "PERFECT RHYTHM");
                 textResultHeader.color = colorResultHeaderPerfect;
                 PlaySoundEffect(clipGameEndPerfect);
                 imageSongProgressGauge.fillAmount = 1f;
             }
-            else if (finalAccuracy >= 0.01f * PlayerSetting.setting.intAccuracyThreshold)
+            else if (!isForcedEnd && finalAccuracy >= 0.01f * PlayerSetting.setting.intAccuracyThreshold)
             {
                 textResultHeader.text = Translator.GetStringTranslation("GAME_RESULTPLAYCLEAR", "COMPLETE RHYTHM");
                 textResultHeader.color = colorResultHeaderPass;
@@ -2422,6 +2429,12 @@ public class Game_Control : MonoBehaviour
                 {
                     animatorNewRecord.gameObject.SetActive(true);
                     animatorNewRecord.Play("clip");
+                }
+
+                for (float f = 0; f < 1f; f += Time.deltaTime * 1.5f)
+                {
+                    textResultOther.text = Translator.GetStringTranslation("GAME_RESULTSCOREADD", "Score:") + " " + Mathf.FloorToInt(f * finalScore).ToString();
+                    yield return null;
                 }
                 textResultOther.text = Translator.GetStringTranslation("GAME_RESULTSCOREADD", "Score:") + " " + finalScore.ToString();
             }
@@ -2562,6 +2575,12 @@ public class Game_Control : MonoBehaviour
                 {
                     animatorNewRecord.gameObject.SetActive(true);
                     animatorNewRecord.Play("clip");
+                }
+
+                for (float f = 0; f < 1f; f += Time.deltaTime * 1.5f)
+                {
+                    textResultOther.text = Translator.GetStringTranslation("GAME_RESULTSCOREADD", "Score:") + " " + Mathf.FloorToInt(f * finalScore).ToString();
+                    yield return null;
                 }
                 textResultOther.text = Translator.GetStringTranslation("GAME_RESULTSCOREADD", "Score:") + " " + finalScore.ToString();
             }

@@ -8,12 +8,16 @@ public class Title_Control : MonoBehaviour
     public Color colorCameraMainBGColor = Color.black;
     public float floatDurationBetweenColor = 4f;
 
+    public GameObject objectTranslationButton;
+
     public string stringSceneNameSongMenuOfficial = "SongMenuOfficial";
     public string stringSceneNameSongMenuCustom = "SongMenuCustom";
     public string stringSceneNameChartEditor = "Creator";
     public string stringSceneNameTranslationMenu = "TranslationMenu";
     public string stringSceneNameMarathonMenu = "MarathonMenu";
     public string stringSceneNameTutorial = "Tutorial";
+
+    private bool boolUpdateOther = false;
 
     void Start()
     {
@@ -24,6 +28,22 @@ public class Title_Control : MonoBehaviour
     void Update()
     {
         cameraMain.backgroundColor = Color.Lerp(cameraMain.backgroundColor, colorCameraMainBGColor, Time.deltaTime * 2f / floatDurationBetweenColor);
+    }
+
+    void FixedUpdate()
+    {
+        // Update on every other frame
+        boolUpdateOther = !boolUpdateOther;
+        if (boolUpdateOther) return;
+
+        // Enable translation button if "Translation" folder exists
+        if (!objectTranslationButton.activeSelf)
+        {
+            if (System.IO.Directory.Exists("Translation"))
+            {
+                objectTranslationButton.SetActive(true);
+            }
+        }
     }
 
     public void ButtonSceneTransferTranslationMenu()
