@@ -48,7 +48,7 @@ public class Game_TutorialMessage : MonoBehaviour
         }
         else
         {
-            floatAlpha -= Time.deltaTime / 1.2f;
+            floatAlpha -= Time.deltaTime / 0.8f;
         }
         floatAlpha = Mathf.Clamp01(floatAlpha);
 

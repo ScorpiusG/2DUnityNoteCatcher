@@ -654,10 +654,28 @@ public class Game_Control : MonoBehaviour
         if (boolCustomSong)
         {
             floatPreviousRecord = PlayerPrefs.GetFloat(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-recordaccuracy", 0f);
+
+            if (marathonItem == null && !boolAutoplay)
+            {
+                // Mapchart play count increase
+                int songPlayCount = PlayerPrefs.GetInt(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-playcount", 0);
+                songPlayCount++;
+                PlayerPrefs.SetInt(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-playcount", songPlayCount);
+                PlayerPrefs.Save();
+            }
         }
         else
         {
             floatPreviousRecord = PlayerPrefs.GetFloat(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-recordaccuracy_official", 0f);
+
+            if (marathonItem == null && !boolAutoplay)
+            {
+                // Mapchart play count increase
+                int songPlayCount = PlayerPrefs.GetInt(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-playcount_official", 0);
+                songPlayCount++;
+                PlayerPrefs.SetInt(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-playcount_official", songPlayCount);
+                PlayerPrefs.Save();
+            }
         }
 
         textMeshRecordGhost.text = "";
@@ -2196,9 +2214,11 @@ public class Game_Control : MonoBehaviour
             }
             else if (intChartGameType == 3 && isForcedEnd)
             {
+                /*
                 int songPlayCount = PlayerPrefs.GetInt(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-playcount", 0);
                 songPlayCount++;
                 PlayerPrefs.SetInt(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-playcount", songPlayCount);
+                */
                 PlayerSetting.setting.intPlayerTotalPlayCountND++;
                 PlayerPrefs.Save();
 
@@ -2260,10 +2280,12 @@ public class Game_Control : MonoBehaviour
                         PlayerPrefs.SetFloat(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-recordaccuracy", finalAccuracy);
                     }
 
+                    /*
                     // Mapchart play count increase
                     int songPlayCount = PlayerPrefs.GetInt(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-playcount", 0);
                     songPlayCount++;
                     PlayerPrefs.SetInt(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-playcount", songPlayCount);
+                    */
 
                     // Clear status
                     int clearStatus = PlayerPrefs.GetInt(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-status", 0);
@@ -2321,10 +2343,12 @@ public class Game_Control : MonoBehaviour
                         PlayerPrefs.GetInt(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-recordscore_official", oldRecordScore);
                     }
 
+                    /*
                     // Mapchart play count increase
                     int songPlayCount = PlayerPrefs.GetInt(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-playcount_official", 0);
                     songPlayCount++;
                     PlayerPrefs.SetInt(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-playcount_official", songPlayCount);
+                    */
 
                     // Clear status
                     int clearStatus = PlayerPrefs.GetInt(stringSongFileName + "-" + intChartGameType.ToString() + "-" + intChartGameChart.ToString() + "-status_official", 0);
